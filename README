@@ -1,0 +1,32 @@
+optional is a command line option parser and library.
+
+YOU WRITE:
+
+object MyAwesomeCommandLineTool extends optional.Application {
+  // for instance...
+  def main(count: Option[Int], file: Option[java.io.File], arg1: String) {
+    [...]
+  }
+}
+
+THEN YOU DO:
+
+  scala MyAwesomeCommandLineTool --count 5 quux
+
+AND YOUR MAIN METHOD WILL BE INVOKED SUCH THAT:
+
+  count = Some(5)
+  file = None
+  arg1 = quux
+  
+See the example programs for many more features.
+
+HOW IT WORKS:
+
+  Reflection, man.
+
+CREDITS:
+
+  Idea and prototype implementation: DRMacIver.
+   Fleshing out and awesomification: paulp.
+

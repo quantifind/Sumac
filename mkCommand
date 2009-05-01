@@ -1,0 +1,1 @@
+/scala/inst/27/bin/scala -cp 'lib/*' optional.MakeCommand $*
