@@ -71,3 +71,23 @@ object Options
     Options(options, arguments.toList, args.toList)
   }
 }
+
+object AutoArgInfo {
+  /**
+   * guess a short form of the arguments from the long names.
+   *
+   *
+   */
+  def guessFromNames(names: Iterable[String]) : Seq[ArgInfo] = {
+    val usedLetters = mutable.Set[Char]()
+    names.map { n =>
+      val l = n.charAt(0)
+      if (usedLetters.contains(l)) {
+        ArgInfo(l,n,false, null)  //TODO
+      }
+      else {
+        ArgInfo(l, n, false, null)
+      }
+    }.toSeq
+  }
+}
