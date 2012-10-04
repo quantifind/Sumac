@@ -9,9 +9,10 @@ class ObjectToArgs(val obj: Object) {
     ReflectionUtils.getAllDeclaredFields(obj.getClass).map{f => new FieldArgAssignable(f)}
   )
 
-  def parse(args: Array[String]) {
-    println(argParser.nameToHolder)
-    val parsed = argParser.parse(args)
+  def parse(args: Array[String],
+            preParsers: Iterator[Parser[_]] = Iterator(),
+            postParsers: Iterator[Parser[_]] = Iterator()) {
+    val parsed = argParser.parse(args, preParsers, postParsers)
     parsed.foreach{
       kv =>
         val field = kv._1.field
@@ -23,7 +24,9 @@ class ObjectToArgs(val obj: Object) {
 
 trait FieldParsing {
   lazy val parser = new ObjectToArgs(this)
-  def parse(args: Array[String]) {
-    parser.parse(args)
+  def parse(args: Array[String],
+            preParsers: Iterator[Parser[_]] = Iterator(),
+            postParsers: Iterator[Parser[_]] = Iterator()) {
+    parser.parse(args, preParsers, postParsers)
   }
 }

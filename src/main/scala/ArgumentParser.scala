@@ -8,7 +8,9 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
   lazy val nameToHolder = argHolders.map{ a => a.getName -> a}.toMap
 
 
-  def parse(args: Array[String]) : Map[T, ValueHolder[_]] = {
+  def parse(args: Array[String],
+            preParsers: Iterator[Parser[_]] = Iterator(),
+            postParsers: Iterator[Parser[_]] = Iterator()) : Map[T, ValueHolder[_]] = {
     val result = mutable.Map[T, ValueHolder[_]]()
     var idx = 0
     while (idx < args.length) {
@@ -19,7 +21,8 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
       val holderOption = nameToHolder.get(name)
       if (holderOption.isEmpty)
         throw new RuntimeException("unknown option " + name)
-      result(holderOption.get) =  ParseHelper.parseInto(args(idx +1), holderOption.get.getType).get
+      result(holderOption.get) =
+        ParseHelper.parseInto(args(idx +1), holderOption.get.getType, preParsers, postParsers).get
       idx += 2
     }
     result

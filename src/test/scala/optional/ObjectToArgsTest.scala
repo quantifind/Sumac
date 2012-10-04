@@ -43,9 +43,48 @@ class ObjectToArgsTest extends FunSuite with ShouldMatchers {
     o.count should be (981)
   }
 
+  test("subclass parsing") {
+    val o = new Child(false, null, 0) with FieldParsing
+
+    o.parse(Array("--flag", "true", "--name", "bugaloo"))
+    o.name should be ("bugaloo")
+    o.flag should be (true)
+  }
+
+  test("custom parsers") {
+    val o = new SpecialTypes(null, null) with FieldParsing
+
+    o.parse(Array("--name", "blah"))
+    o.name should be ("blah")
+
+    evaluating {o.parse(Array("--funky", "xyz"))} should produce [Exception]
+
+    o.parse(Array("--funky", "xyz", "--name", "hi"), preParsers = Iterator(MyFunkyTypeParser))
+    o.name should be ("hi")
+    o.funky should be (MyFunkyType("xyzoogabooga"))
+
+  }
+
+  //TODO tests that there are sensible errors on bad arguments
+
+
 }
 
 
 case class StringHolder(val name: String, val comment: String)
 
 case class MixedTypes(val name: String, val count: Int)
+
+//is there an easier way to do this in scala?
+class Child(val flag: Boolean, name: String, count: Int) extends MixedTypes(name, count)
+
+case class MyFunkyType(val stuff: String)
+
+object MyFunkyTypeParser extends Parser[MyFunkyType] {
+  def canParse(tpe: java.lang.reflect.Type) =
+    classOf[MyFunkyType].isAssignableFrom(tpe.asInstanceOf[Class[_]])
+  def parse(s: String, tpe: java.lang.reflect.Type) =
+    MyFunkyType(s + "oogabooga")
+}
+
+case class SpecialTypes(val name: String, val funky: MyFunkyType)

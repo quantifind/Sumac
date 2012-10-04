@@ -82,17 +82,19 @@ object ListParser extends CompoundParser[List[_]] {
 object ParseHelper {
   val parsers = Seq(StringParser, IntParser, DoubleParser, BooleanParser, ListParser)
 
-  def findParser(tpe: Type) : Option[Parser[_]] = {
-    for (p <- parsers) {
+  def findParser(tpe: Type, preParsers: Iterator[Parser[_]] = Iterator(), postParsers: Iterator[Parser[_]] = Iterator()) : Option[Parser[_]] = {
+    for (p <- (preParsers ++ parsers.iterator ++ postParsers)) {
       if (p.canParse(tpe))
         return Some(p)
     }
     None
   }
 
-  def parseInto[T](s: String, tpe: Type) : Option[ValueHolder[T]] = {
+  def parseInto[T](s: String, tpe: Type,
+                   preParsers: Iterator[Parser[_]] = Iterator(),
+                   postParsers: Iterator[Parser[_]] = Iterator()) : Option[ValueHolder[T]] = {
     //could change this to be a map, at least for the simple types
-    findParser(tpe).map{parser => ValueHolder[T](parser.parse(s, tpe).asInstanceOf[T], tpe)}
+    findParser(tpe, preParsers, postParsers).map{parser => ValueHolder[T](parser.parse(s, tpe).asInstanceOf[T], tpe)}
   }
 }
 
