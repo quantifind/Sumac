@@ -14,6 +14,8 @@ class ParserTest extends FunSuite with ShouldMatchers {
     IntParser.parse("5") should be (5)
     DoubleParser.parse("5") should be (5.0)
     DoubleParser.parse("1e-10") should be (1e-10)
+    BooleanParser.parse("false") should be (false)
+    BooleanParser.parse("true") should be (true)
   }
 
   test("ListParser") {

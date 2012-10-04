@@ -40,6 +40,12 @@ object IntParser extends SimpleParser[Int] {
   def parse(s: String) = s.toInt
 }
 
+object BooleanParser extends SimpleParser[Boolean] {
+  val knownTypes : Set[Class[_]] = Set(classOf[Boolean], classOf[java.lang.Boolean])
+  def getKnownTypes() = knownTypes
+  def parse(s: String) = s.toBoolean
+}
+
 object DoubleParser extends SimpleParser[Double] {
   val knownTypes : Set[Class[_]] = Set(classOf[Double], classOf[java.lang.Double])
   def getKnownTypes() = knownTypes
@@ -74,7 +80,7 @@ object ListParser extends CompoundParser[List[_]] {
 
 
 object ParseHelper {
-  val parsers = Seq(StringParser, IntParser, DoubleParser, ListParser)
+  val parsers = Seq(StringParser, IntParser, DoubleParser, BooleanParser, ListParser)
 
   def findParser(tpe: Type) : Option[Parser[_]] = {
     for (p <- parsers) {
