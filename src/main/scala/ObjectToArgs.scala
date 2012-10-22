@@ -20,6 +20,8 @@ class ObjectToArgs(val obj: Object) {
         field.set(obj, kv._2.value)
     }
   }
+
+  def helpMessage = argParser.helpMessage
 }
 
 trait FieldParsing {
@@ -29,4 +31,6 @@ trait FieldParsing {
             postParsers: Iterator[Parser[_]] = Iterator()) {
     parser.parse(args, preParsers, postParsers)
   }
+
+  def helpMessage = parser.helpMessage
 }

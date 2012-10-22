@@ -65,9 +65,25 @@ class ObjectToArgsTest extends FunSuite with ShouldMatchers {
 
   }
 
-  //TODO tests that there are sensible errors on bad arguments
+  test("help message") {
+    val o = new StringHolder(null, null)
+    val parser = new ObjectToArgs(o)
+    val exc1 = evaluating {parser.parse(Array("--xyz", "hello"))} should produce [ArgException]
+    //the format is still ugly, but at least there is some info there
+    "\\-\\-name\\s.*String".r.findFirstIn(exc1.getMessage()) should be ('defined)
+    "\\-\\-comment\\s.*String".r.findFirstIn(exc1.getMessage()) should be ('defined)
 
+    val o2 = new MixedTypes(null, 0)
+    val p2 = new ObjectToArgs(o2)
+    val exc2 = evaluating {p2.parse(Array("--foo", "bar"))} should produce [ArgException]
+    "\\-\\-name\\s.*String".r findFirstIn(exc2.getMessage) should be ('defined)
+    "\\-\\-count\\s.*[Ii]nt".r findFirstIn(exc2.getMessage) should be ('defined)  //java or scala types, I'll take either for now
 
+    val exc3 = evaluating {p2.parse(Array("--count", "ooga"))} should produce [ArgException]
+    //this message really should be much better.  (a) the number format exception should come first and (b) should indicate that it was while processing the "count" argument
+    "\\-\\-name\\s.*String".r findFirstIn(exc3.getMessage) should be ('defined)
+    "\\-\\-count\\s.*[Ii]nt".r findFirstIn(exc3.getMessage) should be ('defined)  //java or scala types, I'll take either for now
+  }
 }
 
 
