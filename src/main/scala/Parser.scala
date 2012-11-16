@@ -41,7 +41,7 @@ object IntParser extends SimpleParser[Int] {
 }
 
 object LongParser extends SimpleParser[Long] {
-  val knownTypes: Set[Class[_]] = Set(classOf(Long), classOf[java.lang.Long])
+  val knownTypes: Set[Class[_]] = Set(classOf[Long], classOf[java.lang.Long])
   def getKnownTypes() = knownTypes
   def parse(s: String) = s.toLong
 }
