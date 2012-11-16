@@ -84,6 +84,18 @@ class ObjectToArgsTest extends FunSuite with ShouldMatchers {
     "\\-\\-name\\s.*String".r findFirstIn(exc3.getMessage) should be ('defined)
     "\\-\\-count\\s.*[Ii]nt".r findFirstIn(exc3.getMessage) should be ('defined)  //java or scala types, I'll take either for now
   }
+
+  test("error msg on unknown types") {
+    val o = new SpecialTypes("", null) with FieldParsing
+
+    o.parse(Array("--name", "ooga"))
+    o.name should be ("ooga")
+    o.funky should be (null)
+
+    val exc = evaluating {o.parse(Array("--funky", "xyz"))} should produce [ArgException]
+    exc.cause.getMessage should include ("type")
+    exc.cause.getMessage should include ("MyFunkyType")
+  }
 }
 
 

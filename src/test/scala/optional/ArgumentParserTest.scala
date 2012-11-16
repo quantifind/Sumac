@@ -30,7 +30,6 @@ class ArgumentParserTest extends FunSuite with ShouldMatchers {
     }
   }
 
-
   def getSimpleNameToArgMap(parsedArgs : Map[_ <: ArgAssignable, ValueHolder[_]]) = {
     parsedArgs.map{kv => kv._1.getName -> kv._2.value}.toMap[String, Any]
   }
