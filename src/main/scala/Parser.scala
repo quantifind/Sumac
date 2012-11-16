@@ -40,10 +40,22 @@ object IntParser extends SimpleParser[Int] {
   def parse(s: String) = s.toInt
 }
 
+object LongParser extends SimpleParser[Long] {
+  val knownTypes: Set[Class[_]] = Set(classOf(Long), classOf[java.lang.Long])
+  def getKnownTypes() = knownTypes
+  def parse(s: String) = s.toLong
+}
+
 object BooleanParser extends SimpleParser[Boolean] {
   val knownTypes : Set[Class[_]] = Set(classOf[Boolean], classOf[java.lang.Boolean])
   def getKnownTypes() = knownTypes
   def parse(s: String) = s.toBoolean
+}
+
+object FloatParser extends SimpleParser[Float] {
+  val knownTypes : Set[Class[_]] = Set(classOf[Float], classOf[java.lang.Float])
+  def getKnownTypes() = knownTypes
+  def parse(s: String) = s.toFloat
 }
 
 object DoubleParser extends SimpleParser[Double] {
@@ -51,6 +63,7 @@ object DoubleParser extends SimpleParser[Double] {
   def getKnownTypes() = knownTypes
   def parse(s: String) = s.toDouble
 }
+
 
 object ListParser extends CompoundParser[List[_]] {
 
@@ -80,7 +93,7 @@ object ListParser extends CompoundParser[List[_]] {
 
 
 object ParseHelper {
-  val parsers = Seq(StringParser, IntParser, DoubleParser, BooleanParser, ListParser)
+  val parsers = Seq(StringParser, IntParser, LongParser, FloatParser, DoubleParser, BooleanParser, ListParser)
 
   def findParser(tpe: Type, preParsers: Iterator[Parser[_]] = Iterator(), postParsers: Iterator[Parser[_]] = Iterator()) : Option[Parser[_]] = {
     for (p <- (preParsers ++ parsers.iterator ++ postParsers)) {
