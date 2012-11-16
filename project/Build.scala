@@ -13,16 +13,14 @@ object SparkBuild extends Build {
     transitiveClassifiers in Scope.GlobalScope := Seq("sources"),
     publishTo <<= baseDirectory { base => Some(Resolver.file("Local", base / "target" / "maven" asFile)(Patterns(true, Resolver.mavenStyleBasePattern))) },
     libraryDependencies ++= Seq(
-      "org.eclipse.jetty" % "jetty-server" % "7.5.3.v20111011",
-      "org.scalatest" %% "scalatest" % "1.6.1" % "test",
-      "org.scalacheck" %% "scalacheck" % "1.9" % "test"
+      "org.scalatest" %% "scalatest" % "1.6.1" % "test"
     )
   )
 
   val slf4jVersion = "1.6.1"
 
   def coreSettings = sharedSettings ++ Seq(
-    name := "sblaj-core",
+    name := "optional",
     resolvers ++= Seq(
       "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
       "JBoss Repository" at "http://repository.jboss.org/nexus/content/repositories/releases/"
