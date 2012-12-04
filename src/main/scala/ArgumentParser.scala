@@ -25,7 +25,8 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
         val holderOption = nameToHolder.get(name)
         if (holderOption.isEmpty)
           throw new ArgException("unknown option " + name + "\n" + helpMessage)
-        val parsed = ParseHelper.parseInto(args(idx +1), holderOption.get.getType, preParsers, postParsers)
+        val parsed = ParseHelper.parseInto(args(idx +1), holderOption.get.getType, holderOption.get.getCurrentValue,
+          preParsers, postParsers)
         parsed match {
           case Some(x) => result(holderOption.get) = x
           case None => throw new ArgException("don't know how to parse type: " + holderOption.get.getType)
@@ -53,12 +54,15 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
 trait ArgAssignable {
   def getName : String
   def getType: Type
+  def getCurrentValue: AnyRef
 }
 
 
-class FieldArgAssignable(val field: Field) extends ArgAssignable {
+class FieldArgAssignable(val field: Field, val obj: Object) extends ArgAssignable {
+  field.setAccessible(true)
   def getName = field.getName
   def getType = field.getGenericType
+  def getCurrentValue = field.get(obj)
 }
 
 class ArgException(val msg: String, val cause: Throwable) extends IllegalArgumentException(msg, cause) {

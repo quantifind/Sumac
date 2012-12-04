@@ -7,7 +7,8 @@ import scala.collection._
 class ArgumentParserTest extends FunSuite with ShouldMatchers {
 
   test("parse") {
-    val fieldArgs = classOf[SimpleClass].getDeclaredFields.map{f => new FieldArgAssignable(f)}
+    val c = SimpleClass("a", 0, 1.4, 2)
+    val fieldArgs = classOf[SimpleClass].getDeclaredFields.map{f => new FieldArgAssignable(f, c)}
     val argParser = new ArgumentParser(fieldArgs)
 
     {

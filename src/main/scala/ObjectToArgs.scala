@@ -6,7 +6,7 @@ package optional
 
 class ObjectToArgs(val obj: Object) {
   val argParser = new ArgumentParser[FieldArgAssignable](
-    ReflectionUtils.getAllDeclaredFields(obj.getClass).map{f => new FieldArgAssignable(f)}
+    ReflectionUtils.getAllDeclaredFields(obj.getClass).map{f => new FieldArgAssignable(f, obj)}
   )
 
   def parse(args: Array[String],

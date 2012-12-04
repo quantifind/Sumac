@@ -1,9 +1,10 @@
 package optional
 
+import types.{SelectInput,MultiSelectInput}
 import java.lang.reflect.{Type, ParameterizedType}
 
 trait Parser[T] {
-  def parse(s: String, tpe: Type): T
+  def parse(s: String, tpe: Type, currentValue: AnyRef): T
 
   /**
    * return true if this parser knows how to parse the given type
@@ -21,7 +22,7 @@ trait SimpleParser[T] extends Parser[T] {
     else
       false
   }
-  def parse(s: String, tpe:Type) = parse(s)
+  def parse(s: String, tpe:Type, currentValue: AnyRef) = parse(s)
   def parse(s:String) :T
 }
 
@@ -64,26 +65,21 @@ object DoubleParser extends SimpleParser[Double] {
   def parse(s: String) = s.toDouble
 }
 
+//TODO CompoundParser are both a pain to write, and extremely unsafe.  Design needs some work
 
 object ListParser extends CompoundParser[List[_]] {
 
   def canParse(tpe: Type) = {
-    val clz = if (tpe.isInstanceOf[Class[_]])
-      tpe.asInstanceOf[Class[_]]
-    else if (tpe.isInstanceOf[ParameterizedType])
-      tpe.asInstanceOf[ParameterizedType].getRawType.asInstanceOf[Class[_]]
-    else
-      classOf[Int]  //just need something that won't match
-    classOf[List[_]].isAssignableFrom(clz)
+    ParseHelper.checkType(tpe, classOf[List[_]])
   }
 
-  def parse(s: String, tpe: Type) = {
+  def parse(s: String, tpe: Type, currentValue: AnyRef) = {
     if (tpe.isInstanceOf[ParameterizedType]) {
       val ptpe = tpe.asInstanceOf[ParameterizedType]
       val subtype = ptpe.getActualTypeArguments()(0)
       val subParser = ParseHelper.findParser(subtype).get //TODO need to handle cases where its a list, but can't parse subtype
       val parts = s.split(",")
-      parts.map{sub => subParser.parse(sub, subtype)}.toList
+      parts.map{sub => subParser.parse(sub, subtype, currentValue)}.toList
     }
     else
       List()
@@ -91,9 +87,76 @@ object ListParser extends CompoundParser[List[_]] {
 
 }
 
+object SetParser extends CompoundParser[collection.Set[_]] {
+  def canParse(tpe: Type) = {
+    ParseHelper.checkType(tpe, classOf[collection.Set[_]])
+  }
+
+  def parse(s: String, tpe: Type, currentValue: AnyRef) = {
+    if (tpe.isInstanceOf[ParameterizedType]) {
+      val ptpe = tpe.asInstanceOf[ParameterizedType]
+      val subtype = ptpe.getActualTypeArguments()(0)
+      val subParser = ParseHelper.findParser(subtype).get
+      val parts = s.split(",")
+      parts.map{sub => subParser.parse(sub, subtype, currentValue)}.toSet
+    }
+    else
+      Set()
+  }
+}
+
+object SelectInputParser extends CompoundParser[SelectInput[_]] {
+  def canParse(tpe: Type) = {
+    ParseHelper.checkType(tpe, classOf[SelectInput[_]])
+  }
+
+  def parse(s: String, tpe: Type, currentValue: AnyRef) = {
+    val currentVal = currentValue.asInstanceOf[SelectInput[Any]]  //not really Any, but not sure how to make the compiler happy ...
+    if (tpe.isInstanceOf[ParameterizedType]) {
+      val ptpe = tpe.asInstanceOf[ParameterizedType]
+      val subtype = ptpe.getActualTypeArguments()(0)
+      val subParser = ParseHelper.findParser(subtype).get
+      val parsed = subParser.parse(s, subtype, currentVal.value)
+      if (currentVal.options(parsed))
+        currentVal.value = Some(parsed)
+      else
+        throw new IllegalArgumentException(parsed + " is not the allowed values: " + currentVal.options)
+      //we don't return a new object, just modify the existing one
+      currentVal
+    }
+    else
+      throw new UnsupportedOperationException()
+  }
+}
+
+object MultiSelectInputParser extends CompoundParser[MultiSelectInput[_]] {
+
+  def canParse(tpe: Type) = ParseHelper.checkType(tpe, classOf[MultiSelectInput[_]])
+
+  def parse(s: String, tpe: Type, currentValue: AnyRef) = {
+    val currentVal = currentValue.asInstanceOf[MultiSelectInput[Any]]  //not really Any, but not sure how to make the compiler happy ...
+    if (tpe.isInstanceOf[ParameterizedType]) {
+      val ptpe = tpe.asInstanceOf[ParameterizedType]
+      val subtype = ptpe.getActualTypeArguments()(0)
+      val subParser = ParseHelper.findParser(subtype).get
+      val parsed = s.split(",").map{sub => subParser.parse(sub, subtype, "dummy")}.toSet
+      val illegal = parsed.diff(currentVal.options)
+      if (illegal.isEmpty)
+        currentVal.value = parsed
+      else
+        throw new IllegalArgumentException(illegal.toString + " is not the allowed values: " + currentVal.options)
+      //we don't return a new object, just modify the existing one
+      currentVal
+    }
+    else
+      throw new UnsupportedOperationException()
+
+  }
+}
 
 object ParseHelper {
-  val parsers = Seq(StringParser, IntParser, LongParser, FloatParser, DoubleParser, BooleanParser, ListParser)
+  val parsers = Seq(StringParser, IntParser, LongParser, FloatParser, DoubleParser, BooleanParser, ListParser,
+    SetParser, SelectInputParser, MultiSelectInputParser)
 
   def findParser(tpe: Type, preParsers: Iterator[Parser[_]] = Iterator(), postParsers: Iterator[Parser[_]] = Iterator()) : Option[Parser[_]] = {
     for (p <- (preParsers ++ parsers.iterator ++ postParsers)) {
@@ -103,12 +166,26 @@ object ParseHelper {
     None
   }
 
-  def parseInto[T](s: String, tpe: Type,
+  def parseInto[T](s: String, tpe: Type, currentValue: AnyRef,
                    preParsers: Iterator[Parser[_]] = Iterator(),
                    postParsers: Iterator[Parser[_]] = Iterator()) : Option[ValueHolder[T]] = {
     //could change this to be a map, at least for the simple types
-    findParser(tpe, preParsers, postParsers).map{parser => ValueHolder[T](parser.parse(s, tpe).asInstanceOf[T], tpe)}
+    findParser(tpe, preParsers, postParsers).map{parser => ValueHolder[T](parser.parse(s, tpe, currentValue).asInstanceOf[T], tpe)}
   }
+
+  def checkType(tpe: Type, targetClassSet:  Class[_]*) = {
+    def helper(tpe: Type, targetCls: Class[_]) = {
+      val clz = if (tpe.isInstanceOf[Class[_]])
+        tpe.asInstanceOf[Class[_]]
+      else if (tpe.isInstanceOf[ParameterizedType])
+        tpe.asInstanceOf[ParameterizedType].getRawType.asInstanceOf[Class[_]]
+      else
+        classOf[Int]  //just need something that won't match
+      targetCls.isAssignableFrom(clz)
+    }
+    targetClassSet.exists(targetClass => helper(tpe, targetClass))
+  }
+
 }
 
 case class ValueHolder[T](value: T, tpe: Type)

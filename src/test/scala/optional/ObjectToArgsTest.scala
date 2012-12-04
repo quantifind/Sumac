@@ -1,5 +1,6 @@
 package optional
 
+import types.{SelectInput,MultiSelectInput}
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
@@ -96,6 +97,43 @@ class ObjectToArgsTest extends FunSuite with ShouldMatchers {
     exc.cause.getMessage should include ("type")
     exc.cause.getMessage should include ("MyFunkyType")
   }
+
+  test("set args") {
+    case class SetArgs(val set: Set[String]) extends FieldParsing
+    val s = new SetArgs(null)
+    s.parse(Array("--set", "a,b,c,def"))
+    s.set should be (Set("a", "b", "c", "def"))
+  }
+
+  test("selectInput") {
+    case class SelectInputArgs(val select: SelectInput[String] = SelectInput("a", "b", "c")) extends FieldParsing
+    val s = new SelectInputArgs()
+    val id = System.identityHashCode(s.select)
+    s.parse(Array("--select", "b"))
+    s.select.value should be (Some("b"))
+    System.identityHashCode(s.select) should be (id)
+    s.select.options should be (Set("a", "b", "c"))
+
+    evaluating {s.parse(Array("--select", "q"))} should produce [ArgException]
+  }
+
+  test("multiSelectInput") {
+    case class MultiSelectInputArgs(val multiSelect: MultiSelectInput[String] = MultiSelectInput("a", "b", "c")) extends FieldParsing
+    val s = new MultiSelectInputArgs()
+    val id = System.identityHashCode(s.multiSelect)
+    s.parse(Array("--multiSelect", "b"))
+    s.multiSelect.value should be (Set("b"))
+    System.identityHashCode(s.multiSelect) should be (id)
+    s.multiSelect.options should be (Set("a", "b", "c"))
+
+    s.parse(Array("--multiSelect", "b,c"))
+    s.multiSelect.value should be (Set("b", "c"))
+
+    evaluating {s.parse(Array("--multiSelect", "q"))} should produce [ArgException]
+    evaluating {s.parse(Array("--multiSelect", "b,q"))} should produce [ArgException]
+    evaluating {s.parse(Array("--multiSelect", "q,b"))} should produce [ArgException]
+
+  }
 }
 
 
@@ -111,7 +149,7 @@ case class MyFunkyType(val stuff: String)
 object MyFunkyTypeParser extends Parser[MyFunkyType] {
   def canParse(tpe: java.lang.reflect.Type) =
     classOf[MyFunkyType].isAssignableFrom(tpe.asInstanceOf[Class[_]])
-  def parse(s: String, tpe: java.lang.reflect.Type) =
+  def parse(s: String, tpe: java.lang.reflect.Type, currentValue: AnyRef) =
     MyFunkyType(s + "oogabooga")
 }
 

@@ -23,15 +23,15 @@ class ParserTest extends FunSuite with ShouldMatchers {
 
     //Is there is better way to get a handle on parameterized types????
     val field = classOf[ContainerA].getDeclaredField("boundaries")
-    val parsed = ParseHelper.parseInto("a,b,cdef,g", field.getGenericType)
+    val parsed = ParseHelper.parseInto("a,b,cdef,g", field.getGenericType, "dummy")
     parsed should be (Some(ValueHolder(List("a", "b", "cdef", "g"), field.getGenericType)))
   }
 
   test("ParseHelper") {
-    ParseHelper.parseInto("ooga", classOf[String]) should be (Some(ValueHolder("ooga", classOf[String])))
-    ParseHelper.parseInto("5.6", classOf[Double]) should be (Some(ValueHolder(5.6, classOf[Double])))
-    ParseHelper.parseInto("5.6", classOf[String]) should be (Some(ValueHolder("5.6", classOf[String])))
-    ParseHelper.parseInto("abc", classOf[RandomUnknownClass]) should be (None)
+    ParseHelper.parseInto("ooga", classOf[String], "dummy") should be (Some(ValueHolder("ooga", classOf[String])))
+    ParseHelper.parseInto("5.6", classOf[Double], "dummy") should be (Some(ValueHolder(5.6, classOf[Double])))
+    ParseHelper.parseInto("5.6", classOf[String], "dummy") should be (Some(ValueHolder("5.6", classOf[String])))
+    ParseHelper.parseInto("abc", classOf[RandomUnknownClass], "dummy") should be (None)
   }
 
 }
