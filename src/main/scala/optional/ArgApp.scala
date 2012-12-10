@@ -8,6 +8,22 @@ trait ArgApp[T <: FieldParsing] {
     mainHelper(rawArgs)
   }
 
+  private lazy val argHolder = {
+    val argClass = getArgumentClass()
+    val ctors = argClass.getDeclaredConstructors()
+    val ctor = ctors.find(ctor => ctor.getGenericParameterTypes.length == 0).get
+    ctor.setAccessible(true)
+    ctor.newInstance().asInstanceOf[T]
+  }
+
+  /**
+   * get the instance of T that holds the parsed args.
+   *
+   * not needed for the user that just wants to run their code -- this is accessible just for other libs
+   * built on top.
+   */
+  def getArgHolder : T = argHolder
+
   private def getArgumentClass() = {
     val argApp = this.getClass.getGenericInterfaces.find{tpe =>
       val ptpe = tpe.asInstanceOf[ParameterizedType]
@@ -24,13 +40,8 @@ trait ArgApp[T <: FieldParsing] {
   }
 
   private def mainHelper(rawArgs: Array[String]) {
-    val argClass = getArgumentClass()
-    val ctors = argClass.getDeclaredConstructors()
-    val ctor = ctors.find(ctor => ctor.getGenericParameterTypes.length == 0).get
-    ctor.setAccessible(true)
-    val args = ctor.newInstance().asInstanceOf[T]
-    args.parse(rawArgs)
-    main(args)
+    argHolder.parse(rawArgs)
+    main(argHolder)
   }
 
   def main(args: T) : Unit
