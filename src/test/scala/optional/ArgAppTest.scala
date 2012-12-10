@@ -17,10 +17,12 @@ class MyArgs extends FieldParsing {
   val b: Int = 0
 }
 
-class MyApp extends ArgApp[MyArgs] with ShouldMatchers {
+class MyApp extends Dummy with ArgApp[MyArgs] with ShouldMatchers {
   def main(args: MyArgs) {
     args.a should be ("hello")
     args.b should be (17)
   }
 }
+
+trait Dummy
 

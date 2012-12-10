@@ -26,8 +26,11 @@ trait ArgApp[T <: FieldParsing] {
 
   private def getArgumentClass() = {
     val argApp = this.getClass.getGenericInterfaces.find{tpe =>
-      val ptpe = tpe.asInstanceOf[ParameterizedType]
-      ParseHelper.checkType(ptpe, classOf[ArgApp[_]])
+      tpe match {
+        case ptpe: ParameterizedType =>
+          ParseHelper.checkType(ptpe, classOf[ArgApp[_]])
+        case _ => false
+      }
     }
     getRawClass(argApp.get.asInstanceOf[ParameterizedType].getActualTypeArguments.apply(0))
   }
