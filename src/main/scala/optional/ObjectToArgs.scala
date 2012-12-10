@@ -6,8 +6,10 @@ package optional
 
 class ObjectToArgs(val obj: Object) {
   val argParser = new ArgumentParser[FieldArgAssignable](
-    ReflectionUtils.getAllDeclaredFields(obj.getClass).map{f => new FieldArgAssignable(f, obj)}
+    ReflectionUtils.getAllDeclaredFields(obj.getClass).
+      filter{f => f.getName != "parser" && f.getName != "bitmap$0"}.map{f => new FieldArgAssignable(f, obj)}
   )
+
 
   def parse(args: Array[String],
             preParsers: Iterator[Parser[_]] = Iterator(),

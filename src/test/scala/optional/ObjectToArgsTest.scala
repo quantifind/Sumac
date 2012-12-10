@@ -134,6 +134,25 @@ class ObjectToArgsTest extends FunSuite with ShouldMatchers {
     evaluating {s.parse(Array("--multiSelect", "q,b"))} should produce [ArgException]
 
   }
+
+  test("exclude scala helper fields") {
+
+    {
+      val m = new MixedTypes(null, 0)
+      val o = new ObjectToArgs(m)
+      val names = o.argParser.nameToHolder.keySet
+      names should be (Set("name", "count"))
+    }
+
+
+    {
+      val s = new SomeApp()
+      val names = s.getArgHolder.parser.argParser.nameToHolder.keySet
+      println(names)
+      names should be (Set("x", "y"))
+    }
+
+  }
 }
 
 
@@ -154,3 +173,13 @@ object MyFunkyTypeParser extends Parser[MyFunkyType] {
 }
 
 case class SpecialTypes(val name: String, val funky: MyFunkyType)
+
+
+class SomeApp extends ArgApp[SomeArgs] {
+  def main(args: SomeArgs) {}
+}
+
+class SomeArgs extends FieldParsing {
+  var x: Int = 0
+  var y: String = "hello"
+}
