@@ -51,6 +51,13 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
 
 }
 
+object ArgumentParser {
+  def apply[T <: ArgAssignable](argHolders: Traversable[T]) = {
+    //ignore things we dont' know how to parse
+    new ArgumentParser(argHolders.toSeq.filter{t => ParseHelper.findParser(t.getType).isDefined})
+  }
+}
+
 trait ArgAssignable {
   def getName : String
   def getType: Type

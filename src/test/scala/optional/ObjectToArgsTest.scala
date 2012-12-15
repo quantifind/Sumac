@@ -52,20 +52,6 @@ class ObjectToArgsTest extends FunSuite with ShouldMatchers {
     o.flag should be (true)
   }
 
-  test("custom parsers") {
-    val o = new SpecialTypes(null, null) with FieldParsing
-
-    o.parse(Array("--name", "blah"))
-    o.name should be ("blah")
-
-    evaluating {o.parse(Array("--funky", "xyz"))} should produce [Exception]
-
-    o.parse(Array("--funky", "xyz", "--name", "hi"), preParsers = Iterator(MyFunkyTypeParser))
-    o.name should be ("hi")
-    o.funky should be (MyFunkyType("xyzoogabooga"))
-
-  }
-
   test("help message") {
     val o = new StringHolder(null, null)
     val parser = new ObjectToArgs(o)
@@ -94,8 +80,9 @@ class ObjectToArgsTest extends FunSuite with ShouldMatchers {
     o.funky should be (null)
 
     val exc = evaluating {o.parse(Array("--funky", "xyz"))} should produce [ArgException]
-    exc.cause.getMessage should include ("type")
-    exc.cause.getMessage should include ("MyFunkyType")
+    //maybe sometime I should change the removal of unknown types to keep them around for error msgs ...
+//    exc.cause.getMessage should include ("type")
+//    exc.cause.getMessage should include ("MyFunkyType")
   }
 
   test("set args") {
@@ -163,16 +150,9 @@ case class MixedTypes(val name: String, val count: Int)
 //is there an easier way to do this in scala?
 class Child(val flag: Boolean, name: String, count: Int) extends MixedTypes(name, count)
 
-case class MyFunkyType(val stuff: String)
-
-object MyFunkyTypeParser extends Parser[MyFunkyType] {
-  def canParse(tpe: java.lang.reflect.Type) =
-    classOf[MyFunkyType].isAssignableFrom(tpe.asInstanceOf[Class[_]])
-  def parse(s: String, tpe: java.lang.reflect.Type, currentValue: AnyRef) =
-    MyFunkyType(s + "oogabooga")
-}
-
 case class SpecialTypes(val name: String, val funky: MyFunkyType)
+
+case class MyFunkyType(val x: String)
 
 
 class SomeApp extends ArgApp[SomeArgs] {

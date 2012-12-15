@@ -5,16 +5,14 @@ package optional
  */
 
 class ObjectToArgs(val obj: Object) {
-  val argParser = new ArgumentParser[FieldArgAssignable](
+  val argParser = ArgumentParser[FieldArgAssignable](
     ReflectionUtils.getAllDeclaredFields(obj.getClass).
       filter{f => f.getName != "parser" && f.getName != "bitmap$0"}.map{f => new FieldArgAssignable(f, obj)}
   )
 
 
-  def parse(args: Array[String],
-            preParsers: Iterator[Parser[_]] = Iterator(),
-            postParsers: Iterator[Parser[_]] = Iterator()) {
-    val parsed = argParser.parse(args, preParsers, postParsers)
+  def parse(args: Array[String]) {
+    val parsed = argParser.parse(args)
     parsed.foreach{
       kv =>
         val field = kv._1.field
@@ -28,10 +26,8 @@ class ObjectToArgs(val obj: Object) {
 
 trait FieldParsing {
   lazy val parser = new ObjectToArgs(this)
-  def parse(args: Array[String],
-            preParsers: Iterator[Parser[_]] = Iterator(),
-            postParsers: Iterator[Parser[_]] = Iterator()) {
-    parser.parse(args, preParsers, postParsers)
+  def parse(args: Array[String]) {
+    parser.parse(args)
   }
 
   def helpMessage = parser.helpMessage
