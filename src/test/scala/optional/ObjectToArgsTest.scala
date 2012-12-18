@@ -85,6 +85,15 @@ class ObjectToArgsTest extends FunSuite with ShouldMatchers {
 //    exc.cause.getMessage should include ("MyFunkyType")
   }
 
+
+  test("good error msg") {
+    val o = new MixedTypes("", 0) with FieldParsing
+
+    val exc1 = evaluating {o.parse(Array("--count", "hi"))} should produce [ArgException]
+    //don't actually need the message to look *exactly* like this, but extremely useful for it to at least say what it was trying to parse
+    exc1.getMessage should startWith ("""Error parsing "hi" into field "count" (type = int)""")
+  }
+
   test("set args") {
     case class SetArgs(val set: Set[String]) extends FieldParsing
     val s = new SetArgs(null)
@@ -135,7 +144,6 @@ class ObjectToArgsTest extends FunSuite with ShouldMatchers {
     {
       val s = new SomeApp()
       val names = s.getArgHolder.parser.argParser.nameToHolder.keySet
-      println(names)
       names should be (Set("x", "y"))
     }
 

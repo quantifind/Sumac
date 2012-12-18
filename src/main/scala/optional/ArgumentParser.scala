@@ -25,16 +25,21 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
         val holderOption = nameToHolder.get(name)
         if (holderOption.isEmpty)
           throw new ArgException("unknown option " + name + "\n" + helpMessage)
-        val parsed = ParseHelper.parseInto(args(idx +1), holderOption.get.getType, holderOption.get.getCurrentValue,
-          preParsers, postParsers)
-        parsed match {
-          case Some(x) => result(holderOption.get) = x
-          case None => throw new ArgException("don't know how to parse type: " + holderOption.get.getType)
+        try {
+          val parsed = ParseHelper.parseInto(args(idx +1), holderOption.get.getType, holderOption.get.getCurrentValue,
+            preParsers, postParsers)
+          parsed match {
+            case Some(x) => result(holderOption.get) = x
+            case None => throw new ArgException("don't know how to parse type: " + holderOption.get.getType)
+          }
+        } catch {
+          case exc => throw new ArgException("Error parsing \"" + args(idx + 1) + "\" into field \"" + name + "\" (type = " + holderOption.get.getType + ")\n" + helpMessage, exc)
         }
         idx += 2
       }
       result
     } catch {
+      case ae: ArgException => throw ae
       case exc => throw new ArgException(helpMessage, exc)
     }
   }
