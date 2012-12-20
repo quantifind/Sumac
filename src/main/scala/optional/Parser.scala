@@ -76,7 +76,10 @@ object RegexParser extends SimpleParser[Regex] {
 object FileParser extends SimpleParser[File] {
   val knownTypes : Set[Class[_]] = Set(classOf[File])
   def getKnownTypes = knownTypes
-  def parse(s: String) = new File(s)  //TODO maybe this should deal w/ things like "~"
+  def parse(s: String) = {
+    val fullPath = if (s.startsWith("~")) s.replaceFirst("~", System.getProperty("user.home")) else s
+    new File(fullPath)
+  }
 }
 
 //TODO CompoundParser are both a pain to write, and extremely unsafe.  Design needs some work
