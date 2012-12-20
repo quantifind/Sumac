@@ -2,6 +2,8 @@ package optional
 
 import types.{SelectInput,MultiSelectInput}
 import java.lang.reflect.{Type, ParameterizedType}
+import util.matching.Regex
+import java.io.File
 
 trait Parser[T] {
   def parse(s: String, tpe: Type, currentValue: AnyRef): T
@@ -63,6 +65,18 @@ object DoubleParser extends SimpleParser[Double] {
   val knownTypes : Set[Class[_]] = Set(classOf[Double], classOf[java.lang.Double])
   def getKnownTypes() = knownTypes
   def parse(s: String) = s.toDouble
+}
+
+object RegexParser extends SimpleParser[Regex] {
+  val knownTypes : Set[Class[_]] = Set(classOf[Regex])
+  def getKnownTypes = knownTypes
+  def parse(s: String) = s.r
+}
+
+object FileParser extends SimpleParser[File] {
+  val knownTypes : Set[Class[_]] = Set(classOf[File])
+  def getKnownTypes = knownTypes
+  def parse(s: String) = new File(s)  //TODO maybe this should deal w/ things like "~"
 }
 
 //TODO CompoundParser are both a pain to write, and extremely unsafe.  Design needs some work
