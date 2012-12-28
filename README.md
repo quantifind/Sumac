@@ -22,6 +22,11 @@ arguments.
       }
     }
 
+Now MyApp has two arguments, "name" and "count".  You can run it like:
+
+    java -cp <path>/<to>/<compiled>/<code> MyApp --name foobar --count 17
+
+
 ### ArgApp and ArgMain
 
 You don't even have to call parse() yourself.  The arguments are automatically parsed for you
