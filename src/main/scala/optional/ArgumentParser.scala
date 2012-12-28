@@ -45,8 +45,7 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
     val msg = StringBuilder.newBuilder
     msg.append("usage: \n")
     nameToHolder.foreach{ kv =>
-      msg.append("--" + kv._1 + "\t" + kv._2.getType + "\n\n")
-      //TODO add some way to include a usage message
+      msg.append("--" + kv._1 + "\t" + kv._2.getType + "\t" + kv._2.getDescription + "\n\n")
     }
     msg.toString
   }
