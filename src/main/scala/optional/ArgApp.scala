@@ -53,7 +53,7 @@ trait ArgMain[T <: FieldParsing] extends Argable[T] {
   def main(args: T) : Unit
 }
 
-trait ArgFunction[T <: FieldParsing, U] extends Function[T,U]
+trait ArgFunction[T <: FieldParsing, U] extends Function[T,U] with Argable[T]
 
 trait ArgApp[T <: FieldParsing] extends Argable[T] with App {
   override
