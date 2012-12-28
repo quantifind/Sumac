@@ -148,6 +148,41 @@ class ObjectToArgsTest extends FunSuite with ShouldMatchers {
     }
 
   }
+
+
+
+  test("annotations") {
+    val c = new ClassWithSomeAnnotations()
+    val o = new ObjectToArgs(c)
+    o.argParser.nameToHolder.values.foreach { f =>
+      f.getName match {
+        case "foo" =>
+          f.getDescription should be ("foo")
+        case "ooga" =>
+          f.getDescription should be ("this is an integer argument")
+        case "" =>
+          assert(false, "use variable name if no name given in annotation")
+        case "x" => assert(false, "use name from annotation instead of variable name")
+        case "y" =>
+          f.getDescription should be ("another integer argument")
+        case "z" =>
+          assert(false, "use name from annotation instead of variable name")
+        case "wakka" =>
+          f.getDescription should be ("wakka")
+      }
+    }
+
+    o.parse(Array("--foo", "hi", "--ooga", "17", "--y", "181", "--wakka", "1.81"))
+    c.foo should be ("hi")
+    c.x should be (17)
+    c.y should be (181)
+    c.z should be (1.81)
+
+    evaluating {o.parse(Array("--x", "17"))} should produce [ArgException]
+    evaluating {o.parse(Array("--z", "1"))} should produce [ArgException]
+  }
+
+
 }
 
 
@@ -170,4 +205,16 @@ class SomeApp extends ArgApp[SomeArgs] {
 class SomeArgs extends FieldParsing {
   var x: Int = 0
   var y: String = "hello"
+}
+
+
+
+class ClassWithSomeAnnotations {
+  var foo: String = _
+  @Arg(name="ooga", description="this is an integer argument")
+  var x: Int = _
+  @Arg(description="another integer argument")
+  var y: Int = _
+  @Arg(name="wakka")
+  var z: Double = _
 }

@@ -62,6 +62,7 @@ object ArgumentParser {
 
 trait ArgAssignable {
   def getName : String
+  def getDescription: String
   def getType: Type
   def getCurrentValue: AnyRef
 }
@@ -69,7 +70,21 @@ trait ArgAssignable {
 
 class FieldArgAssignable(val field: Field, val obj: Object) extends ArgAssignable {
   field.setAccessible(true)
-  def getName = field.getName
+  val annotationOpt = Option(field.getAnnotation(classOf[Arg]))
+  def getName = {
+    val n = annotationOpt.map{_.name()}.getOrElse(field.getName)
+    if (n == "")
+      field.getName
+    else
+      n
+  }
+  def getDescription = {
+    val d = annotationOpt.map{_.description()}.getOrElse(field.getName)
+    if (d == "")
+      getName
+    else
+      d
+  }
   def getType = field.getGenericType
   def getCurrentValue = field.get(obj)
 }
