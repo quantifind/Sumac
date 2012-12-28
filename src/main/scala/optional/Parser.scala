@@ -175,19 +175,17 @@ object ParseHelper {
   val parsers = Seq(StringParser, IntParser, LongParser, FloatParser, DoubleParser, BooleanParser, ListParser,
     SetParser, SelectInputParser, MultiSelectInputParser)
 
-  def findParser(tpe: Type, preParsers: Iterator[Parser[_]] = Iterator(), postParsers: Iterator[Parser[_]] = Iterator()) : Option[Parser[_]] = {
-    for (p <- (preParsers ++ parsers.iterator ++ postParsers)) {
+  def findParser(tpe: Type) : Option[Parser[_]] = {
+    for (p <- parsers.iterator) {
       if (p.canParse(tpe))
         return Some(p)
     }
     None
   }
 
-  def parseInto[T](s: String, tpe: Type, currentValue: AnyRef,
-                   preParsers: Iterator[Parser[_]] = Iterator(),
-                   postParsers: Iterator[Parser[_]] = Iterator()) : Option[ValueHolder[T]] = {
+  def parseInto[T](s: String, tpe: Type, currentValue: AnyRef) : Option[ValueHolder[T]] = {
     //could change this to be a map, at least for the simple types
-    findParser(tpe, preParsers, postParsers).map{parser => ValueHolder[T](parser.parse(s, tpe, currentValue).asInstanceOf[T], tpe)}
+    findParser(tpe).map{parser => ValueHolder[T](parser.parse(s, tpe, currentValue).asInstanceOf[T], tpe)}
   }
 
   def checkType(tpe: Type, targetClassSet:  Class[_]*) = {
