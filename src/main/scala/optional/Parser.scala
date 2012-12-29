@@ -173,7 +173,7 @@ object MultiSelectInputParser extends CompoundParser[MultiSelectInput[_]] {
 
 object ParseHelper {
   val parsers = Seq(StringParser, IntParser, LongParser, FloatParser, DoubleParser, BooleanParser, ListParser,
-    SetParser, SelectInputParser, MultiSelectInputParser)
+    SetParser, SelectInputParser, MultiSelectInputParser, FileParser, RegexParser)
 
   def findParser(tpe: Type) : Option[Parser[_]] = {
     for (p <- parsers.iterator) {
