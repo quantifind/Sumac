@@ -59,11 +59,15 @@ object ArgumentParser {
   }
 }
 
+/**
+ * Container for one argument, that has name, type, and can be assigned a value
+ */
 trait ArgAssignable {
   def getName : String
   def getDescription: String
   def getType: Type
   def getCurrentValue: AnyRef
+  def setValue(value: Any) : Unit
 }
 
 
@@ -86,6 +90,11 @@ class FieldArgAssignable(val field: Field, val obj: Object) extends ArgAssignabl
   }
   def getType = field.getGenericType
   def getCurrentValue = field.get(obj)
+
+  def setValue(value: Any) = {
+    field.set(obj, value)
+  }
+
 }
 
 class ArgException(val msg: String, val cause: Throwable) extends IllegalArgumentException(msg, cause) {

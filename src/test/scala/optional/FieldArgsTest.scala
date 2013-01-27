@@ -8,40 +8,29 @@ import org.scalatest.matchers.ShouldMatchers
  *
  */
 
-class ObjectToArgsTest extends FunSuite with ShouldMatchers {
+class FieldArgsTest extends FunSuite with ShouldMatchers {
 
   test("parseStrings") {
-    val o = new StringHolder(null, null)
-    val parser = new ObjectToArgs(o)
-    parser.parse(Array("--name", "hello"))
+    val o = new StringHolder(null, null) with FieldArgs
+    o.parse(Array("--name", "hello"))
     o.name should be ("hello")
-    parser.parse(Array("--comment", "blah di blah blah"))
+    o.parse(Array("--comment", "blah di blah blah"))
     o.name should be ("hello")
     o.comment should be ("blah di blah blah")
-    parser.parse(Array("--name", "ooga", "--comment", "stuff"))
+    o.parse(Array("--name", "ooga", "--comment", "stuff"))
     o.name should be ("ooga")
     o.comment should be ("stuff")
   }
 
   test("parseMixed") {
-    val o = new MixedTypes(null, 0)
+    val o = new MixedTypes(null, 0) with FieldArgs
 
-    val parser = new ObjectToArgs(o)
-
-    parser.parse(Array("--name", "foo", "--count", "17"))
+    o.parse(Array("--name", "foo", "--count", "17"))
     o.name should be ("foo")
     o.count should be (17)
-    parser.parse(Array("--count", "-5"))
+    o.parse(Array("--count", "-5"))
     o.name should be ("foo")
     o.count should be (-5)
-  }
-
-  test("field parsing") {
-    val o = new MixedTypes(null, 0) with FieldParsing
-
-    o.parse(Array("--count", "981", "--name", "wakkawakka"))
-    o.name should be ("wakkawakka")
-    o.count should be (981)
   }
 
   test("subclass parsing") {
@@ -53,20 +42,18 @@ class ObjectToArgsTest extends FunSuite with ShouldMatchers {
   }
 
   test("help message") {
-    val o = new StringHolder(null, null)
-    val parser = new ObjectToArgs(o)
-    val exc1 = evaluating {parser.parse(Array("--xyz", "hello"))} should produce [ArgException]
+    val o = new StringHolder(null, null) with FieldArgs
+    val exc1 = evaluating {o.parse(Array("--xyz", "hello"))} should produce [ArgException]
     //the format is still ugly, but at least there is some info there
     "\\-\\-name\\s.*String".r.findFirstIn(exc1.getMessage()) should be ('defined)
     "\\-\\-comment\\s.*String".r.findFirstIn(exc1.getMessage()) should be ('defined)
 
-    val o2 = new MixedTypes(null, 0)
-    val p2 = new ObjectToArgs(o2)
-    val exc2 = evaluating {p2.parse(Array("--foo", "bar"))} should produce [ArgException]
+    val o2 = new MixedTypes(null, 0) with FieldArgs
+    val exc2 = evaluating {o2.parse(Array("--foo", "bar"))} should produce [ArgException]
     "\\-\\-name\\s.*String".r findFirstIn(exc2.getMessage) should be ('defined)
     "\\-\\-count\\s.*[Ii]nt".r findFirstIn(exc2.getMessage) should be ('defined)  //java or scala types, I'll take either for now
 
-    val exc3 = evaluating {p2.parse(Array("--count", "ooga"))} should produce [ArgException]
+    val exc3 = evaluating {o2.parse(Array("--count", "ooga"))} should produce [ArgException]
     //this message really should be much better.  (a) the number format exception should come first and (b) should indicate that it was while processing the "count" argument
     "\\-\\-name\\s.*String".r findFirstIn(exc3.getMessage) should be ('defined)
     "\\-\\-count\\s.*[Ii]nt".r findFirstIn(exc3.getMessage) should be ('defined)  //java or scala types, I'll take either for now
@@ -134,16 +121,15 @@ class ObjectToArgsTest extends FunSuite with ShouldMatchers {
   test("exclude scala helper fields") {
 
     {
-      val m = new MixedTypes(null, 0)
-      val o = new ObjectToArgs(m)
-      val names = o.argParser.nameToHolder.keySet
+      val m = new MixedTypes(null, 0) with FieldArgs
+      val names = m.parser.nameToHolder.keySet
       names should be (Set("name", "count"))
     }
 
 
     {
       val s = new SomeApp()
-      val names = s.getArgHolder.parser.argParser.nameToHolder.keySet
+      val names = s.getArgHolder.parser.nameToHolder.keySet
       names should be (Set("x", "y"))
     }
 
@@ -152,9 +138,8 @@ class ObjectToArgsTest extends FunSuite with ShouldMatchers {
 
 
   test("annotations") {
-    val c = new ClassWithSomeAnnotations()
-    val o = new ObjectToArgs(c)
-    o.argParser.nameToHolder.values.foreach { f =>
+    val c = new ClassWithSomeAnnotations() with FieldArgs
+    c.parser.nameToHolder.values.foreach { f =>
       f.getName match {
         case "foo" =>
           f.getDescription should be ("foo")
@@ -172,14 +157,14 @@ class ObjectToArgsTest extends FunSuite with ShouldMatchers {
       }
     }
 
-    o.parse(Array("--foo", "hi", "--ooga", "17", "--y", "181", "--wakka", "1.81"))
+    c.parse(Array("--foo", "hi", "--ooga", "17", "--y", "181", "--wakka", "1.81"))
     c.foo should be ("hi")
     c.x should be (17)
     c.y should be (181)
     c.z should be (1.81)
 
-    evaluating {o.parse(Array("--x", "17"))} should produce [ArgException]
-    evaluating {o.parse(Array("--z", "1"))} should produce [ArgException]
+    evaluating {c.parse(Array("--x", "17"))} should produce [ArgException]
+    evaluating {c.parse(Array("--z", "1"))} should produce [ArgException]
   }
 
 
