@@ -1,7 +1,5 @@
 package optional
 
-import optional.Args
-
 trait FieldArgs extends Args {
   override
   def getArgs = {

@@ -1,6 +1,4 @@
-package optional.optional
-
-import optional.{ArgumentParser, ArgAssignable}
+package optional
 
 trait Args {
   def getArgs : Traversable[ArgAssignable]
