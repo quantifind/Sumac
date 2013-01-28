@@ -14,8 +14,8 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
       args match {
         case Nil => acc
         case "--help" :: _ => throw new ArgException(helpMessage)
-        case x :: _ if (!x.startsWith("--")) =>
-          throw new ArgException("expecting argument name beginning with \"--\", instead got %s".format(x))
+        case arg :: _ if (!arg.startsWith("--")) =>
+          throw new ArgException("expecting argument name beginning with \"--\", instead got %s".format(arg))
         case name :: value :: tail =>
           val suffix = name.drop(2)
           val holder = nameToHolder(suffix)
