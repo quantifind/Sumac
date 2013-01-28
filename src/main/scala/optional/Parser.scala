@@ -17,65 +17,54 @@ trait Parser[T] {
 }
 
 trait SimpleParser[T] extends Parser[T] {
-  def getKnownTypes() : Set[Class[_]]
+  val knownTypes: Set[Class[_]]
   def canParse(tpe: Type) = {
-    if (tpe.isInstanceOf[Class[_]])
-      getKnownTypes()(tpe.asInstanceOf[Class[_]])
-    else
-      false
+    if (tpe.isInstanceOf[Class[_]]) knownTypes(tpe.asInstanceOf[Class[_]])
+    else false
   }
   def parse(s: String, tpe:Type, currentValue: AnyRef) = parse(s)
-  def parse(s:String) :T
+  def parse(s: String): T
 }
 
 trait CompoundParser[T] extends Parser[T]
 
-
 object StringParser extends SimpleParser[String] {
-  val knownTypes : Set[Class[_]] = Set(classOf[String])
-  def getKnownTypes() = knownTypes
-  def parse(s:String) = s
+  val knownTypes: Set[Class[_]] = Set(classOf[String])
+  def parse(s: String) = s
 }
 
 object IntParser extends SimpleParser[Int] {
-  val knownTypes : Set[Class[_]] = Set(classOf[Int], classOf[java.lang.Integer])
-  def getKnownTypes() = knownTypes
+  val knownTypes: Set[Class[_]] = Set(classOf[Int], classOf[java.lang.Integer])
   def parse(s: String) = s.toInt
 }
 
 object LongParser extends SimpleParser[Long] {
   val knownTypes: Set[Class[_]] = Set(classOf[Long], classOf[java.lang.Long])
-  def getKnownTypes() = knownTypes
   def parse(s: String) = s.toLong
 }
 
 object BooleanParser extends SimpleParser[Boolean] {
-  val knownTypes : Set[Class[_]] = Set(classOf[Boolean], classOf[java.lang.Boolean])
-  def getKnownTypes() = knownTypes
+  val knownTypes: Set[Class[_]] = Set(classOf[Boolean], classOf[java.lang.Boolean])
   def parse(s: String) = s.toBoolean
 }
 
 object FloatParser extends SimpleParser[Float] {
-  val knownTypes : Set[Class[_]] = Set(classOf[Float], classOf[java.lang.Float])
-  def getKnownTypes() = knownTypes
+  val knownTypes: Set[Class[_]] = Set(classOf[Float], classOf[java.lang.Float])
   def parse(s: String) = s.toFloat
 }
 
 object DoubleParser extends SimpleParser[Double] {
-  val knownTypes : Set[Class[_]] = Set(classOf[Double], classOf[java.lang.Double])
-  def getKnownTypes() = knownTypes
+  val knownTypes: Set[Class[_]] = Set(classOf[Double], classOf[java.lang.Double])
   def parse(s: String) = s.toDouble
 }
 
 object RegexParser extends SimpleParser[Regex] {
-  val knownTypes : Set[Class[_]] = Set(classOf[Regex])
-  def getKnownTypes = knownTypes
+  val knownTypes: Set[Class[_]] = Set(classOf[Regex])
   def parse(s: String) = s.r
 }
 
 object FileParser extends SimpleParser[File] {
-  val knownTypes : Set[Class[_]] = Set(classOf[File])
-  def getKnownTypes = knownTypes
+  val knownTypes: Set[Class[_]] = Set(classOf[File])
   def parse(s: String) = {
     val fullPath = if (s.startsWith("~")) s.replaceFirst("~", System.getProperty("user.home")) else s
     new File(fullPath)
@@ -96,12 +85,9 @@ object ListParser extends CompoundParser[List[_]] {
       val subtype = ptpe.getActualTypeArguments()(0)
       val subParser = ParseHelper.findParser(subtype).get //TODO need to handle cases where its a list, but can't parse subtype
       val parts = s.split(",")
-      parts.map{sub => subParser.parse(sub, subtype, currentValue)}.toList
-    }
-    else
-      List()
+      parts.map(subParser.parse(_, subtype, currentValue)).toList
+    } else List.empty
   }
-
 }
 
 object SetParser extends CompoundParser[collection.Set[_]] {
@@ -115,10 +101,8 @@ object SetParser extends CompoundParser[collection.Set[_]] {
       val subtype = ptpe.getActualTypeArguments()(0)
       val subParser = ParseHelper.findParser(subtype).get
       val parts = s.split(",")
-      parts.map{sub => subParser.parse(sub, subtype, currentValue)}.toSet
-    }
-    else
-      Set()
+      parts.map(subParser.parse(_, subtype, currentValue)).toSet
+    } else Set.empty
   }
 }
 
@@ -134,20 +118,15 @@ object SelectInputParser extends CompoundParser[SelectInput[_]] {
       val subtype = ptpe.getActualTypeArguments()(0)
       val subParser = ParseHelper.findParser(subtype).get
       val parsed = subParser.parse(s, subtype, currentVal.value)
-      if (currentVal.options(parsed))
-        currentVal.value = Some(parsed)
-      else
-        throw new IllegalArgumentException(parsed + " is not the allowed values: " + currentVal.options)
+      if (currentVal.options(parsed)) currentVal.value = Some(parsed)
+      else throw new IllegalArgumentException(parsed + " is not the allowed values: " + currentVal.options)
       //we don't return a new object, just modify the existing one
       currentVal
-    }
-    else
-      throw new UnsupportedOperationException()
+    } else throw new UnsupportedOperationException()
   }
 }
 
 object MultiSelectInputParser extends CompoundParser[MultiSelectInput[_]] {
-
   def canParse(tpe: Type) = ParseHelper.checkType(tpe, classOf[MultiSelectInput[_]])
 
   def parse(s: String, tpe: Type, currentValue: AnyRef) = {
@@ -156,39 +135,39 @@ object MultiSelectInputParser extends CompoundParser[MultiSelectInput[_]] {
       val ptpe = tpe.asInstanceOf[ParameterizedType]
       val subtype = ptpe.getActualTypeArguments()(0)
       val subParser = ParseHelper.findParser(subtype).get
-      val parsed = s.split(",").map{sub => subParser.parse(sub, subtype, "dummy")}.toSet
+      val parsed = s.split(",").map(subParser.parse(_, subtype, "dummy")).toSet
       val illegal = parsed.diff(currentVal.options)
-      if (illegal.isEmpty)
-        currentVal.value = parsed
-      else
-        throw new IllegalArgumentException(illegal.toString + " is not the allowed values: " + currentVal.options)
+      if (illegal.isEmpty) currentVal.value = parsed
+      else throw new IllegalArgumentException(illegal.toString + " is not the allowed values: " + currentVal.options)
       //we don't return a new object, just modify the existing one
       currentVal
-    }
-    else
-      throw new UnsupportedOperationException()
-
+    } else throw new UnsupportedOperationException()
   }
 }
 
 object ParseHelper {
-  val parsers = Seq(StringParser, IntParser, LongParser, FloatParser, DoubleParser, BooleanParser, ListParser,
-    SetParser, SelectInputParser, MultiSelectInputParser, FileParser, RegexParser)
+  val parsers = Seq(
+    StringParser,
+    IntParser,
+    LongParser,
+    FloatParser,
+    DoubleParser,
+    BooleanParser,
+    ListParser,
+    SetParser,
+    SelectInputParser,
+    MultiSelectInputParser,
+    FileParser,
+    RegexParser)
 
-  def findParser(tpe: Type) : Option[Parser[_]] = {
-    for (p <- parsers.iterator) {
-      if (p.canParse(tpe))
-        return Some(p)
-    }
-    None
-  }
+  def findParser(tpe: Type): Option[Parser[_]] = parsers.find(_.canParse(tpe))
 
   def parseInto[T](s: String, tpe: Type, currentValue: AnyRef) : Option[ValueHolder[T]] = {
     //could change this to be a map, at least for the simple types
-    findParser(tpe).map{parser => ValueHolder[T](parser.parse(s, tpe, currentValue).asInstanceOf[T], tpe)}
+    findParser(tpe).map(parser => ValueHolder[T](parser.parse(s, tpe, currentValue).asInstanceOf[T], tpe))
   }
 
-  def checkType(tpe: Type, targetClassSet:  Class[_]*) = {
+  def checkType(tpe: Type, targetClassSet: Class[_]*) = {
     def helper(tpe: Type, targetCls: Class[_]) = {
       val clz = if (tpe.isInstanceOf[Class[_]])
         tpe.asInstanceOf[Class[_]]
@@ -200,7 +179,6 @@ object ParseHelper {
     }
     targetClassSet.exists(targetClass => helper(tpe, targetClass))
   }
-
 }
 
 case class ValueHolder[T](value: T, tpe: Type)

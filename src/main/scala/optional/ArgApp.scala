@@ -5,11 +5,14 @@ import java.lang.reflect.{ParameterizedType, Type}
 trait Argable[T <: FieldParsing] {
 
   protected lazy val argHolder = {
-    val argClass = getArgumentClass()
-    val ctors = argClass.getDeclaredConstructors()
-    val ctor = ctors.find(ctor => ctor.getGenericParameterTypes.length == 0).get
-    ctor.setAccessible(true)
-    ctor.newInstance().asInstanceOf[T]
+    val argClass = getArgumentClass
+    val ctors = argClass.getDeclaredConstructors
+    ctors.find(_.getGenericParameterTypes.length == 0) match {
+      case Some(ctor) =>
+        ctor.setAccessible(true)
+        ctor.newInstance().asInstanceOf[T]
+      case None => throw new AssertionError("No zero-arg constructor found")
+    }
   }
 
   /**
@@ -18,13 +21,12 @@ trait Argable[T <: FieldParsing] {
    * not needed for the user that just wants to run their code -- this is accessible just for other libs
    * built on top.
    */
-  def getArgHolder : T = argHolder
+  def getArgHolder: T = argHolder
 
-  private def getArgumentClass() = {
-    val argApp = this.getClass.getGenericInterfaces.find{tpe =>
+  private def getArgumentClass = {
+    val argApp = getClass.getGenericInterfaces.find { tpe =>
       tpe match {
-        case ptpe: ParameterizedType =>
-          ParseHelper.checkType(ptpe, classOf[Argable[_]])
+        case ptpe: ParameterizedType => ParseHelper.checkType(ptpe, classOf[Argable[_]])
         case _ => false
       }
     }
@@ -33,8 +35,8 @@ trait Argable[T <: FieldParsing] {
 
   private def getRawClass(tpe: Type) = {
     tpe match {
-      case x:Class[_] => x
-      case p:ParameterizedType => p.getRawType.asInstanceOf[Class[_]]
+      case x: Class[_] => x
+      case p: ParameterizedType => p.getRawType.asInstanceOf[Class[_]]
     }
   }
 
@@ -50,14 +52,13 @@ trait ArgMain[T <: FieldParsing] extends Argable[T] {
     main(argHolder)
   }
 
-  def main(args: T) : Unit
+  def main(args: T)
 }
 
-trait ArgFunction[T <: FieldParsing, U] extends Function[T,U] with Argable[T]
+trait ArgFunction[T <: FieldParsing, U] extends Function[T, U] with Argable[T]
 
 trait ArgApp[T <: FieldParsing] extends Argable[T] with App {
-  override
-  def main(args: Array[String]) {
+  override def main(args: Array[String]) {
     argHolder.parse(args)
     super.main(args)
   }
