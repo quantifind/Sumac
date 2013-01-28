@@ -6,4 +6,5 @@ trait FieldArgs extends Args {
   }
 }
 
+@deprecated("legacy naming")
 trait FieldParsing extends FieldArgs
