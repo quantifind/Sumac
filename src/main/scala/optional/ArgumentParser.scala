@@ -30,6 +30,7 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
 
           // parse remaining options
           parse(tail, acc + (holder -> result))
+        case _ => throw new ArgException(helpMessage)
       }
     }
 
