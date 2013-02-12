@@ -1,4 +1,4 @@
 language: scala
 scala:
    - 2.9.2
-script: "SBT_OPTS=-XX:MaxPermSize=256m sbt ++$TRAVIS_SCALA_VERSION assembly"
+script: "SBT_OPTS=-XX:MaxPermSize=256m sbt ++$TRAVIS_SCALA_VERSION test"
