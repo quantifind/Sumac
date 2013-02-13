@@ -1,7 +1,10 @@
 package optional.types
 
-class SelectInput[T](var value: Option[T], val options: mutable.LinkedHashSet[T])
+import collection.mutable.LinkedHashSet
+import collection.Set
+
+class SelectInput[T](var value: Option[T], val options: Set[T])
 
 object SelectInput{
-  def apply[T](options: T*) = new OurSelectInput[T](value = None, options = (mutable.LinkedHashSet[T]() ++ options))
+  def apply[T](options: T*) = new SelectInput[T](value = None, options = (LinkedHashSet.empty ++ options))
 }

@@ -2,15 +2,16 @@ package optional
 
 import scala.annotation.tailrec
 import java.lang.reflect.{Type, Field}
+import collection.mutable.LinkedHashMap
 
 class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
-  lazy val nameToHolder = argHolders.map(a => a.getName -> a).toMap.withDefault { arg =>
+  lazy val nameToHolder = (LinkedHashMap.empty ++ argHolders.map(a => a.getName -> a)).withDefault { arg =>
     throw new ArgException("unknown option %s\n%s".format(arg, helpMessage))
   }
 
-  def parse(args: Array[String]): Map[T, ValueHolder[_]] = {
+  def parse(args: Array[String]): LinkedHashMap[T, ValueHolder[_]] = {
     @tailrec
-    def parse(args: List[String], acc: Map[T, ValueHolder[_]] = Map.empty): Map[T, ValueHolder[_]] = {
+    def parse(args: List[String], acc: LinkedHashMap[T, ValueHolder[_]] = LinkedHashMap.empty): LinkedHashMap[T, ValueHolder[_]] = {
       args match {
         case Nil => acc
         case "--help" :: _ => throw new ArgException(helpMessage)
@@ -29,7 +30,8 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
           }
 
           // parse remaining options
-          parse(tail, acc + (holder -> result))
+          acc += (holder -> result)
+          parse(tail, acc)
         case _ => throw new ArgException(helpMessage)
       }
     }

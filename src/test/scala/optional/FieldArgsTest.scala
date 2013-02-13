@@ -100,6 +100,23 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     evaluating {s.parse(Array("--select", "q"))} should produce [ArgException]
   }
 
+  test("selectInput order") {
+    import util.Random._
+    val max = 1000
+    val orderedChoices = shuffle(1.to(max).map(_.toString))
+    case class SelectInputArgs(val select: SelectInput[String] = SelectInput(orderedChoices:_*)) extends FieldParsing
+    val s = new SelectInputArgs()
+    val id = System.identityHashCode(s.select)
+    
+    val index = nextInt(max).toString
+    s.parse(Array("--select", index))
+    s.select.value should be (Some(index))
+    System.identityHashCode(s.select) should be (id)
+    s.select.options.toList should be (orderedChoices)
+
+    evaluating {s.parse(Array("--select", "q"))} should produce [ArgException]
+  }
+
   test("multiSelectInput") {
     case class MultiSelectInputArgs(val multiSelect: MultiSelectInput[String] = MultiSelectInput("a", "b", "c")) extends FieldParsing
     val s = new MultiSelectInputArgs()
