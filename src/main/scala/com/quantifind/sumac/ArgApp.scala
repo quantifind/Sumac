@@ -1,8 +1,6 @@
 package com.quantifind.sumac
 
-import java.lang.reflect.{ParameterizedType, Type}
-
-trait Argable[T <: FieldArgs] {
+trait Argable[T <: Args] {
 
   protected lazy val argHolder = {
     val argClass = getArgumentClass
