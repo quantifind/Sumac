@@ -3,6 +3,7 @@ package com.quantifind.sumac
 import types.{SelectInput,MultiSelectInput}
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
+import java.lang.reflect.Type
 
 /**
  *
@@ -185,6 +186,15 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
   }
 
 
+  test("custom parsers") {
+    val c = new ArgsWithCustomType()
+    c.parse(Array("--x", "7", "--y", "hithere:345","--z", "oogabooga"))
+    c.x should be (7)
+    c.y should be (CustomType("hithere", 345))
+    c.z should be ("oogabooga")
+  }
+
+
 }
 
 
@@ -219,4 +229,23 @@ class ClassWithSomeAnnotations {
   var y: Int = _
   @Arg(name="wakka")
   var z: Double = _
+}
+
+case class CustomType(val name: String, val x: Int)
+
+object CustomTypeParser extends Parser[CustomType] {
+  def canParse(tpe:Type) = {
+    ParseHelper.checkType(tpe, classOf[CustomType])
+  }
+  def parse(s: String, tpe: Type, currentVal: AnyRef) = {
+    val parts = s.split(":")
+    CustomType(parts(0), parts(1).toInt)
+  }
+}
+
+class ArgsWithCustomType extends FieldArgs {
+  registerParser(CustomTypeParser)
+  var x: Int = _
+  var y: CustomType = _
+  var z: String = _
 }

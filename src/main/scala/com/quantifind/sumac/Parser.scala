@@ -146,7 +146,7 @@ object MultiSelectInputParser extends CompoundParser[MultiSelectInput[_]] {
 }
 
 object ParseHelper {
-  val parsers = Seq(
+  var parsers: Seq[Parser[_]] = Seq(
     StringParser,
     IntParser,
     LongParser,
@@ -178,6 +178,10 @@ object ParseHelper {
       targetCls.isAssignableFrom(clz)
     }
     targetClassSet.exists(targetClass => helper(tpe, targetClass))
+  }
+
+  def registerParser[T](parser:Parser[T]) {
+    parsers ++= Seq(parser)
   }
 }
 
