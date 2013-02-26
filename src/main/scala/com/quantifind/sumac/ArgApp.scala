@@ -2,7 +2,7 @@ package com.quantifind.sumac
 
 import java.lang.reflect.{ParameterizedType, Type}
 
-trait Argable[T <: FieldParsing] {
+trait Argable[T <: FieldArgs] {
 
   protected lazy val argHolder = {
     val argClass = getArgumentClass
@@ -42,7 +42,7 @@ trait Argable[T <: FieldParsing] {
 
 }
 
-trait ArgMain[T <: FieldParsing] extends Argable[T] {
+trait ArgMain[T <: FieldArgs] extends Argable[T] {
   def main(rawArgs: Array[String]) {
     mainHelper(rawArgs)
   }
@@ -55,9 +55,9 @@ trait ArgMain[T <: FieldParsing] extends Argable[T] {
   def main(args: T)
 }
 
-trait ArgFunction[T <: FieldParsing, U] extends Function[T, U] with Argable[T]
+trait ArgFunction[T <: FieldArgs, U] extends Function[T, U] with Argable[T]
 
-trait ArgApp[T <: FieldParsing] extends Argable[T] with App {
+trait ArgApp[T <: FieldArgs] extends Argable[T] with App {
   override def main(args: Array[String]) {
     argHolder.parse(args)
     super.main(args)
@@ -66,7 +66,7 @@ trait ArgApp[T <: FieldParsing] extends Argable[T] with App {
 
 //below is just for testing, but want it in compiled classes ...
 
-class MyArgs extends FieldParsing {
+class MyArgs extends FieldArgs {
   val a: String = ""
   val b: Int = 0
 }

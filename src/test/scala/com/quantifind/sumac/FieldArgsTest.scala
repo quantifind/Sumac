@@ -35,7 +35,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
   }
 
   test("subclass parsing") {
-    val o = new Child(false, null, 0) with FieldParsing
+    val o = new Child(false, null, 0) with FieldArgs
 
     o.parse(Array("--flag", "true", "--name", "bugaloo"))
     o.name should be ("bugaloo")
@@ -61,7 +61,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
   }
 
   test("error msg on unknown types") {
-    val o = new SpecialTypes("", null) with FieldParsing
+    val o = new SpecialTypes("", null) with FieldArgs
 
     o.parse(Array("--name", "ooga"))
     o.name should be ("ooga")
@@ -75,7 +75,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
 
 
   test("good error msg") {
-    val o = new MixedTypes("", 0) with FieldParsing
+    val o = new MixedTypes("", 0) with FieldArgs
 
     val exc1 = evaluating {o.parse(Array("--count", "hi"))} should produce [ArgException]
     //don't actually need the message to look *exactly* like this, but extremely useful for it to at least say what it was trying to parse
@@ -83,14 +83,14 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
   }
 
   test("set args") {
-    case class SetArgs(val set: Set[String]) extends FieldParsing
+    case class SetArgs(val set: Set[String]) extends FieldArgs
     val s = new SetArgs(null)
     s.parse(Array("--set", "a,b,c,def"))
     s.set should be (Set("a", "b", "c", "def"))
   }
 
   test("selectInput") {
-    case class SelectInputArgs(val select: SelectInput[String] = SelectInput("a", "b", "c")) extends FieldParsing
+    case class SelectInputArgs(val select: SelectInput[String] = SelectInput("a", "b", "c")) extends FieldArgs
     val s = new SelectInputArgs()
     val id = System.identityHashCode(s.select)
     s.parse(Array("--select", "b"))
@@ -105,7 +105,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     import util.Random._
     val max = 1000
     val orderedChoices = shuffle(1.to(max).map(_.toString))
-    case class SelectInputArgs(val select: SelectInput[String] = SelectInput(orderedChoices:_*)) extends FieldParsing
+    case class SelectInputArgs(val select: SelectInput[String] = SelectInput(orderedChoices:_*)) extends FieldArgs
     val s = new SelectInputArgs()
     val id = System.identityHashCode(s.select)
     
@@ -119,7 +119,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
   }
 
   test("multiSelectInput") {
-    case class MultiSelectInputArgs(val multiSelect: MultiSelectInput[String] = MultiSelectInput("a", "b", "c")) extends FieldParsing
+    case class MultiSelectInputArgs(val multiSelect: MultiSelectInput[String] = MultiSelectInput("a", "b", "c")) extends FieldArgs
     val s = new MultiSelectInputArgs()
     val id = System.identityHashCode(s.multiSelect)
     s.parse(Array("--multiSelect", "b"))
@@ -214,7 +214,7 @@ class SomeApp extends ArgApp[SomeArgs] {
   def main(args: SomeArgs) {}
 }
 
-class SomeArgs extends FieldParsing {
+class SomeArgs extends FieldArgs {
   var x: Int = 0
   var y: String = "hello"
 }

@@ -12,7 +12,7 @@ class ArgAppTest extends FunSuite {
 
 }
 
-class MyArgs extends FieldParsing {
+class MyArgs extends FieldArgs {
   val a: String = ""
   val b: Int = 0
 }
