@@ -175,7 +175,7 @@ object ParseHelper {
   }
 
   def registerParser[T](parser:Parser[T]) {
-    parsers ++= Seq(parser)
+    synchronized{parsers ++= Seq(parser)}
   }
 }
 
