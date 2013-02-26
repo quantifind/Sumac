@@ -4,12 +4,14 @@ trait Args {
   def getArgs: Traversable[ArgAssignable]
 
   lazy val parser = ArgumentParser(getArgs)
+  var validationFunctions: Seq[() => Unit] = Seq()
 
   def parse(args: Array[String]) {
     val parsedArgs = parser.parse(args)
     parsedArgs.foreach { case (argAssignable, valueHolder) =>
       argAssignable.setValue(valueHolder.value)
     }
+    validationFunctions.foreach{_()}
   }
 
   def helpMessage = parser.helpMessage
@@ -20,5 +22,9 @@ trait Args {
    */
   def registerParser[T](parser: Parser[T]) {
     ParseHelper.registerParser(parser)
+  }
+
+  def addValidation(f:  => Unit) {
+    validationFunctions ++= Seq(() => f)
   }
 }

@@ -194,7 +194,20 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     c.z should be ("oogabooga")
   }
 
+  test("validation") {
+    val c = new ArgsWithValidation()
+    c.parse(Array("--x", "-5", "--z", "23.5"))
+    c.x should be (0)
+    c.y should be ("ooga")
+    c.z should be (23.5)
 
+    c.parse(Array("--x", "17", "--y", "blah", "--z", "134"))
+    c.x should be (17)
+    c.y should be ("blah")
+    c.z should be (134)
+
+    evaluating {c.parse(Array("--z", "0"))} should produce [ArgException]
+  }
 }
 
 
@@ -248,4 +261,19 @@ class ArgsWithCustomType extends FieldArgs {
   var x: Int = _
   var y: CustomType = _
   var z: String = _
+}
+
+
+class ArgsWithValidation extends FieldArgs {
+  var x: Int = _
+  var y: String = _
+  var z: Double = _
+  addValidation{
+    if (x < 0)
+      x = 0
+    if (y == null)
+      y = "ooga"
+    if (z < 5)
+      throw new RuntimeException("z must be greater than 5 -- was " + z)
+  }
 }
