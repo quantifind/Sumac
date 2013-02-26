@@ -1,4 +1,4 @@
-package optional
+package com.quantifind.sumac
 
 import scala.annotation.tailrec
 import java.lang.reflect.{Type, Field}

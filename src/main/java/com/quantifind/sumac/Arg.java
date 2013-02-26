@@ -1,4 +1,4 @@
-package optional;
+package com.quantifind.sumac;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

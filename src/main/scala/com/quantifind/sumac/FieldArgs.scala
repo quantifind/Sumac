@@ -1,4 +1,4 @@
-package optional
+package com.quantifind.sumac
 
 trait FieldArgs extends Args {
   override def getArgs = ReflectionUtils.getAllDeclaredFields(getClass) collect {

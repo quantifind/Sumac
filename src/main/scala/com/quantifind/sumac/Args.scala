@@ -1,4 +1,4 @@
-package optional
+package com.quantifind.sumac
 
 trait Args {
   def getArgs: Traversable[ArgAssignable]

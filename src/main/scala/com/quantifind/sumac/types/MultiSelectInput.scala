@@ -1,4 +1,4 @@
-package optional.types
+package com.quantifind.sumac.types
 
 class MultiSelectInput[T](var value: Set[T], val options: Set[T])
 

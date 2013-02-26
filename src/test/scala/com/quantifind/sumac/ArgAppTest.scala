@@ -1,4 +1,4 @@
-package optional
+package com.quantifind.sumac
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers

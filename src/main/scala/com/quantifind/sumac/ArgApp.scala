@@ -1,4 +1,4 @@
-package optional
+package com.quantifind.sumac
 
 import java.lang.reflect.{ParameterizedType, Type}
 

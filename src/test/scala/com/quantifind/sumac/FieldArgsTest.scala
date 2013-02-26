@@ -1,4 +1,4 @@
-package optional
+package com.quantifind.sumac
 
 import types.{SelectInput,MultiSelectInput}
 import org.scalatest.FunSuite

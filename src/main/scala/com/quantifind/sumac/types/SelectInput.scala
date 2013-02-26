@@ -1,4 +1,4 @@
-package optional.types
+package com.quantifind.sumac.types
 
 import collection.mutable.LinkedHashSet
 import collection.Set

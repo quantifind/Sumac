@@ -1,4 +1,4 @@
-package optional
+package com.quantifind.sumac
 
 import types.{SelectInput,MultiSelectInput}
 import java.lang.reflect.{Type, ParameterizedType}
