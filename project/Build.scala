@@ -20,7 +20,7 @@ object SparkBuild extends Build {
   val slf4jVersion = "1.6.1"
 
   def coreSettings = sharedSettings ++ Seq(
-    name := "optional",
+    name := "Sumac",
     resolvers ++= Seq(
       "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
       "JBoss Repository" at "http://repository.jboss.org/nexus/content/repositories/releases/"
