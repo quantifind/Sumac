@@ -135,7 +135,7 @@ object MultiSelectInputParser extends CompoundParser[MultiSelectInput[_]] {
       val ptpe = tpe.asInstanceOf[ParameterizedType]
       val subtype = ptpe.getActualTypeArguments()(0)
       val subParser = ParseHelper.findParser(subtype).get
-      val parsed = s.split(",").map(subParser.parse(_, subtype, "dummy")).toSet
+      val parsed : Set[Any] = s.split(",").map(subParser.parse(_, subtype, "dummy")).toSet
       val illegal = parsed.diff(currentVal.options)
       if (illegal.isEmpty) currentVal.value = parsed
       else throw new IllegalArgumentException(illegal.toString + " is not the allowed values: " + currentVal.options)
