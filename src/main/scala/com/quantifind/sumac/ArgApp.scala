@@ -23,23 +23,12 @@ trait Argable[T <: FieldArgs] {
    */
   def getArgHolder: T = argHolder
 
-  private def getArgumentClass = {
-    val argApp = getClass.getGenericInterfaces.find { tpe =>
-      tpe match {
-        case ptpe: ParameterizedType => ParseHelper.checkType(ptpe, classOf[Argable[_]])
-        case _ => false
-      }
-    }
-    getRawClass(argApp.get.asInstanceOf[ParameterizedType].getActualTypeArguments.apply(0))
+  private[sumac] def getArgumentClass = {
+    //we need to get the type parameter for Argable.  Doing that requires searching through the interfaces of *all*
+    // classes in the type hierarchy.
+    val argApp = ReflectionUtils.findGenericInterface(getClass, classOf[Argable[_]])
+    ReflectionUtils.getRawClass(argApp.get.getActualTypeArguments.apply(0))
   }
-
-  private def getRawClass(tpe: Type) = {
-    tpe match {
-      case x: Class[_] => x
-      case p: ParameterizedType => p.getRawType.asInstanceOf[Class[_]]
-    }
-  }
-
 }
 
 trait ArgMain[T <: FieldArgs] extends Argable[T] {

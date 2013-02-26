@@ -169,13 +169,7 @@ object ParseHelper {
 
   def checkType(tpe: Type, targetClassSet: Class[_]*) = {
     def helper(tpe: Type, targetCls: Class[_]) = {
-      val clz = if (tpe.isInstanceOf[Class[_]])
-        tpe.asInstanceOf[Class[_]]
-      else if (tpe.isInstanceOf[ParameterizedType])
-        tpe.asInstanceOf[ParameterizedType].getRawType.asInstanceOf[Class[_]]
-      else
-        classOf[Int]  //just need something that won't match
-      targetCls.isAssignableFrom(clz)
+      targetCls.isAssignableFrom(ReflectionUtils.getRawClass(tpe))
     }
     targetClassSet.exists(targetClass => helper(tpe, targetClass))
   }

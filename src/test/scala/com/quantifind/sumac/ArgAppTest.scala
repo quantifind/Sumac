@@ -3,11 +3,22 @@ package com.quantifind.sumac
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
-class ArgAppTest extends FunSuite {
+class ArgAppTest extends FunSuite with ShouldMatchers {
+
+  test("getArgumentClass") {
+    val m = new MyApp()
+    m.getArgumentClass should be (classOf[MyArgs])
+
+    val m2 = new MyNestedArgApp()
+    m2.getArgumentClass should be (classOf[MyArgs])
+  }
 
   test("main") {
     val m = new MyApp()
     m.main(Array("--a", "hello", "--b", "17"))
+
+    val m2 = new MyNestedArgApp()
+    m2.main(Array("--a", "byebye", "--b", "3"))
   }
 
 }
@@ -26,3 +37,14 @@ class MyApp extends Dummy with ArgApp[MyArgs] with ShouldMatchers {
 
 trait Dummy
 
+
+trait NestedArgMain extends ArgMain[MyArgs] {
+  def blah(x: Int) = x + 5
+}
+
+class MyNestedArgApp extends NestedArgMain with ShouldMatchers {
+  def main(args: MyArgs) {
+    args.a should be ("byebye")
+    args.b should be (3)
+  }
+}
