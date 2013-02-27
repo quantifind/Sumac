@@ -206,7 +206,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     c.y should be ("blah")
     c.z should be (134)
 
-    evaluating {c.parse(Array("--z", "0"))} should produce [ArgException]
+    evaluating {c.parse(Array("--z", "0"))} should produce [Exception]
   }
 }
 
