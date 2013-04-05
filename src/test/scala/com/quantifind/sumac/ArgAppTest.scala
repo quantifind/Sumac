@@ -24,8 +24,8 @@ class ArgAppTest extends FunSuite with ShouldMatchers {
 }
 
 class MyArgs extends FieldArgs {
-  val a: String = ""
-  val b: Int = 0
+  var a: String = ""
+  var b: Int = 0
 }
 
 class MyApp extends Dummy with ArgApp[MyArgs] with ShouldMatchers {

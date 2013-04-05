@@ -83,14 +83,14 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
   }
 
   test("set args") {
-    case class SetArgs(val set: Set[String]) extends FieldArgs
+    case class SetArgs(var set: Set[String]) extends FieldArgs
     val s = new SetArgs(null)
     s.parse(Array("--set", "a,b,c,def"))
     s.set should be (Set("a", "b", "c", "def"))
   }
 
   test("selectInput") {
-    case class SelectInputArgs(val select: SelectInput[String] = SelectInput("a", "b", "c")) extends FieldArgs
+    case class SelectInputArgs(var select: SelectInput[String] = SelectInput("a", "b", "c")) extends FieldArgs
     val s = new SelectInputArgs()
     val id = System.identityHashCode(s.select)
     s.parse(Array("--select", "b"))
@@ -105,7 +105,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     import util.Random._
     val max = 1000
     val orderedChoices = shuffle(1.to(max).map(_.toString))
-    case class SelectInputArgs(val select: SelectInput[String] = SelectInput(orderedChoices:_*)) extends FieldArgs
+    case class SelectInputArgs(var select: SelectInput[String] = SelectInput(orderedChoices:_*)) extends FieldArgs
     val s = new SelectInputArgs()
     val id = System.identityHashCode(s.select)
     
@@ -119,7 +119,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
   }
 
   test("multiSelectInput") {
-    case class MultiSelectInputArgs(val multiSelect: MultiSelectInput[String] = MultiSelectInput("a", "b", "c")) extends FieldArgs
+    case class MultiSelectInputArgs(var multiSelect: MultiSelectInput[String] = MultiSelectInput("a", "b", "c")) extends FieldArgs
     val s = new MultiSelectInputArgs()
     val id = System.identityHashCode(s.multiSelect)
     s.parse(Array("--multiSelect", "b"))
@@ -208,19 +208,39 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
 
     evaluating {c.parse(Array("--z", "0"))} should produce [Exception]
   }
+
+  test("private fields ignored") {
+    val c = new ArgsWithPrivateFields()
+
+    c.parse(Array("--x","7"))
+    c.x should be (7)
+
+    println(c.parser.nameToHolder)
+    c.parser.nameToHolder should not contain key ("q")
+  }
+
+  test("vals ignored") {
+    val c = new ArgsWithVals()
+
+    c.parse(Array("--x", "19"))
+    c.x should be (19)
+
+    println(c.parser.nameToHolder)
+    c.parser.nameToHolder should not contain key ("y")
+  }
 }
 
 
-case class StringHolder(val name: String, val comment: String)
+case class StringHolder(var name: String, var comment: String)
 
-case class MixedTypes(val name: String, val count: Int)
+case class MixedTypes(var name: String, var count: Int)
 
 //is there an easier way to do this in scala?
-class Child(val flag: Boolean, name: String, count: Int) extends MixedTypes(name, count)
+class Child(var flag: Boolean, name: String, count: Int) extends MixedTypes(name, count)
 
-case class SpecialTypes(val name: String, val funky: MyFunkyType)
+case class SpecialTypes(var name: String, var funky: MyFunkyType)
 
-case class MyFunkyType(val x: String)
+case class MyFunkyType(var x: String)
 
 
 class SomeApp extends ArgApp[SomeArgs] {
@@ -276,4 +296,14 @@ class ArgsWithValidation extends FieldArgs {
     if (z < 5)
       throw new RuntimeException("z must be greater than 5 -- was " + z)
   }
+}
+
+class ArgsWithPrivateFields extends FieldArgs {
+  var x: Int = _
+  private var q: Int = _
+}
+
+class ArgsWithVals extends FieldArgs {
+  var x: Int = _
+  val y = 18
 }
