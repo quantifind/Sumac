@@ -11,6 +11,16 @@ trait Args {
     parsedArgs.foreach { case (argAssignable, valueHolder) =>
       argAssignable.setValue(valueHolder.value)
     }
+    runValidation()
+  }
+
+  /**
+   * run all validation functions.
+   *
+   * Note that parse automatically runs all validation, so in general a user will not need to call this.  However,
+   * if you are programatically filling in the the args of this object, you probably want to call this.
+   */
+  def runValidation() {
     validationFunctions.foreach{_()}
   }
 
