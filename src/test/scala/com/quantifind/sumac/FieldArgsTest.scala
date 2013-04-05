@@ -215,7 +215,6 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     c.parse(Array("--x","7"))
     c.x should be (7)
 
-    println(c.parser.nameToHolder)
     c.parser.nameToHolder should not contain key ("q")
   }
 
@@ -225,7 +224,14 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     c.parse(Array("--x", "19"))
     c.x should be (19)
 
-    println(c.parser.nameToHolder)
+    c.parser.nameToHolder should not contain key ("y")
+  }
+
+  test("respect ignore annotation") {
+    val c = new IgnoredArgs()
+    c.parse(Array("--x", "123"))
+    c.x should be (123)
+
     c.parser.nameToHolder should not contain key ("y")
   }
 }
@@ -306,4 +312,10 @@ class ArgsWithPrivateFields extends FieldArgs {
 class ArgsWithVals extends FieldArgs {
   var x: Int = _
   val y = 18
+}
+
+class IgnoredArgs extends FieldArgs {
+  var x: Int = _
+  @Ignore
+  var y: Int = _
 }

@@ -8,7 +8,7 @@ trait FieldArgs extends Args {
   }
 
   def validField(f: Field): Boolean = {
-    f.getName != "parser" && f.getName != "bitmap$0" && hasSetter(f)
+    f.getName != "parser" && f.getName != "bitmap$0" && hasSetter(f) && !f.isAnnotationPresent(classOf[Ignore])
   }
 
   def hasSetter(f: Field): Boolean = {
