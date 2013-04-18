@@ -14,7 +14,7 @@ trait ExternalConfig {
    * it can take a filename from those args.)  It should return the complete set of args that should be used.  It is
    * free to choose to completely replace the original args, append to them, modify them, etc.
    *
-   * in general, implementations should be abstract override, to allow multiple external configs
+   * in general, implementations should be abstract override with a call to super, to allow multiple external configs
    * via the Stackable Trait Pattern
    */
   def readArgs(originalArgs: Map[String,String]): Map[String,String]
@@ -23,7 +23,7 @@ trait ExternalConfig {
    * save the config back to the external source.  Any parameters for this method should have already been extracted
    * from the call to readArgs
    *
-   * as with readArgs, this should in general be implemented as an abstract override
+   * as with readArgs, this should in general be implemented as an abstract override with a call to super
    */
   def saveConfig(): Unit
 }
