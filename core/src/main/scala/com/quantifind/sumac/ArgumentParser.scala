@@ -3,44 +3,29 @@ package com.quantifind.sumac
 import scala.annotation.tailrec
 import java.lang.reflect.{Type, Field}
 import collection.mutable.LinkedHashMap
+import collection._
 
 class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
   lazy val nameToHolder = (LinkedHashMap.empty ++ argHolders.map(a => a.getName -> a)).withDefault { arg =>
     throw new ArgException("unknown option %s\n%s".format(arg, helpMessage))
   }
 
-  def parse(args: Array[String]): LinkedHashMap[T, ValueHolder[_]] = {
-    @tailrec
-    def parse(args: List[String], acc: LinkedHashMap[T, ValueHolder[_]] = LinkedHashMap.empty): LinkedHashMap[T, ValueHolder[_]] = {
-      args match {
-        case Nil => acc
-        case "--help" :: _ => throw new ArgException(helpMessage)
-        case arg :: _ if (!arg.startsWith("--")) =>
-          throw new ArgException("expecting argument name beginning with \"--\", instead got %s".format(arg))
-        case name :: value :: tail =>
-          val suffix = name.drop(2)
-          val holder = nameToHolder(suffix)
-          val result = try {
-            ParseHelper.parseInto(value, holder.getType, holder.getCurrentValue) getOrElse {
-              throw new ArgException("don't know how to parse type: " + holder.getType)
-            }
-          } catch {
-            case ae: ArgException => throw ae
-            case e: Throwable => throw new ArgException("Error parsing \"%s\" into field \"%s\" (type = %s)\n%s".format(value, suffix, holder.getType, helpMessage))
-          }
+  def parse(args: Array[String]): Map[T, ValueHolder[_]] = {
+    parse(ArgumentParser.argListToKvMap(args))
+  }
 
-          // parse remaining options
-          acc += (holder -> result)
-          parse(tail, acc)
-        case _ => throw new ArgException(helpMessage)
+  def parse(rawKvs: Map[String,String]): Map[T, ValueHolder[_]] = {
+    rawKvs.map{case(argName, argValue) =>
+      val holder = nameToHolder(argName)
+      val result = try {
+        ParseHelper.parseInto(argValue, holder.getType, holder.getCurrentValue) getOrElse {
+          throw new ArgException("don't know how to parse type: " + holder.getType)
+        }
+      } catch {
+        case ae: ArgException => throw ae
+        case e: Throwable => throw new ArgException("Error parsing \"%s\" into field \"%s\" (type = %s)\n%s".format(argValue, argName, holder.getType, helpMessage))
       }
-    }
-
-    try {
-      parse(args.toList)
-    } catch {
-      case ae: ArgException => throw ae
-      case e: Throwable => throw new ArgException(helpMessage, e)
+      holder -> result
     }
   }
 
@@ -58,6 +43,26 @@ object ArgumentParser {
   def apply[T <: ArgAssignable](argHolders: Traversable[T]) = {
     // ignore things we don't know how to parse
     new ArgumentParser(argHolders.toSeq.filter(t => ParseHelper.findParser(t.getType).isDefined))
+  }
+
+  def argListToKvMap(args: Array[String]): Map[String,String] = {
+    @tailrec
+    def parse(args: List[String], acc: mutable.Map[String, String] = mutable.Map.empty): mutable.Map[String,String] = {
+      args match {
+        case Nil => acc
+        case "--help" :: _ =>
+          acc("help") = null
+          acc
+        case arg :: _ if (!arg.startsWith("--")) =>
+          throw new ArgException("expecting argument name beginning with \"--\", instead got %s".format(arg))
+        case name :: value :: tail =>
+          val suffix = name.drop(2)
+          acc(suffix) = value
+          parse(tail, acc)
+        case _ => throw new ArgException("gave a non-key value argument")
+      }
+    }
+    parse(args.toList)
   }
 }
 

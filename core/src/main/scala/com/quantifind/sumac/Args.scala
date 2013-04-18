@@ -1,18 +1,28 @@
 package com.quantifind.sumac
 
-trait Args {
+import collection._
+
+trait Args extends ExternalConfig {
   def getArgs: Traversable[ArgAssignable]
 
   lazy val parser = ArgumentParser(getArgs)
   var validationFunctions: Seq[() => Unit] = Seq()
 
   def parse(args: Array[String]) {
-    val parsedArgs = parser.parse(args)
+    val originalKvPairs = ArgumentParser.argListToKvMap(args)
+    val modifiedKvPairs = readArgs(originalKvPairs)
+    val parsedArgs = parser.parse(modifiedKvPairs)
     parsedArgs.foreach { case (argAssignable, valueHolder) =>
       argAssignable.setValue(valueHolder.value)
     }
     runValidation()
   }
+
+  override def readArgs(originalArgs: Map[String,String]): Map[String,String] = {
+    originalArgs  //here for stackable traits
+  }
+
+  override def saveConfig() {} //noop, here for stackable traits
 
   /**
    * run all validation functions.
