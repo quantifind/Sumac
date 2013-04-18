@@ -6,6 +6,7 @@ trait Args extends ExternalConfig {
   def getArgs: Traversable[ArgAssignable]
 
   lazy val parser = ArgumentParser(getArgs)
+  @Ignore
   var validationFunctions: Seq[() => Unit] = Seq()
 
   def parse(args: Array[String]) {
@@ -42,6 +43,16 @@ trait Args extends ExternalConfig {
    */
   def registerParser[T](parser: Parser[T]) {
     ParseHelper.registerParser(parser)
+  }
+
+  /**
+   * get back the current (name, value) of all arguments as strings.  This does not just return the original arguments
+   * that were passed to this function -- they may have been changed from defaulting, validation, etc.
+   *
+   * In general, users will not need this function, but it is useful for tools built on top, eg. saving to a property file
+   */
+  def getStringValues: Map[String,String] = {
+    getArgs.map{aa => aa.getName -> aa.getParser.valueAsString(aa.getCurrentValue)}.toMap
   }
 
   def addValidation(f:  => Unit) {

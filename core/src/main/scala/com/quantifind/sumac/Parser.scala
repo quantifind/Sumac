@@ -14,6 +14,17 @@ trait Parser[T] {
    * @return
    */
   def canParse(tpe: Type): Boolean
+
+  def valueAsString(currentValue: AnyRef): String = {
+    if (currentValue == null)
+      Parser.nullString
+    else
+      currentValue.toString
+  }
+}
+
+object Parser {
+  val nullString = "<null>"
 }
 
 trait SimpleParser[T] extends Parser[T] {

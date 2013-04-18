@@ -6,7 +6,7 @@ import collection.mutable.LinkedHashMap
 import collection._
 
 class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
-  lazy val nameToHolder = (LinkedHashMap.empty ++ argHolders.map(a => a.getName -> a)).withDefault { arg =>
+  lazy val nameToHolder:Map[String,T] = (LinkedHashMap.empty ++ argHolders.map(a => a.getName -> a)).withDefault { arg =>
     throw new ArgException("unknown option %s\n%s".format(arg, helpMessage))
   }
 
@@ -76,12 +76,14 @@ trait ArgAssignable {
   def getDescription: String
   def getType: Type
   def getCurrentValue: AnyRef
+  def getParser: Parser[_]
   def setValue(value: Any)
 }
 
-class FieldArgAssignable(val field: Field, val obj: Object) extends ArgAssignable {
+class FieldArgAssignable(val field: Field, val obj: Object, val parser: Parser[_]) extends ArgAssignable {
   field.setAccessible(true)
   val annotationOpt = Option(field.getAnnotation(classOf[Arg]))
+  def getParser = parser
 
   def getName = {
     val n = annotationOpt.map(_.name).getOrElse(field.getName)
@@ -98,6 +100,16 @@ class FieldArgAssignable(val field: Field, val obj: Object) extends ArgAssignabl
 
   def setValue(value: Any) = {
     field.set(obj, value)
+  }
+}
+
+object FieldArgAssignable{
+  def apply(field: Field, obj: Object): FieldArgAssignable = {
+    val tpe = field.getGenericType
+    val parser = ParseHelper.findParser(tpe) getOrElse {
+      throw new ArgException("don't know how to parse type: " + tpe)
+    }
+    new FieldArgAssignable(field, obj, parser)
   }
 }
 

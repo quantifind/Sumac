@@ -62,15 +62,11 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
 
   test("error msg on unknown types") {
     val o = new SpecialTypes("", null) with FieldArgs
-
-    o.parse(Array("--name", "ooga"))
-    o.name should be ("ooga")
-    o.funky should be (null)
-
-    val exc = evaluating {o.parse(Array("--funky", "xyz"))} should produce [ArgException]
-    //maybe sometime I should change the removal of unknown types to keep them around for error msgs ...
-//    exc.cause.getMessage should include ("type")
-//    exc.cause.getMessage should include ("MyFunkyType")
+    // originally I had intended this error to be thrown on a call to parse w/ the bad argument, but I guess its OK
+    // to have it thrown on any call to parse
+    val exc = evaluating {o.parse(Array("--name", "blah"))} should produce [ArgException]
+    exc.getMessage should include ("type")
+    exc.getMessage should include ("MyFunkyType")
   }
 
 
@@ -241,6 +237,21 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
 
     c.parser.nameToHolder should not contain key ("y")
   }
+
+  test("getStringValues") {
+    val c = new IgnoredArgs()
+    c.x = 35245
+    c.getStringValues should be (Map("x"-> "35245"))
+
+    val a = new ArgsWithCustomType()
+    a.x = 5
+    a.y = CustomType("blah", 17)
+    a.getStringValues should be (Map(
+      "x" -> "5",
+      "y" -> "blah:17",
+      "z" -> Parser.nullString
+    ))
+  }
 }
 
 
@@ -286,6 +297,10 @@ object CustomTypeParser extends Parser[CustomType] {
   def parse(s: String, tpe: Type, currentVal: AnyRef) = {
     val parts = s.split(":")
     CustomType(parts(0), parts(1).toInt)
+  }
+  override def valueAsString(currentVal: AnyRef) = {
+    val ct = currentVal.asInstanceOf[CustomType]
+    ct.name + ":" + ct.x
   }
 }
 

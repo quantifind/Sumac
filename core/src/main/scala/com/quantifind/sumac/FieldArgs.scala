@@ -4,7 +4,7 @@ import java.lang.reflect.Field
 
 trait FieldArgs extends Args {
   override def getArgs = ReflectionUtils.getAllDeclaredFields(getClass) collect {
-    case f if (isValidField(f)) => new FieldArgAssignable(f, this)
+    case f if (isValidField(f)) => FieldArgAssignable(f, this)
   }
 
   def isValidField(f: Field): Boolean = {
