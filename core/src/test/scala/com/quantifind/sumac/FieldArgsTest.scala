@@ -89,6 +89,13 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     s.set should be (Set("a", "b", "c", "def"))
   }
 
+  test("help") {
+    val s = new IgnoredArgs()
+    val exc = evaluating {s.parse(Array("--help"))} should produce [ArgException]
+    """unknown option""".r findFirstIn (exc.getMessage) should be ('empty)
+    """\-\-x\s.*[Ii]nt""".r findFirstIn(exc.getMessage) should be ('defined)
+  }
+
   test("selectInput") {
     case class SelectInputArgs(var select: SelectInput[String] = SelectInput("a", "b", "c")) extends FieldArgs
     val s = new SelectInputArgs()
