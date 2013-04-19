@@ -7,6 +7,7 @@ import collection.Map
  * format.
  */
 trait ExternalConfig {
+  self: Args =>
 
   /**
    * Read config from an external source, and use that to modify the set of arguments.  The "original" arguments

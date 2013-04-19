@@ -10,13 +10,17 @@ trait Args extends ExternalConfig {
   var validationFunctions: Seq[() => Unit] = Seq()
 
   def parse(args: Array[String]) {
-    val originalKvPairs = ArgumentParser.argListToKvMap(args)
-    val modifiedKvPairs = readArgs(originalKvPairs)
+    parse(ArgumentParser.argListToKvMap(args))
+  }
+
+  def parse(kvPairs: Map[String,String], validation: Boolean = true) {
+    val modifiedKvPairs = if (validation) readArgs(kvPairs) else kvPairs
     val parsedArgs = parser.parse(modifiedKvPairs)
     parsedArgs.foreach { case (argAssignable, valueHolder) =>
       argAssignable.setValue(valueHolder.value)
     }
-    runValidation()
+    if (validation)
+      runValidation()
   }
 
   override def readArgs(originalArgs: Map[String,String]): Map[String,String] = {
