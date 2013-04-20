@@ -5,6 +5,8 @@ import com.twitter.conversions.time._
 import org.scalatest.matchers.ShouldMatchers
 import com.twitter.util.JavaTimer
 import com.quantifind.sumac
+import java.io.{FileInputStream, File}
+import java.util.Properties
 
 
 class ZkArgsTest extends FunSuite with ShouldMatchers {
@@ -125,7 +127,77 @@ class ZkArgsTest extends FunSuite with ShouldMatchers {
   }
 
   zkTest("stacked external configs") {
+    //setup
+    val argsInZk = Map("x" -> "58")
+    implicit val timer = new JavaTimer(false)
+    val zk = ZkArgHelper.basicZkClient(zkTestHost, 5.seconds)
+    val testPath = zkRootPath + "/stacked"
+    ZkArgHelper.saveArgsToZk(zk, testPath, argsInZk)
 
+
+    val propFileIn = new File("test_output/zkargs_test.properties")
+    val propFileOut = new File("test_output/zkargs_test_output.properties")
+    {
+      val args = new BaseArgs() with PropertiesConfig
+      args.propertyFile = propFileIn
+      args.x = 17
+      args.saveConfig()
+    }
+
+    //test load from property file
+    {
+      val args = new BaseArgs() with PropertiesConfig with ZkArgs
+      args.propertyFile = propFileIn
+      args.parse(Map[String,String]("y" -> "3.9"))
+      args.x should be (17)
+      args.y should be (3.9f)
+    }
+
+    //test load from zk
+    {
+      val args = new BaseArgs() with PropertiesConfig with ZkArgs
+      args.zkConn = zkTestHost
+      args.zkPaths = List(testPath)
+      args.parse(Map[String,String]())
+      args.x should be (58)
+
+      args.propertyFile = propFileOut
+      args.saveConfig()
+
+      val props = new Properties()
+      val in = new FileInputStream(propFileOut)
+      props.load(in)
+      in.close()
+      props.containsKey("x") should be (true)
+      props.get("x") should be ("58")
+    }
+
+    //test load from zk and property file
+    {
+      //in this order, zk configs win
+      val zkPrimaryArgs = new BaseArgs() with PropertiesConfig with ZkArgs
+      zkPrimaryArgs.zkConn = zkTestHost
+      zkPrimaryArgs.zkPaths = List(testPath)
+      zkPrimaryArgs.propertyFile = propFileIn
+      zkPrimaryArgs.parse(Map[String,String]())
+      zkPrimaryArgs.x should be (58)
+
+      //reverse the stacking order, and properties should win
+      val propPrimaryArgs = new BaseArgs() with ZkArgs with PropertiesConfig
+      propPrimaryArgs.zkConn = zkTestHost
+      propPrimaryArgs.zkPaths = List(testPath)
+      propPrimaryArgs.propertyFile = propFileIn
+      propPrimaryArgs.parse(Map[String,String]())
+      propPrimaryArgs.x should be (17)
+
+
+      //in both cases, directly passed args should take precedence
+      zkPrimaryArgs.parse(Map[String,String]("x" -> "-1"))
+      zkPrimaryArgs.x should be (-1)
+      propPrimaryArgs.parse(Map[String,String]("x" -> "34134"))
+      propPrimaryArgs.x should be (34134)
+
+    }
   }
 
 }

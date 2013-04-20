@@ -24,7 +24,7 @@ trait PropertiesConfig extends ExternalConfig {
       in.close()
     }
     //append args we read from the property file to the args from the command line, and pass to next trait
-    super.readArgs(originalArgs ++ props.asScala)
+    super.readArgs(ExternalConfigUtil.mapWithDefaults(originalArgs,props.asScala))
   }
 
   abstract override def saveConfig() {
@@ -33,6 +33,7 @@ trait PropertiesConfig extends ExternalConfig {
     val out = new FileOutputStream(propertyFile)
     props.store(out, "")
     out.close()
+    super.saveConfig()
   }
 
 }

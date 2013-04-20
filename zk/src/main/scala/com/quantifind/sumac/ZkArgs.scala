@@ -35,6 +35,11 @@ trait ZkArgs extends ExternalConfig {
     super.readArgs(newArgs)
   }
 
+  abstract override def saveConfig() {
+    //we intentionally do *NOT* save back to zookeeper
+    super.saveConfig()
+  }
+
 }
 
 object ZkArgHelper {
