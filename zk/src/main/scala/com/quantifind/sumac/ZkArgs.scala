@@ -4,18 +4,30 @@ import com.twitter.zk.{ZNode, ZkClient}
 import com.twitter.conversions.time._
 import com.twitter.util.{Duration, Timer, JavaTimer}
 import collection.JavaConverters._
+import collection._
 
 /**
  * Add this into args to be able to read & write args from zookeeper
  */
 trait ZkArgs {
-  var zkConn: String
-  var zkPaths: List[String]
+  self: Args =>
+
+  var zkConn: String = _
+  var zkPaths: List[String] = List()
 
   val timeout = 5.seconds
 
-  implicit val timer = new JavaTimer(false)
-  private val zkClient = ZkArgHelper.basicZkClient(zkConn, timeout)
+  implicit lazy val timer = new JavaTimer(false)
+  lazy val zkClient = ZkArgHelper.basicZkClient(zkConn, timeout)
+  def saveToZk(zkPath: String) = {
+    ZkArgHelper.saveArgsToZk(zkClient, zkPath, getStringValues)
+  }
+
+  abstract override def readArgs(originalArgs: Map[String,String]): Map[String,String] = {
+    parse(originalArgs, false)
+    val argsInZk = ZkArgHelper.getArgsFromZk(zkClient, zkPaths.head)
+    ExternalConfigUtil.mapWithDefaults(originalArgs, argsInZk)
+  }
 
 }
 

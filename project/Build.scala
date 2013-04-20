@@ -3,7 +3,7 @@ import Keys._
 
 object SumacBuild extends Build {
   lazy val core = Project("core", file("core"), settings = coreSettings)
-  lazy val zk = Project("zk", file("zk"), settings = zkSettings)
+  lazy val zk = Project("zk", file("zk"), settings = zkSettings) dependsOn(core)
 
   def sharedSettings = Defaults.defaultSettings ++ Seq(
     version := "0.1-SNAPSHOT",

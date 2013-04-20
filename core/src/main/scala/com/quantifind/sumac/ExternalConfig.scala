@@ -28,3 +28,15 @@ trait ExternalConfig {
    */
   def saveConfig(): Unit
 }
+
+object ExternalConfigUtil {
+
+  def mapWithDefaults(original: Map[String,String], defaults: Map[String,String]):Map[String,String] = {
+    defaults.foldLeft(original){case (orig, (k,v)) =>
+      if (orig.contains(k))
+        orig
+      else
+        orig + (k -> v)
+    }
+  }
+}
