@@ -27,7 +27,19 @@ class PropertiesConfigTest extends FunSuite with ShouldMatchers {
   }
 
   test("roundtrip properties") {
-    pending
+    val propFile = new File(testOutDir, "roundtrip_properties_test.properties")
+    val args = new PropertyArgs()
+    args.x = 5
+    args.wakka = 93.4f
+    args.propertyFile = propFile
+    args.saveConfig()
+
+    val args2 = new PropertyArgs()
+    args2.propertyFile = propFile
+    args2.parse(Map[String,String]())
+    args2.x should be (5)
+    args2.wakka should be (93.4f)
+    args2.blah should be (null)
   }
 
 

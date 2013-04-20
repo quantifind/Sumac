@@ -2,7 +2,7 @@ package com.quantifind.sumac
 
 import collection._
 import java.util.Properties
-import java.io.{File, FileInputStream, BufferedInputStream}
+import java.io.{FileOutputStream, File, FileInputStream, BufferedInputStream}
 
 import collection.JavaConverters._
 
@@ -25,6 +25,14 @@ trait PropertiesConfig extends ExternalConfig {
     }
     //append args we read from the property file to the args from the command line, and pass to next trait
     super.readArgs(originalArgs ++ props.asScala)
+  }
+
+  abstract override def saveConfig() {
+    val props = new Properties()
+    getStringValues.foreach{case(k,v) => props.put(k,v)}
+    val out = new FileOutputStream(propertyFile)
+    props.store(out, "")
+    out.close()
   }
 
 }

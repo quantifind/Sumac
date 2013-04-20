@@ -124,10 +124,17 @@ class ZkArgsTest extends FunSuite with ShouldMatchers {
     }
   }
 
+  zkTest("stacked external configs") {
+
+  }
+
 }
 
-class MyArgs extends FieldArgs with ZkArgs {
+class BaseArgs extends FieldArgs {
   var x: Int = _
   var y: Float = _
   var ooga: String = _
 }
+
+class MyArgs extends BaseArgs with ZkArgs
+

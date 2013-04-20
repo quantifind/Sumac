@@ -7,9 +7,12 @@ import collection.JavaConverters._
 import collection._
 
 /**
- * Add this into args to be able to read & write args from zookeeper
+ * Add this into args to be able to read args from zookeeper.
+ *
+ * Note that it does *NOT* write the arguments back to zookeeper automatically.  This is because in general, zookeeper
+ * would just be used to store some defaults, which you don't want to get overridden all the time.
  */
-trait ZkArgs {
+trait ZkArgs extends ExternalConfig {
   self: Args =>
 
   var zkConn: String = _
@@ -25,11 +28,11 @@ trait ZkArgs {
 
   abstract override def readArgs(originalArgs: Map[String,String]): Map[String,String] = {
     parse(originalArgs, false)
-    println(zkPaths)
-    zkPaths.foldLeft(originalArgs){case(prev, nextPath) =>
+    val newArgs = zkPaths.foldLeft(originalArgs){case(prev, nextPath) =>
       val zkArgs = ZkArgHelper.getArgsFromZk(zkClient, nextPath)
       ExternalConfigUtil.mapWithDefaults(prev, zkArgs)
     }
+    super.readArgs(newArgs)
   }
 
 }

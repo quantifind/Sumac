@@ -41,7 +41,12 @@ trait CompoundParser[T] extends Parser[T]
 
 object StringParser extends SimpleParser[String] {
   val knownTypes: Set[Class[_]] = Set(classOf[String])
-  def parse(s: String) = s
+  def parse(s: String) = {
+    if(s == Parser.nullString)
+      null
+    else
+      s
+  }
 }
 
 object IntParser extends SimpleParser[Int] {
