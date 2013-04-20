@@ -4,14 +4,13 @@ import org.scalatest.{Tag, FunSuite}
 import com.twitter.conversions.time._
 import org.scalatest.matchers.ShouldMatchers
 import com.twitter.util.JavaTimer
-import com.quantifind.sumac
 import java.io.{FileInputStream, File}
 import java.util.Properties
 
 
 class ZkArgsTest extends FunSuite with ShouldMatchers {
 
-  val runZkTests = true
+  val runZkTests = false
   val zkTestHost = "localhost:2181"
   val zkRootPath = "/ZkArgsTest"
 
