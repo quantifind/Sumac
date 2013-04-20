@@ -6,7 +6,7 @@ object SumacBuild extends Build {
   lazy val zk = Project("zk", file("zk"), settings = zkSettings) dependsOn(core)
 
   def sharedSettings = Defaults.defaultSettings ++ Seq(
-    version := "0.1-SNAPSHOT",
+    version := "0.2-SNAPSHOT",
     scalaVersion := "2.9.1",
     organization := "com.quantifind",
     scalacOptions := Seq(/*"-deprecation",*/ "-unchecked", "-optimize"), // -deprecation is too noisy due to usage of old Hadoop API, enable it once that's no longer an issue
