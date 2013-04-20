@@ -25,8 +25,11 @@ trait ZkArgs {
 
   abstract override def readArgs(originalArgs: Map[String,String]): Map[String,String] = {
     parse(originalArgs, false)
-    val argsInZk = ZkArgHelper.getArgsFromZk(zkClient, zkPaths.head)
-    ExternalConfigUtil.mapWithDefaults(originalArgs, argsInZk)
+    println(zkPaths)
+    zkPaths.foldLeft(originalArgs){case(prev, nextPath) =>
+      val zkArgs = ZkArgHelper.getArgsFromZk(zkClient, nextPath)
+      ExternalConfigUtil.mapWithDefaults(prev, zkArgs)
+    }
   }
 
 }

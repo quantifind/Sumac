@@ -71,13 +71,57 @@ class ZkArgsTest extends FunSuite with ShouldMatchers {
   zkTest("args.loadFromZk"){
     val argsInZk = Map("x" -> "87")
     implicit val timer = new JavaTimer(false)
-    val testPath = zkRootPath + "/loadArgs1"
     val zk = ZkArgHelper.basicZkClient(zkTestHost, 5.seconds)
+    val testPath = zkRootPath + "/loadArgs1"
     ZkArgHelper.saveArgsToZk(zk, testPath, argsInZk)
 
     val args = new MyArgs()
     args.parse(Map("zkConn" -> zkTestHost, "zkPaths" -> testPath))
     args.x should be (87)
+
+    args.parse(Map("zkConn" -> zkTestHost, "zkPaths" -> testPath, "x" -> "5"))
+    args.x should be (5)
+  }
+
+  zkTest("args.loadFromMultipleZk"){
+    val argsInZk1 = Map("x" -> "58")
+    val argsInZk2 = Map("x" -> "19", "ooga" -> "booga")
+    implicit val timer = new JavaTimer(false)
+    val zk = ZkArgHelper.basicZkClient(zkTestHost, 5.seconds)
+    def testPath(id: Int) = zkRootPath + "/loadArgs" + id
+
+    ZkArgHelper.saveArgsToZk(zk, testPath(1), argsInZk1)
+    ZkArgHelper.saveArgsToZk(zk, testPath(2), argsInZk2)
+
+    {
+      val args = new MyArgs()
+      args.parse(Map("zkConn" -> zkTestHost, "zkPaths" -> testPath(1)))
+      args.x should be (58)
+      args.ooga should be (null)
+    }
+
+    {
+      val args = new MyArgs()
+      args.parse(Map("zkConn" -> zkTestHost, "zkPaths" -> testPath(2)))
+      args.x should be (19)
+      args.ooga should be ("booga")
+    }
+
+    //multiple paths -- first path takes precendence
+    {
+      val args = new MyArgs()
+      args.parse(Map("zkConn" -> zkTestHost, "zkPaths" -> (testPath(1) + "," + testPath(2))))
+      args.x should be (58)
+      args.ooga should be ("booga")
+    }
+
+    //reverse the order
+    {
+      val args = new MyArgs()
+      args.parse(Map("zkConn" -> zkTestHost, "zkPaths" -> (testPath(2) + "," + testPath(1))))
+      args.x should be (19)
+      args.ooga should be ("booga")
+    }
   }
 
 }
