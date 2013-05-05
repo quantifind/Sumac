@@ -61,12 +61,23 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
   }
 
   test("error msg on unknown types") {
+    //Note that FieldArgs will simply ignore fields with types that it doesn't support
+    // (contrast with FieldArgsExceptionOnUnparseable below)
     val o = new SpecialTypes("", null) with FieldArgs
-    // originally I had intended this error to be thrown on a call to parse w/ the bad argument, but I guess its OK
-    // to have it thrown on any call to parse
-    val exc = evaluating {o.parse(Array("--name", "blah"))} should produce [ArgException]
-    exc.getMessage should include ("type")
-    exc.getMessage should include ("MyFunkyType")
+
+    //no exception if we only pass the args it knows about
+    o.parse(Array("--name", "blah"))
+    o.name should be ("blah")
+
+    //it will throw an exception if we pass in an argument for a field that it didn't know what to do with
+    val exc = evaluating {o.parse(Array("--funky", ""))} should produce [ArgException]
+    exc.getMessage should include ("unknown option funky")
+
+    //on the other hand, FieldArgsExceptionOnUnparseable will throw an exception no matter what we do
+    val o2 = new SpecialTypes("", null) with FieldArgsExceptionOnUnparseable
+    val exc2 = evaluating {o2.parse(Array("--name", "blah"))} should produce [ArgException]
+    exc2.getMessage should include ("type")
+    exc2.getMessage should include ("MyFunkyType")
   }
 
 
