@@ -35,7 +35,7 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
     val msg = new StringBuilder
     msg.append("usage: \n")
     nameToHolder.foreach { case (k, v) =>
-      msg.append("--%s\t%s\t%s\n\n".format(k, v.getType, v.getDescription))
+      msg.append(v.toString())
     }
     msg.toString
   }
@@ -78,6 +78,13 @@ trait ArgAssignable {
   def getCurrentValue: AnyRef
   def getParser: Parser[_]
   def setValue(value: Any)
+  override def toString() = {
+    var t = "--" + getName + "\t" + getType
+    if (getDescription != getName)
+      t += "\t" + getDescription
+    t += "\t" + getCurrentValue
+    t
+  }
 }
 
 class FieldArgAssignable(val field: Field, val obj: Object, val parser: Parser[_]) extends ArgAssignable {
