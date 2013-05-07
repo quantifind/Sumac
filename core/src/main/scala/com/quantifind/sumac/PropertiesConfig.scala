@@ -28,12 +28,18 @@ trait PropertiesConfig extends ExternalConfig {
   }
 
   abstract override def saveConfig() {
-    val props = new Properties()
-    getStringValues.foreach{case(k,v) => props.put(k,v)}
-    val out = new FileOutputStream(propertyFile)
-    props.store(out, "")
-    out.close()
+    PropertiesConfig.saveConfig(this, propertyFile)
     super.saveConfig()
   }
 
+}
+
+object PropertiesConfig {
+  def saveConfig(args: Args, propertyFile: File) {
+    val props = new Properties()
+    args.getStringValues.foreach{case(k,v) => props.put(k,v)}
+    val out = new FileOutputStream(propertyFile)
+    props.store(out, "")
+    out.close()
+  }
 }
