@@ -25,7 +25,7 @@ object ArgBuilder extends ArgMain[ArgBuilderArgs] {
     promptForArgs(args, in, System.out)
   }
 
-  def promptForArgs(args: Args, input: BufferedReader, out: PrintStream) {
+  private[sumac] def promptForArgs(args: Args, input: BufferedReader, out: PrintStream) {
     out.println("Enter values for each argument.  To skip an argument, enter 2 blank lines. To enter an empty string, enter" +
       "one blank line followed by a line with \"\"")
     var newVals = Map[String,String]()
