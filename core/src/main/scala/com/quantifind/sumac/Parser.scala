@@ -14,6 +14,17 @@ trait Parser[T] {
    * @return
    */
   def canParse(tpe: Type): Boolean
+
+  def valueAsString(currentValue: AnyRef): String = {
+    if (currentValue == null)
+      Parser.nullString
+    else
+      currentValue.toString
+  }
+}
+
+object Parser {
+  val nullString = "<null>"
 }
 
 trait SimpleParser[T] extends Parser[T] {
@@ -30,7 +41,12 @@ trait CompoundParser[T] extends Parser[T]
 
 object StringParser extends SimpleParser[String] {
   val knownTypes: Set[Class[_]] = Set(classOf[String])
-  def parse(s: String) = s
+  def parse(s: String) = {
+    if(s == Parser.nullString)
+      null
+    else
+      s
+  }
 }
 
 object IntParser extends SimpleParser[Int] {

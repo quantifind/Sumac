@@ -61,16 +61,23 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
   }
 
   test("error msg on unknown types") {
+    //Note that FieldArgs will simply ignore fields with types that it doesn't support
+    // (contrast with FieldArgsExceptionOnUnparseable below)
     val o = new SpecialTypes("", null) with FieldArgs
 
-    o.parse(Array("--name", "ooga"))
-    o.name should be ("ooga")
-    o.funky should be (null)
+    //no exception if we only pass the args it knows about
+    o.parse(Array("--name", "blah"))
+    o.name should be ("blah")
 
-    val exc = evaluating {o.parse(Array("--funky", "xyz"))} should produce [ArgException]
-    //maybe sometime I should change the removal of unknown types to keep them around for error msgs ...
-//    exc.cause.getMessage should include ("type")
-//    exc.cause.getMessage should include ("MyFunkyType")
+    //it will throw an exception if we pass in an argument for a field that it didn't know what to do with
+    val exc = evaluating {o.parse(Array("--funky", ""))} should produce [ArgException]
+    exc.getMessage should include ("unknown option funky")
+
+    //on the other hand, FieldArgsExceptionOnUnparseable will throw an exception no matter what we do
+    val o2 = new SpecialTypes("", null) with FieldArgsExceptionOnUnparseable
+    val exc2 = evaluating {o2.parse(Array("--name", "blah"))} should produce [ArgException]
+    exc2.getMessage should include ("type")
+    exc2.getMessage should include ("MyFunkyType")
   }
 
 
@@ -87,6 +94,13 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     val s = new SetArgs(null)
     s.parse(Array("--set", "a,b,c,def"))
     s.set should be (Set("a", "b", "c", "def"))
+  }
+
+  test("help") {
+    val s = new IgnoredArgs()
+    val exc = evaluating {s.parse(Array("--help"))} should produce [ArgException]
+    """unknown option""".r findFirstIn (exc.getMessage) should be ('empty)
+    """\-\-x\s.*[Ii]nt""".r findFirstIn(exc.getMessage) should be ('defined)
   }
 
   test("selectInput") {
@@ -234,6 +248,21 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
 
     c.parser.nameToHolder should not contain key ("y")
   }
+
+  test("getStringValues") {
+    val c = new IgnoredArgs()
+    c.x = 35245
+    c.getStringValues should be (Map("x"-> "35245"))
+
+    val a = new ArgsWithCustomType()
+    a.x = 5
+    a.y = CustomType("blah", 17)
+    a.getStringValues should be (Map(
+      "x" -> "5",
+      "y" -> "blah:17",
+      "z" -> Parser.nullString
+    ))
+  }
 }
 
 
@@ -279,6 +308,10 @@ object CustomTypeParser extends Parser[CustomType] {
   def parse(s: String, tpe: Type, currentVal: AnyRef) = {
     val parts = s.split(":")
     CustomType(parts(0), parts(1).toInt)
+  }
+  override def valueAsString(currentVal: AnyRef) = {
+    val ct = currentVal.asInstanceOf[CustomType]
+    ct.name + ":" + ct.x
   }
 }
 
