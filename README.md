@@ -1,5 +1,3 @@
-[![Build Status](https://secure.travis-ci.org/squito/optional.png?branch=master)](http://travis-ci.org/squito/optional)
-
 **Sumac** is a command line option parser and library.  It tries
 to differentiate itself from other libraries by making it dead
 simple to define arguments, removing boilerplate and repitition.  It
