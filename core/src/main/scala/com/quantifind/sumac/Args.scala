@@ -3,9 +3,9 @@ package com.quantifind.sumac
 import collection._
 
 trait Args extends ExternalConfig {
-  def getArgs: Traversable[ArgAssignable]
+  def getArgs(argPrefix:String): Traversable[ArgAssignable]
 
-  lazy val parser = ArgumentParser(getArgs)
+  lazy val parser = ArgumentParser(getArgs(""))
   @Ignore
   var validationFunctions: Seq[() => Unit] = Seq()
 
@@ -56,7 +56,7 @@ trait Args extends ExternalConfig {
    * In general, users will not need this function, but it is useful for tools built on top, eg. saving to a property file
    */
   def getStringValues: Map[String,String] = {
-    getArgs.map{aa => aa.getName -> aa.getParser.valueAsString(aa.getCurrentValue)}.toMap
+    getArgs("").map{aa => aa.getName -> aa.getParser.valueAsString(aa.getCurrentValue)}.toMap
   }
 
   def addValidation(f:  => Unit) {

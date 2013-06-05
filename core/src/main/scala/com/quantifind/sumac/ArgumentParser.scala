@@ -35,7 +35,7 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
     val msg = new StringBuilder
     msg.append("usage: \n")
     nameToHolder.foreach { case (k, v) =>
-      msg.append(v.toString())
+      msg.append(v.toString() + "\n")
     }
     msg.toString
   }
@@ -87,14 +87,16 @@ trait ArgAssignable {
   }
 }
 
-class FieldArgAssignable(val field: Field, val obj: Object, val parser: Parser[_]) extends ArgAssignable {
+class FieldArgAssignable(val prefix: String, val field: Field, val obj: Object, val parser: Parser[_]) extends ArgAssignable {
   field.setAccessible(true)
   val annotationOpt = Option(field.getAnnotation(classOf[Arg]))
   def getParser = parser
 
   def getName = {
-    val n = annotationOpt.map(_.name).getOrElse(field.getName)
-    if (n == "") field.getName else n
+    prefix + {
+      val n = annotationOpt.map(_.name).getOrElse(field.getName)
+      if (n == "") field.getName else n
+    }
   }
 
   def getDescription = {
@@ -111,12 +113,12 @@ class FieldArgAssignable(val field: Field, val obj: Object, val parser: Parser[_
 }
 
 object FieldArgAssignable{
-  def apply(field: Field, obj: Object): FieldArgAssignable = {
+  def apply(argPrefix: String, field: Field, obj: Object): FieldArgAssignable = {
     val tpe = field.getGenericType
     val parser = ParseHelper.findParser(tpe) getOrElse {
       throw new ArgException("don't know how to parse type: " + tpe)
     }
-    new FieldArgAssignable(field, obj, parser)
+    new FieldArgAssignable(argPrefix, field, obj, parser)
   }
 }
 

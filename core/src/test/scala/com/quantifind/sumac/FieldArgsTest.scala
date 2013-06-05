@@ -263,6 +263,28 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
       "z" -> Parser.nullString
     ))
   }
+
+  test("nested args") {
+    val args = new NestedArgs()
+    val origFirstSet = args.firstSet
+    //basic parsing of top level args
+    args.parse(Map("x" -> "3"))
+    args.x should be (3)
+    //inner args should not be null, and also should *not* take values from unqualified names
+    args.firstSet should not be (null)
+    args.secondSet should not be (null)
+    args.firstSet.x should be (0)
+    args.secondSet.x should be (0)
+    (args.firstSet eq origFirstSet) should be (true)  //if a nested arg is not null, don't replace it with a new object
+
+
+    //now lets actually parse some nested args
+    args.parse(Map("x" -> "91", "firstSet.x" -> "-32", "secondSet.x" -> "11"))
+    args.x should be (91)
+    args.firstSet.x should be (-32)
+    args.secondSet.x should be (11)
+  }
+
 }
 
 
@@ -351,4 +373,12 @@ class IgnoredArgs extends FieldArgs {
   var x: Int = _
   @Ignore
   var y: Int = _
+}
+
+
+class NestedArgs extends FieldArgs {
+  var firstSet = new SomeArgs()
+  var secondSet: SomeArgs = _
+  var x: Int = 7
+  var z: Float = _
 }

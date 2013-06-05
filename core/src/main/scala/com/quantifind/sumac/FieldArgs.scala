@@ -8,14 +8,30 @@ import java.lang.reflect.Field
  * know how to parse.
  */
 trait FieldArgs extends Args {
-  override def getArgs = ReflectionUtils.getAllDeclaredFields(getClass) collect {
-    case f if (isValidField(f)) => FieldArgAssignable(f, this)
+  override def getArgs(argPrefix:String) = {
+    val args: Seq[Seq[ArgAssignable]] = ReflectionUtils.getAllDeclaredFields(getClass) collect {
+      case f: Field if (isValidField(f)) => Seq(FieldArgAssignable(argPrefix, f, this))
+      case nested: Field if (isNestedArgField(nested)) =>
+        nested.setAccessible(true)
+        val v = Option(nested.get(this)).getOrElse{
+          val t = nested.getType.newInstance()
+          nested.set(this, t)
+          t
+        }
+        val subArgs: Seq[ArgAssignable] = v.asInstanceOf[Args].getArgs(argPrefix + nested.getName + ".").toSeq
+        subArgs
+    }
+    args.flatten
   }
 
   def isSumacHelperField(f: Field): Boolean = f.getName == "parser" || f.getName == "bitmap$0"
 
   def isValidField(f: Field): Boolean = {
     ParseHelper.findParser(f.getType).isDefined && !isSumacHelperField(f) && hasSetter(f) && !f.isAnnotationPresent(classOf[Ignore])
+  }
+
+  def isNestedArgField(f: Field): Boolean = {
+    classOf[Args].isAssignableFrom(f.getType)
   }
 
   def hasSetter(f: Field): Boolean = {

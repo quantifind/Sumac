@@ -29,7 +29,7 @@ object ArgBuilder extends ArgMain[ArgBuilderArgs] {
     out.println("Enter values for each argument.  To skip an argument, enter 2 blank lines. To enter an empty string, enter" +
       "one blank line followed by a line with \"\"")
     var newVals = Map[String,String]()
-    args.getArgs.foreach{aa =>
+    args.getArgs("").foreach{aa =>
       out.println(aa)
       val line = input.readLine()
       if (line == "") {
