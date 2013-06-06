@@ -79,7 +79,8 @@ object SumacBuild extends Build {
       "Twitter Repo" at "http://maven.twttr.com/"
     ),
     libraryDependencies ++= Seq(
-      "com.twitter"   % "util-zk"   % "5.3.10"
+      "com.twitter"   % "util-zk"   % "5.3.10",
+      "com.typesafe" % "config" % "1.0.1"
     )
   )
 }
