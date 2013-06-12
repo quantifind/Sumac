@@ -41,6 +41,23 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     o.name should be ("bugaloo")
     o.flag should be (true)
   }
+  
+  test("parseOptions") {
+    val o = new ArgsWithOptions()
+    
+    // check default behavior 
+    o.parse(Array[String]())    
+    o.optStringNone should be (None: Option[String])
+    o.optStringSome should be (Some("ooga"))
+    o.optListStringNone should be (None: Option[List[String]])
+    o.optListStringSome should be (Some(List("abc", "def", "ghi")))
+
+    o.parse(Array("--optStringSome", "foo", "--optListStringSome", "x,y,zzz"))
+    o.optStringNone should be (None: Option[String])
+    o.optStringSome should be (Some("foo"))
+    o.optListStringNone should be (None: Option[List[String]])
+    o.optListStringSome should be (Some(List("x", "y", "zzz")))
+  }
 
   test("help message") {
     val o = new StringHolder(null, null) with FieldArgs
@@ -381,4 +398,11 @@ class NestedArgs extends FieldArgs {
   var secondSet: SomeArgs = _
   var x: Int = 7
   var z: Float = _
+}
+
+class ArgsWithOptions extends FieldArgs {
+  var optStringNone: Option[String] = None
+  var optStringSome: Option[String] = Some("ooga")
+  var optListStringNone: Option[List[String]] = None
+  var optListStringSome: Option[List[String]] = Some(List("abc", "def", "ghi"))
 }
