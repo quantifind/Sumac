@@ -30,6 +30,15 @@ class ParserTest extends FunSuite with ShouldMatchers {
     val parsed = ParseHelper.parseInto("a,b,cdef,g", field.getGenericType, "dummy")
     parsed should be (Some(ValueHolder(List("a", "b", "cdef", "g"), field.getGenericType)))
   }
+  
+  test("OptionParser") {
+    //Doesn't work with primitive types, same problem as ListParser?
+    OptionParser.parse("foo", classOf[ContainerOption].getDeclaredField("string").getGenericType, null) should be (Some("foo"): Option[String])
+    OptionParser.parse(null, classOf[ContainerOption].getDeclaredField("string").getGenericType, null) should be (None: Option[String])
+    OptionParser.parse(Parser.nullString, classOf[ContainerOption].getDeclaredField("string").getGenericType, null) should be (None: Option[String])
+
+    OptionParser.parse("a,b,cdef,g", classOf[ContainerOption].getDeclaredField("listOfString").getGenericType, null) should be (Some(List("a", "b", "cdef", "g")): Option[List[String]])
+  }
 
   test("ParseHelper") {
     ParseHelper.parseInto("ooga", classOf[String], "dummy") should be (Some(ValueHolder("ooga", classOf[String])))
@@ -44,3 +53,5 @@ class RandomUnknownClass
 
 
 class ContainerA(val title: String, val count: Int, val boundaries: List[String])
+
+class ContainerOption(val string: Option[String], val listOfString: Option[List[String]])
