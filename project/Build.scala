@@ -7,7 +7,7 @@ object SumacBuild extends Build {
 
   def sharedSettings = Defaults.defaultSettings ++ Seq(
     version := "0.2-SNAPSHOT",
-    scalaVersion := "2.9.3",
+    scalaVersion := "2.10.2",
     organization := "com.quantifind",
     scalacOptions := Seq("-deprecation", "-unchecked", "-optimize"), 
     unmanagedJars in Compile <<= baseDirectory map { base => (base / "lib" ** "*.jar").classpath },
@@ -20,7 +20,7 @@ object SumacBuild extends Build {
       "JBoss Repository" at "http://repository.jboss.org/nexus/content/repositories/releases/"
     ),
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "1.9.1" % "test"
+      "org.scalatest" % "scalatest_2.10" % "1.9.1" % "test"
     ),
 
     // Publishing configuration
