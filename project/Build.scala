@@ -20,7 +20,8 @@ object SumacBuild extends Build {
       "JBoss Repository" at "http://repository.jboss.org/nexus/content/repositories/releases/"
     ),
     libraryDependencies ++= Seq(
-      "org.scalatest" % "scalatest_2.10" % "1.9.1" % "test"
+      "org.scalatest" % "scalatest_2.10" % "1.9.1" % "test",
+      "org.scala-lang" % "scala-reflect" % "2.10.2"
     ),
 
     // Publishing configuration
