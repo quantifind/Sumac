@@ -2,11 +2,13 @@ package com.quantifind.sumac
 
 import collection._
 
-trait Args extends ExternalConfig {
+trait Args extends ExternalConfig with Serializable {
   def getArgs(argPrefix:String): Traversable[ArgAssignable]
 
+  @transient
   lazy val parser = ArgumentParser(getArgs(""))
   @Ignore
+  @transient
   var validationFunctions: Seq[() => Unit] = Seq()
 
   def parse(args: Array[String]) {
