@@ -4,6 +4,7 @@ import types.{SelectInput,MultiSelectInput}
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import java.lang.reflect.Type
+import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, ByteArrayOutputStream}
 
 /**
  *
@@ -300,6 +301,19 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     args.x should be (91)
     args.firstSet.x should be (-32)
     args.secondSet.x should be (11)
+  }
+
+  test("args are serializable") {
+    val args = new SomeArgs()
+    args.parse(Array("--x", "1", "--y", "test"))
+    val out = new ByteArrayOutputStream()
+    new ObjectOutputStream(out).writeObject(args)
+    out.close()
+    val in = new ByteArrayInputStream(out.toByteArray)
+    val deserializedArgs = new ObjectInputStream(in).readObject().asInstanceOf[SomeArgs]
+    in.close()
+    deserializedArgs.x should be (1)
+    deserializedArgs.y should be ("test")
   }
 
 }
