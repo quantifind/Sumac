@@ -5,6 +5,16 @@ import collection._
 trait Args extends ExternalConfig with Serializable {
   def getArgs(argPrefix:String): Traversable[ArgAssignable]
 
+  /**
+   * Returns the "default" values for the arguments of this class.  Unrelated to the current
+   * value of those arguments.  Unless overridden, "default" means whatever values are assigned
+   * by the no-arg constructor of this class.
+   * @return
+   */
+  def getDefaultArgs: Traversable[ArgAssignable] = {
+    this.getClass().newInstance().getArgs("")
+  }
+
   @transient
   lazy val parser = ArgumentParser(getArgs(""))
   @Ignore

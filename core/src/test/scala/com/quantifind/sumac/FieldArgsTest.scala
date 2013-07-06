@@ -316,6 +316,32 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     deserializedArgs.y should be ("test")
   }
 
+  test("getDefaultValues") {
+
+    {
+      //args w/ explicit defaults
+      val args = new SomeArgs()
+      args.x = 17
+      args.y = "blah"
+
+      val defaultArgs = args.getDefaultArgs.map{a => a.getName -> a}.toMap
+      defaultArgs("x").getCurrentValue should be (0)
+      defaultArgs("y").getCurrentValue should be ("hello")
+    }
+
+    {
+      //args w/ java default values
+      val args2 = new ArgsWithValidation()
+      args2.x = 98
+      args2.y = "ooga"
+      args2.z = 3.9
+      val defaultArgs2 = args2.getDefaultArgs.map{a => a.getName -> a}.toMap
+      defaultArgs2("x").getCurrentValue should be (0)
+      defaultArgs2("y").getCurrentValue should be (null)
+      defaultArgs2("z").getCurrentValue should be (0.0)
+    }
+  }
+
 }
 
 
