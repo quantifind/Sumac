@@ -3,7 +3,9 @@ package com.quantifind.sumac
 import collection._
 
 trait Args extends ExternalConfig with Serializable {
-  def getArgs(argPrefix:String): Traversable[ArgAssignable]
+  def getArgs(argPrefix:String): Traversable[ArgAssignable] = getArgs(argPrefix, false)
+
+  private[sumac] def getArgs(argPrefix: String, gettingDefaults: Boolean): Traversable[ArgAssignable]
 
   /**
    * Returns the "default" values for the arguments of this class.  Unrelated to the current
@@ -12,7 +14,11 @@ trait Args extends ExternalConfig with Serializable {
    * @return
    */
   def getDefaultArgs: Traversable[ArgAssignable] = {
-    this.getClass().newInstance().getArgs("")
+    try {
+      this.getClass().newInstance().getArgs("", true)
+    } catch {
+      case ie: InstantiationException => Traversable()  //nothing else we can do in this case, really
+    }
   }
 
   @transient
