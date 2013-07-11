@@ -1,6 +1,9 @@
 package com.quantifind.sumac
 
 import java.lang.reflect.Field
+import java.lang.annotation.Annotation
+import scala.collection._
+import com.quantifind.sumac.validation._
 
 /**
  * Mix this trait into any class that you want to turn into an "argument holder".  It will automatically
@@ -8,9 +11,13 @@ import java.lang.reflect.Field
  * know how to parse.
  */
 trait FieldArgs extends Args {
-  override def getArgs(argPrefix:String) = {
+  private[sumac] override def getArgs(argPrefix:String, gettingDefaults: Boolean) = {
     val args: Seq[Seq[ArgAssignable]] = ReflectionUtils.getAllDeclaredFields(getClass) collect {
-      case f: Field if (isValidField(f)) => Seq(FieldArgAssignable(argPrefix, f, this))
+      case f: Field if (isValidField(f)) => {
+        val fa = FieldArgAssignable(argPrefix, f, this)
+        if(!gettingDefaults) addAnnotationValidations(fa)
+        Seq(fa)
+      }
       case nested: Field if (isNestedArgField(nested)) =>
         nested.setAccessible(true)
         val v = Option(nested.get(this)).getOrElse{
@@ -18,7 +25,7 @@ trait FieldArgs extends Args {
           nested.set(this, t)
           t
         }
-        val subArgs: Seq[ArgAssignable] = v.asInstanceOf[Args].getArgs(argPrefix + nested.getName + ".").toSeq
+        val subArgs: Seq[ArgAssignable] = v.asInstanceOf[Args].getArgs(argPrefix + nested.getName + ".", gettingDefaults).toSeq
         subArgs
     }
     args.flatten
@@ -38,6 +45,58 @@ trait FieldArgs extends Args {
     //all fields in scala are private -- this is a way of checking if it has any public setter
     f.getDeclaringClass.getMethods.exists{_.getName() == f.getName + "_$eq"}
   }
+
+  private[sumac] def addAnnotationValidations(f: FieldArgAssignable) {
+    val defaultVals = getDefaultArgs.map{a => a.getName -> a}.toMap
+    //Q: do inherited annotations mean anything on a field?  does it matter if I use getAnnotations vs getDeclaredAnnotations?
+    f.field.getAnnotations.foreach { annot =>
+      annotationValidationFunctions.get(annot.annotationType()).foreach{func =>
+        val default = defaultVals(f.getName).getCurrentValue
+        validationFunctions +:= new AnnotationValidationFunction(f, default, annot, func)
+      }
+    }
+  }
+
+  //just for debugging, nice to have a toString on this
+  private class AnnotationValidationFunction(
+    field: FieldArgAssignable,
+    default: Any,
+    annot: Annotation,
+    check: (Any, Any, Annotation, String) => Unit
+  ) extends (() => Unit) {
+    def apply() {
+      check(default, field.getCurrentValue, annot, field.getName)
+    }
+    override def toString() = "annotation check of " + field.getName
+  }
+
+  @transient
+  private[sumac] val annotationValidationFunctions = mutable.Map[Class[_ <: Annotation], (Any,Any, Annotation, String) => Unit]()
+
+
+  /**
+   * Use this function to make an annotation automatically imply a validation function.  This registers the annotation
+   * with *this* instance, so that any use of the annotation automatically adds the validation function on the field.
+   *
+   * In general, if you create user-defined annotation validation functions, you will want to call this in a base trait,
+   * which all your arg classes extend, so you can use those annotations anywhere.
+   *
+   * @param annotation the class of the annotation to add a validation function to
+   * @param validationFunction the function that will be called to validate every field marked w/ the annotation.  The
+   *                           first argument is the default value of the argument, the second is the current value,
+   *                           the third is the annotation, and the fourth is the name of the argument (for error msgs).
+   */
+  def registerAnnotationValidation(annotation: Class[_ <: Annotation])(validationFunction: (Any,Any, Annotation, String) => Unit) {
+    annotationValidationFunctions += annotation -> validationFunction
+  }
+
+  {
+    //some built-in annotation validations
+    registerAnnotationValidation(classOf[Required])(RequiredCheck)
+    registerAnnotationValidation(classOf[Positive])(PositiveCheck)
+    registerAnnotationValidation(classOf[Range])(RangeCheck)
+  }
+
 }
 
 /**
