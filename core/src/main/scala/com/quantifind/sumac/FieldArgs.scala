@@ -52,7 +52,7 @@ trait FieldArgs extends Args {
     f.field.getAnnotations.foreach { annot =>
       annotationValidationFunctions.get(annot.annotationType()).foreach{func =>
         val default = defaultVals(f.getName).getCurrentValue
-        validationFunctions +:= new AnnotationValidationFunction(f, default, func)
+        validationFunctions +:= new AnnotationValidationFunction(f, default, annot, func)
       }
     }
   }
@@ -61,16 +61,17 @@ trait FieldArgs extends Args {
   private class AnnotationValidationFunction(
     field: FieldArgAssignable,
     default: Any,
-    check: (Any, Any, String) => Unit
+    annot: Annotation,
+    check: (Any, Any, Annotation, String) => Unit
   ) extends (() => Unit) {
     def apply() {
-      check(default, field.getCurrentValue, field.getName)
+      check(default, field.getCurrentValue, annot, field.getName)
     }
     override def toString() = "annotation check of " + field.getName
   }
 
   @transient
-  private[sumac] val annotationValidationFunctions = mutable.Map[Class[_ <: Annotation], (Any,Any, String) => Unit]()
+  private[sumac] val annotationValidationFunctions = mutable.Map[Class[_ <: Annotation], (Any,Any, Annotation, String) => Unit]()
 
 
   /**
@@ -82,10 +83,10 @@ trait FieldArgs extends Args {
    *
    * @param annotation the class of the annotation to add a validation function to
    * @param validationFunction the function that will be called to validate every field marked w/ the annotation.  The
-   *                           first argument is the default value of the argument, the second is the current value, and
-   *                           the third is the name of the argument (for error msgs).
+   *                           first argument is the default value of the argument, the second is the current value,
+   *                           the third is the annotation, and the fourth is the name of the argument (for error msgs).
    */
-  def registerAnnotationValidation(annotation: Class[_ <: Annotation])(validationFunction: (Any,Any, String) => Unit) {
+  def registerAnnotationValidation(annotation: Class[_ <: Annotation])(validationFunction: (Any,Any, Annotation, String) => Unit) {
     annotationValidationFunctions += annotation -> validationFunction
   }
 
@@ -93,6 +94,7 @@ trait FieldArgs extends Args {
     //some built-in annotation validations
     registerAnnotationValidation(classOf[Required])(RequiredCheck)
     registerAnnotationValidation(classOf[Positive])(PositiveCheck)
+    registerAnnotationValidation(classOf[Range])(RangeCheck)
   }
 
 }

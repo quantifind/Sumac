@@ -2,7 +2,7 @@ package com.quantifind.sumac
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import com.quantifind.sumac.validation.{Positive, Required}
+import com.quantifind.sumac.validation.{Positive, Required, Range}
 
 class ValidationSuite extends FunSuite with ShouldMatchers {
 
@@ -60,6 +60,26 @@ class ValidationSuite extends FunSuite with ShouldMatchers {
     a.c should be (7.9f)
   }
 
+  test("@Range") {
+    def parseR(args: Map[String,String], msg: String) {
+      parse(args, msg) {new RangeArgs()}
+    }
+
+    val msgX = "must specify a value between 3.0 and 8.0 for x"
+    parseR(Map("y" -> "-80"), msgX)
+    parseR(Map("x"->"1", "y" -> "-80"), msgX)
+    parseR(Map("x" -> "9", "y" -> "-80"), msgX)
+    val msgY = "must specify a value between -83.0 and -72.0 for y"
+    parseR(Map("x" -> "5"), msgY)
+    parseR(Map("x" -> "5", "y" -> "5"), msgY)
+    parseR(Map("x" -> "5", "y" -> "-90"), msgY)
+
+    val a = new RangeArgs()
+    a.parse(Map("x"->"4", "y" -> "-77"))
+    a.x should be (4)
+    a.y should be (-77)
+  }
+
   test("user-defined") {
     //silly example of user-defined annotation validations
     parse(Map("x" -> "7"), "x must be 3 or 4"){new UserDefinedAnnotationArgs()}
@@ -107,6 +127,13 @@ class PositiveArgs extends FieldArgs {
   var d: Float = _
 }
 
+class RangeArgs extends FieldArgs {
+  @Range(min=3,max=8)
+  var x: Int = _
+  @Range(min= -83, max= -72)
+  var y: Float = _
+}
+
 
 class MultiAnnotationArgs extends FieldArgs {
   @Positive @Required
@@ -117,7 +144,7 @@ class UserDefinedAnnotationArgs extends FieldArgs {
   @ThreeOrFour
   var x: Int = _
 
-  registerAnnotationValidation(classOf[ThreeOrFour]){(_, value, name) =>
+  registerAnnotationValidation(classOf[ThreeOrFour]){(_, value, _, name) =>
     if (value != 3 && value != 4) {
       throw new ArgException(name + " must be 3 or 4")
     }
