@@ -3,7 +3,23 @@ package com.quantifind.sumac
 import collection._
 
 trait Args extends ExternalConfig with Serializable {
-  def getArgs(argPrefix:String): Traversable[ArgAssignable]
+  def getArgs(argPrefix:String): Traversable[ArgAssignable] = getArgs(argPrefix, false)
+
+  private[sumac] def getArgs(argPrefix: String, gettingDefaults: Boolean): Traversable[ArgAssignable]
+
+  /**
+   * Returns the "default" values for the arguments of this class.  Unrelated to the current
+   * value of those arguments.  Unless overridden, "default" means whatever values are assigned
+   * by the no-arg constructor of this class.
+   * @return
+   */
+  def getDefaultArgs: Traversable[ArgAssignable] = {
+    try {
+      this.getClass().newInstance().getArgs("", true)
+    } catch {
+      case ie: InstantiationException => Traversable()  //nothing else we can do in this case, really
+    }
+  }
 
   @transient
   lazy val parser = ArgumentParser(getArgs(""))
