@@ -62,7 +62,6 @@ object ZkArgHelper {
   }
 
   def saveArgsToZk(zkClient: ZkClient, path: String, args: Map[String,String])(implicit timer: Timer) {
-    implicit val timer = new JavaTimer(false)
     val node = zkClient.apply(path)
     //first, remove this node, to clear any properties previously set
     if (nodeExists(node))
