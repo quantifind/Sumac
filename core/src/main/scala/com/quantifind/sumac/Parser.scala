@@ -4,6 +4,7 @@ import types.{SelectInput,MultiSelectInput}
 import java.lang.reflect.{Type, ParameterizedType}
 import util.matching.Regex
 import java.io.File
+import scala.concurrent.duration.Duration
 
 trait Parser[T] {
   def parse(s: String, tpe: Type, currentValue: AnyRef): T
@@ -46,6 +47,18 @@ object StringParser extends SimpleParser[String] {
       null
     else
       s
+  }
+}
+
+/**
+ * parse a duration, the format should be with a point between the number and the unit:
+ * e.g.:   10.seconds
+ *         20.minutes
+ */
+object DurationParser extends SimpleParser[Duration] {
+  val knownTypes: Set[Class[_]] = Set(classOf[Duration])
+  def parse(s: String) = {
+    Duration(s.replace('.', ' '))
   }
 }
 
