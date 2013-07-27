@@ -54,8 +54,8 @@ trait ArgApp[T <: FieldArgs] extends Argable[T] with App {
 //below is just for testing, but want it in compiled classes ...
 
 class MyArgs extends FieldArgs {
-  val a: String = ""
-  val b: Int = 0
+  var a: String = ""
+  var b: Int = 0
 }
 
 object MyMain extends ArgMain[MyArgs] {
