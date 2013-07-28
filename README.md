@@ -1,6 +1,6 @@
 **Sumac** is a command line option parser and library.  It tries
 to differentiate itself from other libraries by making it dead
-simple to define arguments, removing boilerplate and repitition.  It
+simple to define arguments, removing boilerplate and repetition.  It
 is a very small, lightweight scala library.
 
 ## Usage
@@ -10,8 +10,8 @@ becomes a command line argument with the same name.  Then use `parse()` to proce
 
     import com.quantifind.sumac.FieldArgs
 
-    class Arguments with FieldArgs {
-      var name: String = _
+    class Arguments extends FieldArgs {
+      var name: Option[String] = None
       var count: Int = _
     }
 
@@ -35,7 +35,7 @@ if you extend `ArgMain`
 
     import com.quantifind.sumac.{ArgMain, FieldArgs}
 
-    class Arguments with FieldArgs {
+    class Arguments extends FieldArgs {
       var name: String = _
       var count: Int = _
     }
