@@ -20,6 +20,9 @@ class ParserTest extends FunSuite with ShouldMatchers {
     FileParser.parse("~/foo") should be (new java.io.File(homeDir, "foo"))
     val cwd = System.getProperty("user.dir")
     FileParser.parse("ooga").getAbsolutePath should be (new java.io.File(cwd, "ooga").getAbsolutePath)
+    import scala.concurrent.duration._
+    DurationParser.parse("10.seconds") should be (10 seconds)
+    DurationParser.parse("10.minutes") should be (10 minutes)
   }
 
   test("ListParser") {
