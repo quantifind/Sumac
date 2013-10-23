@@ -7,7 +7,7 @@ object SumacBuild extends Build {
 
   def sharedSettings = Defaults.defaultSettings ++ Seq(
     version := "0.2-SNAPSHOT",
-    scalaVersion := "2.9.3",
+    scalaVersion := "2.10.3",
     organization := "com.quantifind",
     scalacOptions := Seq("-deprecation", "-unchecked", "-optimize"), 
     unmanagedJars in Compile <<= baseDirectory map { base => (base / "lib" ** "*.jar").classpath },
@@ -79,7 +79,7 @@ object SumacBuild extends Build {
       "Twitter Repo" at "http://maven.twttr.com/"
     ),
     libraryDependencies ++= Seq(
-      "com.twitter"   % "util-zk"   % "5.3.10"
+      "com.twitter"   %% "util-zk"   % "6.5.0"
     )
   )
 }

@@ -34,7 +34,9 @@ trait FieldArgs extends Args {
   def isSumacHelperField(f: Field): Boolean = f.getName == "parser" || f.getName == "bitmap$0"
 
   def isValidField(f: Field): Boolean = {
-    ParseHelper.findParser(f.getType).isDefined && !isSumacHelperField(f) && hasSetter(f) && !f.isAnnotationPresent(classOf[Ignore])
+    ParseHelper.findParser(f.getType).isDefined && !isSumacHelperField(f) && hasSetter(f) &&
+      !f.isAnnotationPresent(classOf[Ignore]) &&
+      !f.getName().contains("$")  //this is hack for 2.10, as a way to detect private vars that are added via traits
   }
 
   def isNestedArgField(f: Field): Boolean = {

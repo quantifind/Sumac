@@ -248,6 +248,15 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     c.x should be (7)
 
     c.parser.nameToHolder should not contain key ("q")
+    c.parser.nameToHolder.size should be (1)
+
+    val a = new ArgsWithMorePrivate
+    a.parse(Array("--x", "7", "--y", "-5.4"))
+    a.x should be (7)
+    a.y should be (-5.4f)
+    a.parser.nameToHolder.size should be (2)
+    a.parser.nameToHolder should not contain key ("q")
+    a.parser.nameToHolder should not contain key ("o")
   }
 
   test("vals ignored") {
@@ -419,6 +428,17 @@ class ArgsWithValidation extends FieldArgs {
 class ArgsWithPrivateFields extends FieldArgs {
   var x: Int = _
   private var q: Int = _
+}
+
+
+trait TraitWithPrivateStuff extends FieldArgs {
+  var x: Int = _
+  private var q: Int = _
+  private var o: Option[String] = None
+}
+
+class ArgsWithMorePrivate extends TraitWithPrivateStuff {
+  var y: Float = _
 }
 
 class ArgsWithVals extends FieldArgs {
