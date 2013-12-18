@@ -3,11 +3,11 @@ import Keys._
 
 object SumacBuild extends Build {
   lazy val core = Project("core", file("core"), settings = coreSettings)
-  lazy val zk = Project("zk", file("zk"), settings = zkSettings) dependsOn(core)
+  lazy val zk = Project("ext", file("ext"), settings = extSettings) dependsOn(core)
 
   def sharedSettings = Defaults.defaultSettings ++ Seq(
-    version := "0.2-SNAPSHOT",
-    scalaVersion := "2.9.3",
+    version := "0.3-SNAPSHOT",
+    scalaVersion := "2.10.3",
     organization := "com.quantifind",
     scalacOptions := Seq("-deprecation", "-unchecked", "-optimize"), 
     unmanagedJars in Compile <<= baseDirectory map { base => (base / "lib" ** "*.jar").classpath },
@@ -73,7 +73,7 @@ object SumacBuild extends Build {
     name := "Sumac"
   )
   
-  def zkSettings = sharedSettings ++ Seq(
+  def extSettings = sharedSettings ++ Seq(
     name := "Sumac-zk",
     resolvers ++= Seq(
       "Twitter Repo" at "http://maven.twttr.com/"
