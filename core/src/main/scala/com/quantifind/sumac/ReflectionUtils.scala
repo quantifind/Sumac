@@ -53,4 +53,36 @@ object ReflectionUtils {
   def getTerms(typ: ru.Type): Traversable[ru.TermSymbol] = {
     typ.members.collect{case x if x.isTerm => x.asTerm}
   }
+
+  def getVariableTerms(typ: ru.Type): Traversable[ru.TermSymbol] = {
+    getTerms(typ).filter{x =>
+      x.isCaseAccessor || x.isVal || x.isVar
+    }
+  }
+
+  def extractGetterSetterPairs(typ: ru.Type): Traversable[GetterSetterPair] = {
+    //scala reflection really pushes us towards just tracking getters & setters
+    val terms = getTerms(typ)
+    terms.filter{x => x.isGetter}.map{x => x -> x.setter}.
+      filter{case(g,s) => s.isTerm}.map{case(g,s) => GetterSetterPair(g,s.asTerm)}
+  }
+
+  def termName(t: ru.TermSymbol): String = {
+    t.name.toString.trim
+  }
+
+}
+
+case class GetterSetterPair(getter: ru.TermSymbol, setter: ru.TermSymbol) {
+  val name = ReflectionUtils.termName(getter)
+
+  val fieldType = {
+    //this is way more complicated than it should be. But
+    // 1) getters for some reason are not instances of ru.MethodType
+    //        java.lang.ClassCastException: scala.reflect.internal.Types$NullaryMethodType cannot be cast to scala.reflect.api.Types$MethodTypeApi
+    // 2) its a headache to get the types out of setters
+    val m = setter.typeSignature.
+      asInstanceOf[ru.MethodType]
+    m.params.head.typeSignature
+  }
 }
