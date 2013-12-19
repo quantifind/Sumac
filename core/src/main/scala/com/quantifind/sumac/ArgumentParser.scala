@@ -1,9 +1,9 @@
 package com.quantifind.sumac
 
 import scala.annotation.tailrec
-import java.lang.reflect.{Type, Field}
 import collection.mutable.LinkedHashMap
 import collection._
+import scala.reflect.runtime.{universe => ru}
 
 class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
   lazy val nameToHolder:Map[String,T] = (LinkedHashMap.empty ++ argHolders.map(a => a.getName -> a)).withDefault { arg =>
@@ -74,8 +74,8 @@ object ArgumentParser {
 trait ArgAssignable {
   def getName: String
   def getDescription: String
-  def getType: Type
-  def getCurrentValue: AnyRef
+  def getType: ru.Type
+  def getCurrentValue: Any
   def getParser: Parser[_]
   def setValue(value: Any)
   override def toString() = {
@@ -87,40 +87,46 @@ trait ArgAssignable {
   }
 }
 
-class FieldArgAssignable(val prefix: String, val field: Field, val obj: Object, val parser: Parser[_]) extends ArgAssignable {
-  field.setAccessible(true)
-  val annotationOpt = Option(field.getAnnotation(classOf[Arg]))
+class TermArgAssignable(val prefix: String, val field: ru.TermSymbol, val obj: Object, val parser: Parser[_]) extends ArgAssignable {
+
+  val annotationOpt: Option[Arg] = None  //TODO
   def getParser = parser
+
+  private def fName = field.name.toString.trim  //for some crazy reason, vars have an extra space at the end of their name
 
   def getName = {
     prefix + {
-      val n = annotationOpt.map(_.name).getOrElse(field.getName)
-      if (n == "") field.getName else n
+      val n = annotationOpt.map(_.name).getOrElse(fName)
+      if (n == "") fName else n
     }
   }
 
   def getDescription = {
-    val d = annotationOpt.map(_.description).getOrElse(field.getName)
+    val d = annotationOpt.map(_.description).getOrElse(getName)
     if (d == "") getName else d
   }
 
-  def getType = field.getGenericType
-  def getCurrentValue = field.get(obj)
+  def getType = field.typeSignature
+  val mirror = ru.runtimeMirror(getClass.getClassLoader).reflect(obj).reflectField(field)
+  def getCurrentValue = mirror.get
 
   def setValue(value: Any) = {
-    field.set(obj, value)
+    mirror.set(value)
   }
 }
 
-object FieldArgAssignable{
-  def apply(argPrefix: String, field: Field, obj: Object): FieldArgAssignable = {
-    val tpe = field.getGenericType
+object TermArgAssignable {
+  def apply(prefix: String, field: ru.TermSymbol, obj: Object): TermArgAssignable = {
+    val tpe = field.typeSignature
     val parser = ParseHelper.findParser(tpe) getOrElse {
       throw new ArgException("don't know how to parse type: " + tpe)
     }
-    new FieldArgAssignable(argPrefix, field, obj, parser)
+    val r = new TermArgAssignable(prefix, field, obj, parser)
+    r
   }
 }
+
+
 
 case class ArgException(msg: String, cause: Throwable) extends IllegalArgumentException(msg, cause) {
   def this(msg: String) = this(msg, null)

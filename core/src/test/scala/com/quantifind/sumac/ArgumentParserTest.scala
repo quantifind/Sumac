@@ -3,12 +3,13 @@ package com.quantifind.sumac
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import scala.collection._
+import scala.reflect.runtime.{universe => ru}
 
 class ArgumentParserTest extends FunSuite with ShouldMatchers {
 
   test("parse") {
     val c = SimpleClass("a", 0, 1.4, 2)
-    val fieldArgs = classOf[SimpleClass].getDeclaredFields.map{f => FieldArgAssignable("",f, c)}
+    val fieldArgs = ReflectionUtils.getTerms(ru.typeOf[SimpleClass]).filter{_.isVar}.map{f => TermArgAssignable("",f, c)}.toSeq
     val argParser = new ArgumentParser(fieldArgs)
 
     {
@@ -37,4 +38,4 @@ class ArgumentParserTest extends FunSuite with ShouldMatchers {
 }
 
 
-case class SimpleClass(val name: String, val count: Int, val dummy: Double, val count2: Int)
+case class SimpleClass(var name: String, var count: Int, var dummy: Double, var count2: Int)

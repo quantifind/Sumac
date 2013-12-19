@@ -5,6 +5,7 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import java.lang.reflect.Type
 import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, ByteArrayOutputStream}
+import scala.reflect.runtime.{universe => ru}
 
 /**
  *
@@ -13,7 +14,7 @@ import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, Byt
 class FieldArgsTest extends FunSuite with ShouldMatchers {
 
   test("parseStrings") {
-    val o = new StringHolder(null, null) with FieldArgs
+    val o = new StringHolder(null, null)
     o.parse(Array("--name", "hello"))
     o.name should be ("hello")
     o.parse(Array("--comment", "blah di blah blah"))
@@ -25,7 +26,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
   }
 
   test("parseMixed") {
-    val o = new MixedTypes(null, 0) with FieldArgs
+    val o = new MixedTypes(null, 0)
 
     o.parse(Array("--name", "foo", "--count", "17"))
     o.name should be ("foo")
@@ -36,7 +37,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
   }
 
   test("subclass parsing") {
-    val o = new Child(false, null, 0) with FieldArgs
+    val o = new Child(false, null, 0)
 
     o.parse(Array("--flag", "true", "--name", "bugaloo"))
     o.name should be ("bugaloo")
@@ -337,7 +338,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
       args2.z = 3.9
       val defaultArgs2 = args2.getDefaultArgs.map{a => a.getName -> a}.toMap
       defaultArgs2("x").getCurrentValue should be (0)
-      defaultArgs2("y").getCurrentValue should be (null)
+      defaultArgs2("y").getCurrentValue should be (null.asInstanceOf[Any])
       defaultArgs2("z").getCurrentValue should be (0.0)
     }
   }
@@ -345,9 +346,9 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
 }
 
 
-case class StringHolder(var name: String, var comment: String)
+case class StringHolder(var name: String, var comment: String) extends FieldArgs
 
-case class MixedTypes(var name: String, var count: Int)
+case class MixedTypes(var name: String, var count: Int) extends FieldArgs
 
 //is there an easier way to do this in scala?
 class Child(var flag: Boolean, name: String, count: Int) extends MixedTypes(name, count)
@@ -381,14 +382,14 @@ class ClassWithSomeAnnotations {
 case class CustomType(val name: String, val x: Int)
 
 object CustomTypeParser extends Parser[CustomType] {
-  def canParse(tpe:Type) = {
+  def canParse(tpe:ru.Type) = {
     ParseHelper.checkType(tpe, classOf[CustomType])
   }
-  def parse(s: String, tpe: Type, currentVal: AnyRef) = {
+  def parse(s: String, tpe: ru.Type, currentVal: Any) = {
     val parts = s.split(":")
     CustomType(parts(0), parts(1).toInt)
   }
-  override def valueAsString(currentVal: AnyRef) = {
+  override def valueAsString(currentVal: Any) = {
     val ct = currentVal.asInstanceOf[CustomType]
     ct.name + ":" + ct.x
   }

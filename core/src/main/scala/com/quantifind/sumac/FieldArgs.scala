@@ -1,9 +1,9 @@
 package com.quantifind.sumac
 
-import java.lang.reflect.Field
 import java.lang.annotation.Annotation
 import scala.collection._
 import com.quantifind.sumac.validation._
+import scala.reflect.runtime.{universe => ru}
 
 /**
  * Mix this trait into any class that you want to turn into an "argument holder".  It will automatically
@@ -12,63 +12,74 @@ import com.quantifind.sumac.validation._
  */
 trait FieldArgs extends Args {
   private[sumac] override def getArgs(argPrefix:String, gettingDefaults: Boolean) = {
-    val args: Seq[Seq[ArgAssignable]] = ReflectionUtils.getAllDeclaredFields(getClass) collect {
-      case f: Field if (isValidField(f)) => {
-        val fa = FieldArgAssignable(argPrefix, f, this)
-        if(!gettingDefaults) addAnnotationValidations(fa)
+    val args: Seq[Seq[ArgAssignable]] = getMyTerms.toSeq collect {
+      case f: ru.TermSymbol if (isValidField(f)) => {
+        val fa = TermArgAssignable(argPrefix, f, this)
+//        if(!gettingDefaults) addAnnotationValidations(fa)
         Seq(fa)
       }
-      case nested: Field if (isNestedArgField(nested)) =>
-        nested.setAccessible(true)
-        val v = Option(nested.get(this)).getOrElse{
-          val t = nested.getType.newInstance()
-          nested.set(this, t)
-          t
-        }
-        val subArgs: Seq[ArgAssignable] = v.asInstanceOf[Args].getArgs(argPrefix + nested.getName + ".", gettingDefaults).toSeq
-        subArgs
+      //TODO nesting
+//      case nested: ru.TermSymbol if (isNestedArgField(nested)) =>
+//        val v = Option(nested.get(this)).getOrElse{
+//          val t = nested.getType.newInstance()
+//          nested.set(this, t)
+//          t
+//        }
+//        val subArgs: Seq[ArgAssignable] = v.asInstanceOf[Args].getArgs(argPrefix + nested.getName + ".", gettingDefaults).toSeq
+//        subArgs
     }
     args.flatten
   }
 
-  def isSumacHelperField(f: Field): Boolean = f.getName == "parser" || f.getName == "bitmap$0"
-
-  def isValidField(f: Field): Boolean = {
-    ParseHelper.findParser(f.getType).isDefined && !isSumacHelperField(f) && hasSetter(f) && !f.isAnnotationPresent(classOf[Ignore])
+  def isSumacHelperField(f: ru.TermSymbol): Boolean = f.name.toString == "parser" || f.name.toString == "bitmap$0"
+  private[sumac] def getMyTerms: Traversable[ru.TermSymbol] = {
+    val tpe = ReflectionUtils.getRuntimeType(this)
+    println("getting terms for type: " + tpe)
+    ReflectionUtils.getTerms(tpe)
   }
 
-  def isNestedArgField(f: Field): Boolean = {
-    classOf[Args].isAssignableFrom(f.getType)
-  }
-
-  def hasSetter(f: Field): Boolean = {
-    //all fields in scala are private -- this is a way of checking if it has any public setter
-    f.getDeclaringClass.getMethods.exists{_.getName() == f.getName + "_$eq"}
-  }
-
-  private[sumac] def addAnnotationValidations(f: FieldArgAssignable) {
-    val defaultVals = getDefaultArgs.map{a => a.getName -> a}.toMap
-    //Q: do inherited annotations mean anything on a field?  does it matter if I use getAnnotations vs getDeclaredAnnotations?
-    f.field.getAnnotations.foreach { annot =>
-      annotationValidationFunctions.get(annot.annotationType()).foreach{func =>
-        val default = defaultVals(f.getName).getCurrentValue
-        validationFunctions +:= new AnnotationValidationFunction(f, default, annot, func)
-      }
+  def isValidField(f: ru.TermSymbol): Boolean = {
+    val r = ParseHelper.findParser(f.typeSignature).isDefined && !isSumacHelperField(f) && hasSetter(f) //TODO ignore annotation
+    if (f.name.toString().contains("name")) {
+      println(f + " is valid field  = " + r)
+      println(ParseHelper.findParser(f.typeSignature).isDefined)
+      println(isSumacHelperField(f))
+      println(hasSetter(f))
     }
+    r
   }
 
-  //just for debugging, nice to have a toString on this
-  private class AnnotationValidationFunction(
-    field: FieldArgAssignable,
-    default: Any,
-    annot: Annotation,
-    check: (Any, Any, Annotation, String) => Unit
-  ) extends (() => Unit) {
-    def apply() {
-      check(default, field.getCurrentValue, annot, field.getName)
-    }
-    override def toString() = "annotation check of " + field.getName
+  def isNestedArgField(f: ru.TermSymbol): Boolean = {
+    ru.typeOf[Args] =:= f.typeSignature //TODO wrong, need it to be a bound, not exact
   }
+
+  def hasSetter(f: ru.TermSymbol): Boolean = {
+    f.isVar && (f.isPublic || f.isCaseAccessor)
+  }
+
+//  private[sumac] def addAnnotationValidations(f: FieldArgAssignable) {
+//    val defaultVals = getDefaultArgs.map{a => a.getName -> a}.toMap
+//    //Q: do inherited annotations mean anything on a field?  does it matter if I use getAnnotations vs getDeclaredAnnotations?
+//    f.field.getAnnotations.foreach { annot =>
+//      annotationValidationFunctions.get(annot.annotationType()).foreach{func =>
+//        val default = defaultVals(f.getName).getCurrentValue
+//        validationFunctions +:= new AnnotationValidationFunction(f, default, annot, func)
+//      }
+//    }
+//  }
+//
+//  //just for debugging, nice to have a toString on this
+//  private class AnnotationValidationFunction(
+//    field: FieldArgAssignable,
+//    default: Any,
+//    annot: Annotation,
+//    check: (Any, Any, Annotation, String) => Unit
+//  ) extends (() => Unit) {
+//    def apply() {
+//      check(default, field.getCurrentValue, annot, field.getName)
+//    }
+//    override def toString() = "annotation check of " + field.getName
+//  }
 
   @transient
   private[sumac] val annotationValidationFunctions = mutable.Map[Class[_ <: Annotation], (Any,Any, Annotation, String) => Unit]()
@@ -107,7 +118,7 @@ trait FieldArgs extends Args {
  * shorter name in your projects.
  */
 trait FieldArgsExceptionOnUnparseable extends FieldArgs {
-  override def isValidField(f: Field): Boolean = {
-    !isSumacHelperField(f) && hasSetter(f) && !f.isAnnotationPresent(classOf[Ignore])
+  override def isValidField(f: ru.TermSymbol): Boolean = {
+    !isSumacHelperField(f) && hasSetter(f) //TODO ignore annotation && !f.isAnnotationPresent(classOf[Ignore])
   }
 }
