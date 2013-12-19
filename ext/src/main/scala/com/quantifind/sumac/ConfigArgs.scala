@@ -113,7 +113,9 @@ trait ConfigFromArg extends ConfigArgs {
   /**
    * create the filename of the config file to load based on a command line argument.
    * @param originalArgs the set of (unparsed) command arguments. Use this to search for the value of the
-   *                     command line argument(s) to build the config filename.
+   *                     command line argument(s) to build the config filename. The set of values is unparsed (all strings)
+   *                     and does not contain the defaults.
+   *
    * @return maybe a name of a config file.
    */
   def makeConfigFilename(originalArgs: Map[String, String]): Option[String]

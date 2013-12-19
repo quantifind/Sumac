@@ -89,14 +89,13 @@ class ConfigTest extends FunSuite with ShouldMatchers {
   test("get the name of the config file from another arg") {
     val test = new Test with ConfigFromArg {
 
-      var env: String = "dev"
+      var env: String = _
 
       useDefaultConfig = false
       def makeConfigFilename(originalArgs: Map[String, String]): Option[String] = {
         originalArgs.get("env") match {
           case Some("prod") => Some("application.conf")
-          case Some("dev") => Some("alternate.conf")
-          case _ => None
+          case _ => Some("alternate.conf")
         }
       }
     }
@@ -104,11 +103,11 @@ class ConfigTest extends FunSuite with ShouldMatchers {
 
     test.parse(Array[String]())
 
-    test.arg1 should be (None)
+    test.arg1 should be (Some(3.days)) //use the fallback as nothing is specified
 
     test.parse(Array[String]("--env", "prod"))
 
-    test.arg1 should be (Some(10.seconds))
+    test.arg1 should be (Some(10.seconds)) //use the prod application.conf
 
 
   }
