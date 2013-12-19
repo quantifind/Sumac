@@ -60,10 +60,18 @@ object ReflectionUtils {
     }
   }
 
-  def extractGetterSetterPairs(typ: ru.Type): Traversable[GetterSetterPair] = {
+  def extractGetterSetterPairs(typ: ru.Type): Seq[GetterSetterPair] = {
     //scala reflection really pushes us towards just tracking getters & setters
-    val terms = getTerms(typ)
-    terms.filter{x => x.isGetter}.map{x => x -> x.setter}.
+    // and because of http://stackoverflow.com/questions/20692702/in-scala-reflection-why-do-constructor-params-hide-getters
+    // need to go through all parents
+    typ.baseClasses.foldLeft(Seq[GetterSetterPair]()){case (acc, clsSymb) =>
+      extractGetterSetterPairs(clsSymb.asClass.toType, acc)
+    }
+  }
+
+  private def extractGetterSetterPairs(typ: ru.Type, acc: Seq[GetterSetterPair]): Seq[GetterSetterPair] = {
+    val terms = typ.declarations.collect{case x if x.isTerm => x.asTerm}
+    acc ++ terms.filter{x => x.isGetter}.map{x => x -> x.setter}.
       filter{case(g,s) => s.isTerm}.map{case(g,s) => GetterSetterPair(g,s.asTerm)}
   }
 
