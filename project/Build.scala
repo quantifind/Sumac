@@ -22,6 +22,7 @@ object SumacBuild extends Build {
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "1.9.1" % "test"
     ),
+    parallelExecution in Test := false, //b/c scala reflection is not thread safe (yikes)
 
     // Publishing configuration
 
@@ -70,7 +71,8 @@ object SumacBuild extends Build {
   val slf4jVersion = "1.6.1"
 
   def coreSettings = sharedSettings ++ Seq(
-    name := "Sumac"
+    name := "Sumac",
+    libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _)
   )
   
   def extSettings = sharedSettings ++ Seq(
