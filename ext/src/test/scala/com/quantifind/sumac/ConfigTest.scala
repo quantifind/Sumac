@@ -4,6 +4,7 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
+import scala.collection.Map
 
 /**
  * Test ConfigArgs
@@ -53,8 +54,9 @@ class ConfigTest extends FunSuite with ShouldMatchers {
 
   test("support setter") {
 
-    val test = new Test with ConfigSetter
-    test.config = ConfigFactory.load("alternate.conf")
+    val test = new Test
+    test.useDefaultConfig = false
+    test addConfig "alternate.conf"
 
     test.parse(Array[String]())
 
@@ -63,8 +65,9 @@ class ConfigTest extends FunSuite with ShouldMatchers {
   }
 
   test("use default if nothing is provided") {
-    val test = new TestWithNested with ConfigSetter
-    test.config = ConfigFactory.load("alternate.conf")
+    val test = new TestWithNested
+    test.useDefaultConfig = false
+    test addConfig "alternate.conf"
 
     test.parse(Array[String]())
 
@@ -81,6 +84,33 @@ class ConfigTest extends FunSuite with ShouldMatchers {
       test.parse(Array[String]())
     }
     ex.getMessage should be("test arg1 = Some(10 seconds)")
+  }
+
+  test("get the name of the config file from another arg") {
+    val test = new Test with ConfigFromArg {
+
+      var env: String = "dev"
+
+      useDefaultConfig = false
+      def makeConfigFilename(originalArgs: Map[String, String]): Option[String] = {
+        originalArgs.get("env") match {
+          case Some("prod") => Some("application.conf")
+          case Some("dev") => Some("alternate.conf")
+          case _ => None
+        }
+      }
+    }
+
+
+    test.parse(Array[String]())
+
+    test.arg1 should be (None)
+
+    test.parse(Array[String]("--env", "prod"))
+
+    test.arg1 should be (Some(10.seconds))
+
+
   }
 
 }
