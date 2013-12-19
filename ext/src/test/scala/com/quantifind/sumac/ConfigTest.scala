@@ -45,7 +45,7 @@ class ConfigTest extends FunSuite with ShouldMatchers {
     test.parse(args)
 
     test.arg1 should be("other")
-    test.arg2 should not be(null)
+    test.arg2 should not be (null)
     test.arg2.arg3 should be("arg3")
 
   }
@@ -68,6 +68,18 @@ class ConfigTest extends FunSuite with ShouldMatchers {
     test.parse(Array[String]())
 
     test.arg2.arg3 should be("default")
+  }
+
+  test("validations should be applied on the config value too") {
+    val test = new Test {
+      addValidation {
+        if (arg1.equals("arg1")) throw new IllegalArgumentException(s"test arg1 = '$arg1'")
+      }
+    }
+    val ex = intercept[IllegalArgumentException] {
+      test.parse(Array[String]())
+    }
+    ex.getMessage should be("test arg1 = 'arg1'")
   }
 
 }
