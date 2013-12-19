@@ -5,7 +5,10 @@ import org.scalatest.matchers.ShouldMatchers
 import com.typesafe.config.ConfigFactory
 
 /**
- * TODO DOC
+ * Test ConfigArgs
+ *
+ * there should be an application.conf and alternate.conf in the resources folder
+ *
  * User: andrews
  * Date: 12/18/13
  */
