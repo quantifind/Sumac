@@ -6,7 +6,7 @@ object SumacBuild extends Build {
   lazy val zk = Project("ext", file("ext"), settings = extSettings) dependsOn(core)
 
   def sharedSettings = Defaults.defaultSettings ++ Seq(
-    version := "0.3-SNAPSHOT",
+    version := "0.2-SNAPSHOT",
     scalaVersion := "2.10.3",
     organization := "com.quantifind",
     scalacOptions := Seq("-deprecation", "-unchecked", "-optimize"), 
@@ -74,7 +74,7 @@ object SumacBuild extends Build {
   )
   
   def extSettings = sharedSettings ++ Seq(
-    name := "Sumac-zk",
+    name := "Sumac-ext",
     resolvers ++= Seq(
       "Twitter Repo" at "http://maven.twttr.com/"
     ),
