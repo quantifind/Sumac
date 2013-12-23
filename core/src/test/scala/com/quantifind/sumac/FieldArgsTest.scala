@@ -3,7 +3,6 @@ package com.quantifind.sumac
 import types.{SelectInput,MultiSelectInput}
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import java.lang.reflect.Type
 import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, ByteArrayOutputStream}
 import scala.reflect.runtime.{universe => ru}
 
@@ -42,6 +41,10 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     o.parse(Array("--flag", "true", "--name", "bugaloo"))
     o.name should be ("bugaloo")
     o.flag should be (true)
+  }
+
+  test("multi-trait") {
+    pending
   }
   
   test("parseOptions") {
@@ -105,7 +108,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
 
     val exc1 = evaluating {o.parse(Array("--count", "hi"))} should produce [ArgException]
     //don't actually need the message to look *exactly* like this, but extremely useful for it to at least say what it was trying to parse
-    exc1.getMessage should startWith ("""Error parsing "hi" into field "count" (type = int)""")
+    exc1.getMessage should startWith ("""Error parsing "hi" into field "count" (type = Scala.Int)""")
   }
 
   test("set args") {
@@ -348,7 +351,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
 
 case class StringHolder(var name: String, var comment: String) extends FieldArgs
 
-case class MixedTypes(var name: String, var count: Int) extends FieldArgs
+class MixedTypes(var name: String, var count: Int) extends FieldArgs
 
 //is there an easier way to do this in scala?
 class Child(var flag: Boolean, name: String, count: Int) extends MixedTypes(name, count)

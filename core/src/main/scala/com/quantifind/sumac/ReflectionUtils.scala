@@ -72,7 +72,12 @@ object ReflectionUtils {
   private def extractGetterSetterPairs(typ: ru.Type, acc: Seq[GetterSetterPair]): Seq[GetterSetterPair] = {
     val terms = typ.declarations.collect{case x if x.isTerm => x.asTerm}
     acc ++ terms.filter{x => x.isGetter}.map{x => x -> x.setter}.
-      filter{case(g,s) => s.isTerm}.map{case(g,s) => GetterSetterPair(g,s.asTerm)}
+      filter{case(g,s) => s.isTerm}.map{case(g,s) =>
+        if (g.fullName.contains("validation")) {
+          println("getting validation functions from type : " + typ)
+        }
+        GetterSetterPair(g,s.asTerm)
+      }
   }
 
   def termName(t: ru.TermSymbol): String = {

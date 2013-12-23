@@ -13,7 +13,7 @@ import scala.reflect.runtime.{universe => ru}
 trait FieldArgs extends Args {
   private[sumac] override def getArgs(argPrefix:String, gettingDefaults: Boolean) = {
     val args: Seq[Seq[ArgAssignable]] = getMyTerms.toSeq collect {
-      case f: ru.TermSymbol if (isValidField(f)) => {
+      case f: GetterSetterPair if (isValidField(f)) => {
         val fa = TermArgAssignable(argPrefix, f, this)
 //        if(!gettingDefaults) addAnnotationValidations(fa)
         Seq(fa)
@@ -31,30 +31,19 @@ trait FieldArgs extends Args {
     args.flatten
   }
 
-  def isSumacHelperField(f: ru.TermSymbol): Boolean = f.name.toString == "parser" || f.name.toString == "bitmap$0"
-  private[sumac] def getMyTerms: Traversable[ru.TermSymbol] = {
+  def isSumacHelperField(f: GetterSetterPair): Boolean = f.name == "parser" || f.name == "bitmap$0"
+  private[sumac] def getMyTerms: Traversable[GetterSetterPair] = {
     val tpe = ReflectionUtils.getRuntimeType(this)
-    println("getting terms for type: " + tpe)
-    ReflectionUtils.getTerms(tpe)
+    ReflectionUtils.extractGetterSetterPairs(tpe)
   }
 
-  def isValidField(f: ru.TermSymbol): Boolean = {
-    val r = ParseHelper.findParser(f.typeSignature).isDefined && !isSumacHelperField(f) && hasSetter(f) //TODO ignore annotation
-    if (f.name.toString().contains("name")) {
-      println(f + " is valid field  = " + r)
-      println(ParseHelper.findParser(f.typeSignature).isDefined)
-      println(isSumacHelperField(f))
-      println(hasSetter(f))
-    }
+  def isValidField(f: GetterSetterPair): Boolean = {
+    val r = ParseHelper.findParser(f.fieldType).isDefined && !isSumacHelperField(f) //TODO ignore annotation
     r
   }
 
   def isNestedArgField(f: ru.TermSymbol): Boolean = {
     ru.typeOf[Args] =:= f.typeSignature //TODO wrong, need it to be a bound, not exact
-  }
-
-  def hasSetter(f: ru.TermSymbol): Boolean = {
-    f.isVar && (f.isPublic || f.isCaseAccessor)
   }
 
 //  private[sumac] def addAnnotationValidations(f: FieldArgAssignable) {
@@ -118,7 +107,7 @@ trait FieldArgs extends Args {
  * shorter name in your projects.
  */
 trait FieldArgsExceptionOnUnparseable extends FieldArgs {
-  override def isValidField(f: ru.TermSymbol): Boolean = {
-    !isSumacHelperField(f) && hasSetter(f) //TODO ignore annotation && !f.isAnnotationPresent(classOf[Ignore])
+  override def isValidField(f: GetterSetterPair): Boolean = {
+    !isSumacHelperField(f) //TODO ignore annotation && !f.isAnnotationPresent(classOf[Ignore])
   }
 }

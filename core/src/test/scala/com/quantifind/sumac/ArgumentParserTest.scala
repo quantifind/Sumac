@@ -9,7 +9,7 @@ class ArgumentParserTest extends FunSuite with ShouldMatchers {
 
   test("parse") {
     val c = SimpleClass("a", 0, 1.4, 2)
-    val fieldArgs = ReflectionUtils.getTerms(ru.typeOf[SimpleClass]).filter{_.isVar}.map{f => TermArgAssignable("",f, c)}.toSeq
+    val fieldArgs = ReflectionUtils.extractGetterSetterPairs(ru.typeOf[SimpleClass]).map{f => TermArgAssignable("",f, c)}.toSeq
     val argParser = new ArgumentParser(fieldArgs)
 
     {

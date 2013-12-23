@@ -115,24 +115,24 @@ object FileParser extends SimpleParser[File] {
 
 //TODO CompoundParser are both a pain to write, and extremely unsafe.  Design needs some work
 
-//object OptionParser extends CompoundParser[Option[_]] {
-//  def canParse(tpe: ru.Type) = {
-//    ParseHelper.checkType(tpe, classOf[Option[_]])
-//  }
-//
-//  def parse(s: String, tpe: ru.Type, currentValue: AnyRef) = {
-//    //TODO
-//    None
-////    if (tpe.isInstanceOf[ParameterizedType]) {
-////      val ptpe = tpe.asInstanceOf[ParameterizedType]
-////      val subtype = ptpe.getActualTypeArguments()(0)
-////      val subParser = ParseHelper.findParser(subtype).get
-////      val x = subParser.parse(s, subtype, currentValue)
-////      if (x == null) None else Some(x)
-////      None
-////    } else None
-//  }
-//}
+object OptionParser extends CompoundParser[Option[_]] {
+  def canParse(tpe: ru.Type) = {
+    ParseHelper.checkType(tpe, classOf[Option[_]])
+  }
+
+  def parse(s: String, tpe: ru.Type, currentValue: Any) = {
+    //TODO
+    None
+//    if (tpe.isInstanceOf[ParameterizedType]) {
+//      val ptpe = tpe.asInstanceOf[ParameterizedType]
+//      val subtype = ptpe.getActualTypeArguments()(0)
+//      val subParser = ParseHelper.findParser(subtype).get
+//      val x = subParser.parse(s, subtype, currentValue)
+//      if (x == null) None else Some(x)
+//      None
+//    } else None
+  }
+}
 //
 //object ListParser extends CompoundParser[List[_]] {
 //
@@ -218,7 +218,7 @@ object ParseHelper {
     FloatParser,
     DoubleParser,
     BooleanParser,
-//    OptionParser,
+    OptionParser,
 //    ListParser,
 //    SetParser,
 //    SelectInputParser,

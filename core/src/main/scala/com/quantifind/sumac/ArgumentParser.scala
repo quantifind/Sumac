@@ -87,17 +87,15 @@ trait ArgAssignable {
   }
 }
 
-class TermArgAssignable(val prefix: String, val field: ru.TermSymbol, val obj: Object, val parser: Parser[_]) extends ArgAssignable {
+class TermArgAssignable(val prefix: String, val field: GetterSetterPair, val obj: Object, val parser: Parser[_]) extends ArgAssignable {
 
   val annotationOpt: Option[Arg] = None  //TODO
   def getParser = parser
 
-  private def fName = field.name.toString.trim  //for some crazy reason, vars have an extra space at the end of their name
-
   def getName = {
     prefix + {
-      val n = annotationOpt.map(_.name).getOrElse(fName)
-      if (n == "") fName else n
+      val n = annotationOpt.map(_.name).getOrElse(field.name)
+      if (n == "") field.name else n
     }
   }
 
@@ -106,18 +104,20 @@ class TermArgAssignable(val prefix: String, val field: ru.TermSymbol, val obj: O
     if (d == "") getName else d
   }
 
-  def getType = field.typeSignature
-  val mirror = ru.runtimeMirror(getClass.getClassLoader).reflect(obj).reflectField(field)
-  def getCurrentValue = mirror.get
+  def getType = field.fieldType
+  private val objMirror = ru.runtimeMirror(getClass.getClassLoader).reflect(obj)
+  private val getterMirror = objMirror.reflectField(field.getter)
+  private val setterMirror = objMirror.reflectField(field.setter)
+  def getCurrentValue = getterMirror.get
 
   def setValue(value: Any) = {
-    mirror.set(value)
+    setterMirror.set(value)
   }
 }
 
 object TermArgAssignable {
-  def apply(prefix: String, field: ru.TermSymbol, obj: Object): TermArgAssignable = {
-    val tpe = field.typeSignature
+  def apply(prefix: String, field: GetterSetterPair, obj: Object): TermArgAssignable = {
+    val tpe = field.fieldType
     val parser = ParseHelper.findParser(tpe) getOrElse {
       throw new ArgException("don't know how to parse type: " + tpe)
     }
