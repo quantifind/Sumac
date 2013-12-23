@@ -52,6 +52,30 @@ class ConfigTest extends FunSuite with ShouldMatchers {
 
   }
 
+  test("deal with Config fallback chain") {
+
+    val test = new TestWithNested
+
+    test.configFiles = List("application", "alternate")
+    test.useDefaultConfig = false
+
+    test.parse(Array[String]())
+
+    test.arg1 should be(Some(3 days))      //top config: alternate
+    test.arg2.arg3 should be(42.42)        //fallback: application
+
+  }
+
+  test("deal with Config fallback from args") {
+    val test = new TestWithNested
+    test.parse(Array("--useDefaultConfig", "false", "--configFiles", "application,alternate"))
+    test.configFiles should be(List("application", "alternate"))
+    test.useDefaultConfig should be(false)
+    test.arg1 should be(Some(3 days))      //top config: alternate
+    test.arg2.arg3 should be(42.42)        //fallback: application
+
+  }
+
   test("support setter") {
 
     val test = new Test
@@ -112,6 +136,7 @@ class ConfigTest extends FunSuite with ShouldMatchers {
     t3.arg1 should be(None)
 
   }
+
 
 }
 

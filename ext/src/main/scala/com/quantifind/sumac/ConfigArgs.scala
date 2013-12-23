@@ -3,7 +3,7 @@ package com.quantifind.sumac
 import scala.collection.Map
 import scala.util.Try
 
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 
 /**
  * A mixin to load fallback values for args from a typesafe config file. Arguments are filled in in this order:
@@ -46,7 +46,7 @@ trait ConfigArgs extends ExternalConfig {
    * the Config to use to lookup values
    * @return
    */
-  def makeConfig(originalArgs: Map[String, String]) = {
+  def makeConfig(originalArgs: Map[String, String]): Config = {
     val startWith = if (useDefaultConfig) {
       ConfigFactory.load()
     } else {
@@ -67,6 +67,17 @@ trait ConfigArgs extends ExternalConfig {
   }
 
   abstract override def readArgs(originalArgs: Map[String, String]): Map[String, String] = {
+    //figure out configFiles and useDefaultConfig
+    originalArgs.get("configFiles") foreach {
+      files =>
+        configFiles = files.split(",").toList
+    }
+    originalArgs.get("useDefaultConfig") foreach {
+      d =>
+        useDefaultConfig = d.toBoolean
+    }
+
+
     //find out the expected arguments
     val expected = self.getArgs("").map(_.getName).toSeq
     //find out the ones provided on the command line
@@ -118,7 +129,7 @@ trait ConfigFromArg extends PreParse with ConfigArgs {
    */
   def configFilenameFromArg: Option[String]
 
-  abstract override def makeConfig(originalArgs: Map[String, String]) = {
+  abstract override def makeConfig(originalArgs: Map[String, String]): Config = {
     configFilenameFromArg foreach {
       f =>
         addConfig(f)
