@@ -40,3 +40,22 @@ object ExternalConfigUtil {
     }
   }
 }
+
+
+/**
+ * a mixin for ExternalConfig to make sure that the parse and setting of fields is done before the ExternalConfig
+ *  is processed. Mix it in first. A second parsing and the validation will take place after the ExternalConfig is
+ *  applied.
+ */
+trait PreParse extends ExternalConfig {
+  self: Args =>
+
+  abstract override def readArgs(originalArgs: Map[String, String]): Map[String, String] = {
+    val parsedArgs = parser.parse(originalArgs)
+    parsedArgs.foreach { case (argAssignable, valueHolder) =>
+      argAssignable.setValue(valueHolder.value)
+    }
+    super.readArgs(originalArgs)
+  }
+
+}
