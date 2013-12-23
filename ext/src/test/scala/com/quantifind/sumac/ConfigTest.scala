@@ -86,29 +86,30 @@ class ConfigTest extends FunSuite with ShouldMatchers {
     ex.getMessage should be("test arg1 = Some(10 seconds)")
   }
 
-  test("get the name of the config file from another arg") {
-    val test = new Test with ConfigFromArg {
+  test("get the name of the config file from another arg -- use default value") {
+    val t1 = new TestFromArg
 
-      var env: String = _
+    t1.parse(Array[String]())
 
-      useDefaultConfig = false
-      def makeConfigFilename(originalArgs: Map[String, String]): Option[String] = {
-        originalArgs.get("env") match {
-          case Some("prod") => Some("application.conf")
-          case _ => Some("alternate.conf")
-        }
-      }
-    }
+    t1.arg1 should be(Some(3.days)) //no env arg, should fallback on default: 'dev' and use alternate.conf
+  }
 
 
-    test.parse(Array[String]())
+  test("get the name of the config file from another arg -- use arg") {
+    val t2 = new TestFromArg
 
-    test.arg1 should be (Some(3.days)) //use the fallback as nothing is specified
+    t2.parse(Array[String]("--env", "prod")) //prod env, use application.conf
 
-    test.parse(Array[String]("--env", "prod"))
+    t2.arg1 should be(Some(10.seconds)) //use the prod application.conf
+  }
 
-    test.arg1 should be (Some(10.seconds)) //use the prod application.conf
 
+  test("get the name of the config file from another arg -- use nothing") {
+
+    val t3 = new TestFromArg
+    t3.parse(Array[String]("--env", "")) //defaults to nothing, use the default arg1
+
+    t3.arg1 should be(None)
 
   }
 
@@ -127,4 +128,18 @@ class Nested extends FieldArgs {
 
 class TestWithNested extends Test {
   var arg2: Nested = new Nested
+}
+
+class TestFromArg extends Test with ConfigFromArg {
+  var env: String = "dev"
+
+  useDefaultConfig = false
+
+  override lazy val configFilenameFromArg: Option[String] = {
+    env match {
+      case "prod" => Some("application.conf")
+      case "dev" => Some("alternate.conf")
+      case _ => None
+    }
+  }
 }

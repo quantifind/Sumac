@@ -107,21 +107,19 @@ trait ConfigArgs extends ExternalConfig {
     }
  * }}}
  */
-trait ConfigFromArg extends ConfigArgs {
+trait ConfigFromArg extends PreParse with ConfigArgs {
   self: Args =>
 
   /**
-   * create the filename of the config file to load based on a command line argument.
-   * @param originalArgs the set of (unparsed) command arguments. Use this to search for the value of the
-   *                     command line argument(s) to build the config filename. The set of values is unparsed (all strings)
-   *                     and does not contain the defaults.
+   * create the filename of the config file to load based on one, or multiple, command line argument(s).
+   * Override it as a def or a lazy val, but DO NOT use a val as it would just fix it to the value of the default.
    *
    * @return maybe a name of a config file.
    */
-  def makeConfigFilename(originalArgs: Map[String, String]): Option[String]
+  def configFilenameFromArg: Option[String]
 
   abstract override def makeConfig(originalArgs: Map[String, String]) = {
-    makeConfigFilename(originalArgs) foreach {
+    configFilenameFromArg foreach {
       f =>
         addConfig(f)
     }
