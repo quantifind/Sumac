@@ -139,6 +139,21 @@ class ParserTest extends FunSuite with ShouldMatchers {
     }
   }
 
+  test("enum parser") {
+    class A extends FieldArgs {
+      var x: MyEnum = _
+    }
+    val a = new A()
+
+    a.parse(Array("--x", "Abigail"))
+    a.x should be (MyEnum.Abigail)
+
+
+
+    val ex = evaluating{a.parse(Array("--x", "foobar"))} should produce [ArgException]
+    ex.getMessage should include ("foobar is not in set of enum values: " + MyEnum.values.mkString(","))
+  }
+
 }
 
 class RandomUnknownClass

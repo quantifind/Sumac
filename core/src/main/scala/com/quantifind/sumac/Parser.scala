@@ -175,6 +175,31 @@ object OptionParser extends CompoundParser[Option[_]] {
   }
 }
 
+object EnumParser extends CompoundParser[Enum[_]] {
+  def canParse(tpe: Type) = {
+    tpe match {
+      case c:Class[_] =>
+        c.isEnum
+      case _ =>
+        false
+    }
+  }
+
+  def parse(s: String, tpe: Type, currentValue: AnyRef) = {
+    tpe match {
+      case c: Class[_] =>
+        val enums = c.getEnumConstants
+        enums.find{_.toString() == s} match {
+          case Some(x) => x.asInstanceOf[Enum[_]]
+          case None =>
+            throw new ArgException(s + " is not in set of enum values: " + enums.mkString(","))
+        }
+      case _ =>
+        throw new RuntimeException("unexpected type in enum parser: " + tpe)
+    }
+  }
+}
+
 abstract class CollectionParser[T] extends CompoundParser[T] {
   def targetCollection: Class[T]
   def build(stuff: Any*): T
@@ -345,6 +370,7 @@ object ParseHelper {
     DurationParser,
     DateParser,
     CalendarParser,
+    EnumParser,
 
   //collections
     OptionParser,
