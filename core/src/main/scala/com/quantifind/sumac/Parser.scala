@@ -133,14 +133,14 @@ object DateParser extends SimpleParser[Date] {
   def parse(s: String) = {
     formats.find{case(r,fmt) =>
       if (r.findFirstIn(s).isDefined) {
-        val t = Try{fmt.parse(s)}
+        val t = Try{fmt.synchronized{fmt.parse(s)}}
         t.isSuccess
       } else {
         false
       }
     } match {
       case Some((_,fmt)) =>
-        fmt.parse(s)
+        fmt.synchronized{fmt.parse(s)}
       case None => throw new ArgException("no format found to parse \"" + s + "\" into Date")
     }
   }
