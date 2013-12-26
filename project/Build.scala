@@ -3,7 +3,7 @@ import Keys._
 
 object SumacBuild extends Build {
   lazy val core = Project("core", file("core"), settings = coreSettings)
-  lazy val zk = Project("ext", file("ext"), settings = extSettings) dependsOn(core)
+  lazy val ext = Project("ext", file("ext"), settings = extSettings) dependsOn(core)
 
   def sharedSettings = Defaults.defaultSettings ++ Seq(
     version := "0.2-SNAPSHOT",
@@ -80,7 +80,9 @@ object SumacBuild extends Build {
     ),
     libraryDependencies ++= Seq(
       "com.twitter"   % "util-zk"   % "5.3.10",
-	  "com.typesafe" % "config" % "1.0.2"
+      "com.typesafe" % "config" % "1.0.2",
+      "joda-time" % "joda-time" % "2.3",
+      "org.joda" % "joda-convert" % "1.2"  //this is needed for joda to work w/ scala
     )
   )
 }
