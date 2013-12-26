@@ -6,6 +6,9 @@ import util.matching.Regex
 import java.io.File
 import scala.concurrent.duration.Duration
 import scala.collection._
+import java.util.{GregorianCalendar, Calendar, TimeZone, Date}
+import java.text.SimpleDateFormat
+import scala.util.Try
 
 trait Parser[T] {
   def parse(s: String, tpe: Type, currentValue: AnyRef): T
@@ -111,6 +114,47 @@ object FileParser extends SimpleParser[File] {
     val fullPath = if (s.startsWith("~")) s.replaceFirst("~", System.getProperty("user.home")) else s
     new File(fullPath)
   }
+}
+
+object DateParser extends SimpleParser[Date] {
+  val knownTypes: Set[Class[_]] = Set(classOf[Date])
+  val utc = TimeZone.getTimeZone("UTC")
+  val formats = Map(
+    """\d{4}-\d{2}-\d{2}""".r -> "yyyy-MM-dd",
+    """\d{4}/\d{2}/\d{2}""".r -> "yyyy/MM/dd",
+    """\d{2}-\d{2}-\d{4}""".r -> "MM-dd-yyyy",
+    """\d{2}/\d{2}/\d{4}""".r -> "MM/dd/yyyy"
+  ).map{case(r,p) =>
+    val fmt = new SimpleDateFormat(p)
+    fmt.setTimeZone(utc)
+    r -> fmt
+  }
+
+  def parse(s: String) = {
+    formats.find{case(r,fmt) =>
+      if (r.findFirstIn(s).isDefined) {
+        val t = Try{fmt.parse(s)}
+        t.isSuccess
+      } else {
+        false
+      }
+    } match {
+      case Some((_,fmt)) =>
+        fmt.parse(s)
+      case None => throw new ArgException("no format found to parse \"" + s + "\" into Date")
+    }
+  }
+}
+
+object CalendarParser extends SimpleParser[Calendar] {
+  val knownTypes: Set[Class[_]] = Set(classOf[Calendar])
+  def parse(s: String) = {
+    val d = DateParser.parse(s)
+    val c = new GregorianCalendar(DateParser.utc)
+    c.setTimeInMillis(d.getTime)
+    c
+  }
+
 }
 
 //TODO CompoundParser are both a pain to write, and extremely unsafe.  Design needs some work
@@ -299,6 +343,8 @@ object ParseHelper {
     FileParser,
     RegexParser,
     DurationParser,
+    DateParser,
+    CalendarParser,
 
   //collections
     OptionParser,

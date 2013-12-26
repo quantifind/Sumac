@@ -6,6 +6,8 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.duration._
 import scala.collection._
 import java.io.File
+import java.util.{Calendar, TimeZone, GregorianCalendar, Date}
+import java.text.SimpleDateFormat
 
 
 /**
@@ -105,6 +107,36 @@ class ParserTest extends FunSuite with ShouldMatchers {
 
     val ex = evaluating {a.parse(Array("--x", "adfadfdfa"))} should produce [IllegalArgumentException]
     ex.getMessage should include ("""expect a list of kv pairs, with each key separated from value by ":" and pairs separated by ","""")
+  }
+
+  test("date parser") {
+    class A extends FieldArgs {
+      var x: Date = _
+    }
+    val a = new A()
+
+    class B extends FieldArgs {
+      var x: Calendar = _
+    }
+    val b = new B()
+
+
+    //using java time classes is a serious pain ...
+    val tz = TimeZone.getTimeZone("UTC")
+    val format = new SimpleDateFormat("yyyy-MM-dd")
+    format.setTimeZone(tz)
+    val d = format.parse("2013-12-26")
+
+    Seq("2013-12-26", "2013/12/26", "12-26-2013", "12/26/2013").foreach{p =>
+      withClue(p){
+        a.parse(Array("--x", p))
+        a.x should be (d)
+
+        b.parse(Array("--x", p))
+        b.x.getTimeInMillis should be (d.getTime)
+        b.x.getTimeZone should be (tz)
+      }
+    }
   }
 
 }
