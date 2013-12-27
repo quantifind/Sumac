@@ -2,8 +2,8 @@ import sbt._
 import Keys._
 
 object SumacBuild extends Build {
-  lazy val core = Project("core", file("core"), settings = coreSettings)
-  lazy val ext = Project("ext", file("ext"), settings = extSettings) dependsOn(core)
+  lazy val core = Project("core", file("core"), settings = coreSettings).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
+  lazy val ext = Project("ext", file("ext"), settings = extSettings).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) dependsOn(core)
 
   def sharedSettings = Defaults.defaultSettings ++ Seq(
     version := "0.2-SNAPSHOT",
