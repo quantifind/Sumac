@@ -2,8 +2,8 @@ import sbt._
 import Keys._
 
 object SumacBuild extends Build {
-  lazy val core = Project("core", file("core"), settings = coreSettings)
-  lazy val ext = Project("ext", file("ext"), settings = extSettings) dependsOn(core)
+  lazy val core = Project("core", file("core"), settings = coreSettings).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
+  lazy val ext = Project("ext", file("ext"), settings = extSettings).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) dependsOn(core)
 
   val qf = "http://repo.quantifind.com/content/repositories/"
   def sharedSettings = Defaults.defaultSettings ++ Seq(
@@ -40,7 +40,7 @@ object SumacBuild extends Build {
       "Twitter Repo" at "http://maven.twttr.com/"
     ),
     libraryDependencies ++= Seq(
-      "com.twitter"   % "util-zk"   % "5.3.10",
+      "com.twitter"   % "util-zk_2.10"   % "6.10.0",
       "com.typesafe" % "config" % "1.0.2",
       "joda-time" % "joda-time" % "2.3",
       "org.joda" % "joda-convert" % "1.2"  //this is needed for joda to work w/ scala
