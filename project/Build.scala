@@ -79,7 +79,7 @@ object SumacBuild extends Build {
       "Twitter Repo" at "http://maven.twttr.com/"
     ),
     libraryDependencies ++= Seq(
-      "com.twitter"   % "util-zk"   % "5.3.10",
+      "com.twitter"   % "util-zk_2.10"   % "6.10.0",
       "com.typesafe" % "config" % "1.0.2",
       "joda-time" % "joda-time" % "2.3",
       "org.joda" % "joda-convert" % "1.2"  //this is needed for joda to work w/ scala
