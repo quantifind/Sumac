@@ -4,7 +4,11 @@ import types.{SelectInput, MultiSelectInput}
 import java.lang.reflect.{Type, ParameterizedType}
 import util.matching.Regex
 import java.io.File
-import scala.concurrent.duration.{FiniteDuration, Duration}
+import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.collection._
+import java.util.{GregorianCalendar, Calendar, TimeZone, Date}
+import java.text.SimpleDateFormat
+import scala.util.Try
 import java.util.concurrent.TimeUnit
 
 trait Parser[T] {
@@ -73,7 +77,7 @@ object FiniteDurationParser extends SimpleParser[FiniteDuration] {
 
   def parse(s: String) = {
     val maybeFinite = DurationParser.parse(s)
-    if(maybeFinite.isFinite) FiniteDuration(maybeFinite.toNanos, TimeUnit.NANOSECONDS)
+    if (maybeFinite.isFinite) FiniteDuration(maybeFinite.toNanos, TimeUnit.NANOSECONDS)
     else throw new IllegalArgumentException(s"'$s' is not a finite duration")
   }
 }
@@ -123,6 +127,56 @@ object FileParser extends SimpleParser[File] {
   }
 }
 
+object DateParser extends SimpleParser[Date] {
+  val knownTypes: Set[Class[_]] = Set(classOf[Date])
+  val utc = TimeZone.getTimeZone("UTC")
+  val formats = Map(
+    """\d{4}-\d{2}-\d{2}""".r -> "yyyy-MM-dd",
+    """\d{4}/\d{2}/\d{2}""".r -> "yyyy/MM/dd",
+    """\d{2}-\d{2}-\d{4}""".r -> "MM-dd-yyyy",
+    """\d{2}/\d{2}/\d{4}""".r -> "MM/dd/yyyy"
+  ).map {
+    case (r, p) =>
+      val fmt = new SimpleDateFormat(p)
+      fmt.setTimeZone(utc)
+      r -> fmt
+  }
+
+  def parse(s: String) = {
+    formats.find {
+      case (r, fmt) =>
+        if (r.findFirstIn(s).isDefined) {
+          val t = Try {
+            fmt.synchronized {
+              fmt.parse(s)
+            }
+          }
+          t.isSuccess
+        } else {
+          false
+        }
+    } match {
+      case Some((_, fmt)) =>
+        fmt.synchronized {
+          fmt.parse(s)
+        }
+      case None => throw new ArgException("no format found to parse \"" + s + "\" into Date")
+    }
+  }
+}
+
+object CalendarParser extends SimpleParser[Calendar] {
+  val knownTypes: Set[Class[_]] = Set(classOf[Calendar])
+
+  def parse(s: String) = {
+    val d = DateParser.parse(s)
+    val c = new GregorianCalendar(DateParser.utc)
+    c.setTimeInMillis(d.getTime)
+    c
+  }
+
+}
+
 //TODO CompoundParser are both a pain to write, and extremely unsafe.  Design needs some work
 
 object OptionParser extends CompoundParser[Option[_]] {
@@ -141,26 +195,42 @@ object OptionParser extends CompoundParser[Option[_]] {
   }
 }
 
-object ListParser extends CompoundParser[List[_]] {
-
+object EnumParser extends CompoundParser[Enum[_]] {
   def canParse(tpe: Type) = {
-    ParseHelper.checkType(tpe, classOf[List[_]])
+    tpe match {
+      case c: Class[_] =>
+        c.isEnum
+      case _ =>
+        false
+    }
   }
 
   def parse(s: String, tpe: Type, currentValue: AnyRef) = {
-    if (tpe.isInstanceOf[ParameterizedType]) {
-      val ptpe = tpe.asInstanceOf[ParameterizedType]
-      val subtype = ptpe.getActualTypeArguments()(0)
-      val subParser = ParseHelper.findParser(subtype).get //TODO need to handle cases where its a list, but can't parse subtype
-      val parts = s.split(",")
-      parts.map(subParser.parse(_, subtype, currentValue)).toList
-    } else List.empty
+    tpe match {
+      case c: Class[_] =>
+        val enums = c.getEnumConstants
+        enums.find {
+          _.toString() == s
+        } match {
+          case Some(x) => x.asInstanceOf[Enum[_]]
+          case None =>
+            throw new ArgException(s + " is not in set of enum values: " + enums.mkString(","))
+        }
+      case _ =>
+        throw new RuntimeException("unexpected type in enum parser: " + tpe)
+    }
   }
 }
 
-object SetParser extends CompoundParser[collection.Set[_]] {
+abstract class CollectionParser[T] extends CompoundParser[T] {
+  def targetCollection: Class[T]
+
+  def build(stuff: Any*): T
+
+  def empty: T
+
   def canParse(tpe: Type) = {
-    ParseHelper.checkType(tpe, classOf[collection.Set[_]])
+    ParseHelper.checkType(tpe, targetCollection)
   }
 
   def parse(s: String, tpe: Type, currentValue: AnyRef) = {
@@ -169,10 +239,125 @@ object SetParser extends CompoundParser[collection.Set[_]] {
       val subtype = ptpe.getActualTypeArguments()(0)
       val subParser = ParseHelper.findParser(subtype).get
       val parts = s.split(",")
-      parts.map(subParser.parse(_, subtype, currentValue)).toSet
-    } else Set.empty
+      val sub: Seq[Any] = parts.map(subParser.parse(_, subtype, currentValue)).toSeq
+      build(sub: _*)
+    } else empty
   }
 }
+
+object ListParser extends CollectionParser[List[_]] {
+  def targetCollection = classOf[List[_]]
+
+  def build(stuff: Any*) = {
+    stuff.toList
+  }
+
+  def empty = List()
+}
+
+object SetParser extends CollectionParser[Set[_]] {
+  def targetCollection = classOf[Set[_]]
+
+  def build(stuff: Any*) = {
+    stuff.toSet
+  }
+
+  def empty = Set()
+}
+
+object ArrayParser extends CompoundParser[Array[_]] {
+  override def canParse(tpe: Type) = {
+    tpe match {
+      case p: ParameterizedType =>
+        false
+      case c: Class[_] =>
+        c.isArray
+      case _ =>
+        //not sure what else could be here, but should be false
+        false
+    }
+  }
+
+  override def parse(s: String, tpe: Type, currentValue: AnyRef) = {
+    tpe match {
+      case c: Class[_] =>
+        val subtype = c.getComponentType
+        val subParser = ParseHelper.findParser(subtype).get
+        val parts = s.split(",")
+        val sub: Array[Any] = parts.map(subParser.parse(_, subtype, currentValue))
+        //toArray doesn't cut it here ... we end up trying to set Array[Object] on an Array[whatever], which reflection
+        // doesn't like
+        val o = java.lang.reflect.Array.newInstance(subtype, sub.size)
+        (0 until sub.length).foreach {
+          i => java.lang.reflect.Array.set(o, i, sub(i))
+        }
+        o.asInstanceOf[Array[_]]
+      case _ =>
+        throw new RuntimeException("unexpected type in array parser: " + tpe)
+    }
+  }
+}
+
+object SeqParser extends CollectionParser[Seq[_]] {
+  def targetCollection = classOf[Seq[_]]
+
+  def build(stuff: Any*) = {
+    stuff.toSeq
+  }
+
+  def empty = Seq()
+}
+
+object VectorParser extends CollectionParser[Vector[_]] {
+  def targetCollection = classOf[Vector[_]]
+
+  def build(stuff: Any*) = {
+    stuff.toVector
+  }
+
+  def empty = Vector()
+}
+
+object TraversableParser extends CollectionParser[Traversable[_]] {
+  def targetCollection = classOf[Traversable[_]]
+
+  def build(stuff: Any*) = {
+    stuff.toTraversable
+  }
+
+  def empty = Traversable()
+}
+
+object MapParser extends CompoundParser[Map[_, _]] {
+  def canParse(tpe: Type) = {
+    ParseHelper.checkType(tpe, classOf[Map[_, _]])
+  }
+
+  def parse(s: String, tpe: Type, currentValue: AnyRef): Map[_, _] = {
+    if (tpe.isInstanceOf[ParameterizedType]) {
+      val ptpe = tpe.asInstanceOf[ParameterizedType]
+      val keyType = ptpe.getActualTypeArguments()(0)
+      val keyParser = ParseHelper.findParser(keyType).get
+      val valueType = ptpe.getActualTypeArguments()(1)
+      val valueParser = ParseHelper.findParser(valueType).get
+      val parts = s.split(",")
+      val r = parts.map {
+        p =>
+        //should we trim here, or keep the whitespace?  for now I'll keep the whitespace ...
+          val kv = p.split(":")
+          if (kv.length != 2) {
+            throw new ArgException("maps expect a list of kv pairs, with each key separated from value by \":\" and pairs separated by \",\"")
+          }
+          val k = keyParser.parse(kv(0), keyType, currentValue)
+          val v = valueParser.parse(kv(1), valueType, currentValue)
+          k -> v
+      }.toMap
+      r
+    } else Map()
+  }
+
+}
+
 
 object SelectInputParser extends CompoundParser[SelectInput[_]] {
   def canParse(tpe: Type) = {
@@ -221,14 +406,28 @@ object ParseHelper {
     FloatParser,
     DoubleParser,
     BooleanParser,
+    FileParser,
+    RegexParser,
+    DurationParser,
+    FiniteDurationParser,
+    DateParser,
+    CalendarParser,
+    EnumParser,
+
+    //collections
     OptionParser,
     ListParser,
     SetParser,
+    ArrayParser,
+    VectorParser,
+    SeqParser,
+    MapParser,
+    TraversableParser, //order matters, be sure this at the end
+
+    //special collections
     SelectInputParser,
-    MultiSelectInputParser,
-    FileParser,
-    RegexParser,
-    DurationParser)
+    MultiSelectInputParser
+  )
 
   def findParser(tpe: Type): Option[Parser[_]] = parsers.find(_.canParse(tpe))
 
