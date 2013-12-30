@@ -4,11 +4,12 @@ import types.{SelectInput, MultiSelectInput}
 import java.lang.reflect.{Type, ParameterizedType}
 import util.matching.Regex
 import java.io.File
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.collection._
 import java.util.{GregorianCalendar, Calendar, TimeZone, Date}
 import java.text.SimpleDateFormat
 import scala.util.Try
+import java.util.concurrent.TimeUnit
 
 trait Parser[T] {
   def parse(s: String, tpe: Type, currentValue: AnyRef): T
@@ -71,6 +72,16 @@ object DurationParser extends SimpleParser[Duration] {
   }
 }
 
+object FiniteDurationParser extends SimpleParser[FiniteDuration] {
+  val knownTypes: Set[Class[_]] = Set(classOf[FiniteDuration])
+
+  def parse(s: String) = {
+    val maybeFinite = DurationParser.parse(s)
+    if (maybeFinite.isFinite) FiniteDuration(maybeFinite.toNanos, TimeUnit.NANOSECONDS)
+    else throw new IllegalArgumentException(s"'$s' is not a finite duration")
+  }
+}
+
 object IntParser extends SimpleParser[Int] {
   val knownTypes: Set[Class[_]] = Set(classOf[Int], classOf[java.lang.Integer])
 
@@ -124,23 +135,31 @@ object DateParser extends SimpleParser[Date] {
     """\d{4}/\d{2}/\d{2}""".r -> "yyyy/MM/dd",
     """\d{2}-\d{2}-\d{4}""".r -> "MM-dd-yyyy",
     """\d{2}/\d{2}/\d{4}""".r -> "MM/dd/yyyy"
-  ).map{case(r,p) =>
-    val fmt = new SimpleDateFormat(p)
-    fmt.setTimeZone(utc)
-    r -> fmt
+  ).map {
+    case (r, p) =>
+      val fmt = new SimpleDateFormat(p)
+      fmt.setTimeZone(utc)
+      r -> fmt
   }
 
   def parse(s: String) = {
-    formats.find{case(r,fmt) =>
-      if (r.findFirstIn(s).isDefined) {
-        val t = Try{fmt.synchronized{fmt.parse(s)}}
-        t.isSuccess
-      } else {
-        false
-      }
+    formats.find {
+      case (r, fmt) =>
+        if (r.findFirstIn(s).isDefined) {
+          val t = Try {
+            fmt.synchronized {
+              fmt.parse(s)
+            }
+          }
+          t.isSuccess
+        } else {
+          false
+        }
     } match {
-      case Some((_,fmt)) =>
-        fmt.synchronized{fmt.parse(s)}
+      case Some((_, fmt)) =>
+        fmt.synchronized {
+          fmt.parse(s)
+        }
       case None => throw new ArgException("no format found to parse \"" + s + "\" into Date")
     }
   }
@@ -148,6 +167,7 @@ object DateParser extends SimpleParser[Date] {
 
 object CalendarParser extends SimpleParser[Calendar] {
   val knownTypes: Set[Class[_]] = Set(classOf[Calendar])
+
   def parse(s: String) = {
     val d = DateParser.parse(s)
     val c = new GregorianCalendar(DateParser.utc)
@@ -178,7 +198,7 @@ object OptionParser extends CompoundParser[Option[_]] {
 object EnumParser extends CompoundParser[Enum[_]] {
   def canParse(tpe: Type) = {
     tpe match {
-      case c:Class[_] =>
+      case c: Class[_] =>
         c.isEnum
       case _ =>
         false
@@ -189,7 +209,9 @@ object EnumParser extends CompoundParser[Enum[_]] {
     tpe match {
       case c: Class[_] =>
         val enums = c.getEnumConstants
-        enums.find{_.toString() == s} match {
+        enums.find {
+          _.toString() == s
+        } match {
           case Some(x) => x.asInstanceOf[Enum[_]]
           case None =>
             throw new ArgException(s + " is not in set of enum values: " + enums.mkString(","))
@@ -202,11 +224,15 @@ object EnumParser extends CompoundParser[Enum[_]] {
 
 abstract class CollectionParser[T] extends CompoundParser[T] {
   def targetCollection: Class[T]
+
   def build(stuff: Any*): T
+
   def empty: T
+
   def canParse(tpe: Type) = {
     ParseHelper.checkType(tpe, targetCollection)
   }
+
   def parse(s: String, tpe: Type, currentValue: AnyRef) = {
     if (tpe.isInstanceOf[ParameterizedType]) {
       val ptpe = tpe.asInstanceOf[ParameterizedType]
@@ -214,24 +240,28 @@ abstract class CollectionParser[T] extends CompoundParser[T] {
       val subParser = ParseHelper.findParser(subtype).get
       val parts = s.split(",")
       val sub: Seq[Any] = parts.map(subParser.parse(_, subtype, currentValue)).toSeq
-      build(sub:_*)
+      build(sub: _*)
     } else empty
   }
 }
 
 object ListParser extends CollectionParser[List[_]] {
   def targetCollection = classOf[List[_]]
+
   def build(stuff: Any*) = {
     stuff.toList
   }
+
   def empty = List()
 }
 
 object SetParser extends CollectionParser[Set[_]] {
   def targetCollection = classOf[Set[_]]
+
   def build(stuff: Any*) = {
     stuff.toSet
   }
+
   def empty = Set()
 }
 
@@ -247,9 +277,10 @@ object ArrayParser extends CompoundParser[Array[_]] {
         false
     }
   }
+
   override def parse(s: String, tpe: Type, currentValue: AnyRef) = {
     tpe match {
-      case c:Class[_] =>
+      case c: Class[_] =>
         val subtype = c.getComponentType
         val subParser = ParseHelper.findParser(subtype).get
         val parts = s.split(",")
@@ -257,7 +288,9 @@ object ArrayParser extends CompoundParser[Array[_]] {
         //toArray doesn't cut it here ... we end up trying to set Array[Object] on an Array[whatever], which reflection
         // doesn't like
         val o = java.lang.reflect.Array.newInstance(subtype, sub.size)
-        (0 until sub.length).foreach{i => java.lang.reflect.Array.set(o, i, sub(i))}
+        (0 until sub.length).foreach {
+          i => java.lang.reflect.Array.set(o, i, sub(i))
+        }
         o.asInstanceOf[Array[_]]
       case _ =>
         throw new RuntimeException("unexpected type in array parser: " + tpe)
@@ -267,33 +300,40 @@ object ArrayParser extends CompoundParser[Array[_]] {
 
 object SeqParser extends CollectionParser[Seq[_]] {
   def targetCollection = classOf[Seq[_]]
+
   def build(stuff: Any*) = {
     stuff.toSeq
   }
+
   def empty = Seq()
 }
 
 object VectorParser extends CollectionParser[Vector[_]] {
   def targetCollection = classOf[Vector[_]]
+
   def build(stuff: Any*) = {
     stuff.toVector
   }
+
   def empty = Vector()
 }
 
 object TraversableParser extends CollectionParser[Traversable[_]] {
   def targetCollection = classOf[Traversable[_]]
+
   def build(stuff: Any*) = {
     stuff.toTraversable
   }
+
   def empty = Traversable()
 }
 
-object MapParser extends CompoundParser[Map[_,_]] {
+object MapParser extends CompoundParser[Map[_, _]] {
   def canParse(tpe: Type) = {
-    ParseHelper.checkType(tpe, classOf[Map[_,_]])
+    ParseHelper.checkType(tpe, classOf[Map[_, _]])
   }
-  def parse(s: String, tpe: Type, currentValue: AnyRef): Map[_,_] = {
+
+  def parse(s: String, tpe: Type, currentValue: AnyRef): Map[_, _] = {
     if (tpe.isInstanceOf[ParameterizedType]) {
       val ptpe = tpe.asInstanceOf[ParameterizedType]
       val keyType = ptpe.getActualTypeArguments()(0)
@@ -301,15 +341,16 @@ object MapParser extends CompoundParser[Map[_,_]] {
       val valueType = ptpe.getActualTypeArguments()(1)
       val valueParser = ParseHelper.findParser(valueType).get
       val parts = s.split(",")
-      val r = parts.map{p =>
+      val r = parts.map {
+        p =>
         //should we trim here, or keep the whitespace?  for now I'll keep the whitespace ...
-        val kv = p.split(":")
-        if (kv.length != 2) {
-          throw new ArgException("maps expect a list of kv pairs, with each key separated from value by \":\" and pairs separated by \",\"")
-        }
-        val k = keyParser.parse(kv(0), keyType, currentValue)
-        val v = valueParser.parse(kv(1), valueType, currentValue)
-        k -> v
+          val kv = p.split(":")
+          if (kv.length != 2) {
+            throw new ArgException("maps expect a list of kv pairs, with each key separated from value by \":\" and pairs separated by \",\"")
+          }
+          val k = keyParser.parse(kv(0), keyType, currentValue)
+          val v = valueParser.parse(kv(1), valueType, currentValue)
+          k -> v
       }.toMap
       r
     } else Map()
@@ -368,11 +409,12 @@ object ParseHelper {
     FileParser,
     RegexParser,
     DurationParser,
+    FiniteDurationParser,
     DateParser,
     CalendarParser,
     EnumParser,
 
-  //collections
+    //collections
     OptionParser,
     ListParser,
     SetParser,
@@ -380,9 +422,9 @@ object ParseHelper {
     VectorParser,
     SeqParser,
     MapParser,
-    TraversableParser,  //order matters, be sure this at the end
+    TraversableParser, //order matters, be sure this at the end
 
-  //special collections
+    //special collections
     SelectInputParser,
     MultiSelectInputParser
   )
