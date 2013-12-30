@@ -23,6 +23,7 @@ class ParserTest extends FunSuite with ShouldMatchers {
     import scala.concurrent.duration._
     DurationParser.parse("10.seconds") should be (10 seconds)
     DurationParser.parse("10.minutes") should be (10 minutes)
+    FiniteDurationParser.parse("3.days") should be (3 days)
   }
 
   test("ListParser") {

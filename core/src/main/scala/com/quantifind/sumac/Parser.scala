@@ -4,7 +4,8 @@ import types.{SelectInput, MultiSelectInput}
 import java.lang.reflect.{Type, ParameterizedType}
 import util.matching.Regex
 import java.io.File
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{FiniteDuration, Duration}
+import java.util.concurrent.TimeUnit
 
 trait Parser[T] {
   def parse(s: String, tpe: Type, currentValue: AnyRef): T
@@ -64,6 +65,16 @@ object DurationParser extends SimpleParser[Duration] {
 
   def parse(s: String) = {
     Duration(s.replace('.', ' '))
+  }
+}
+
+object FiniteDurationParser extends SimpleParser[FiniteDuration] {
+  val knownTypes: Set[Class[_]] = Set(classOf[FiniteDuration])
+
+  def parse(s: String) = {
+    val maybeFinite = DurationParser.parse(s)
+    if(maybeFinite.isFinite) FiniteDuration(maybeFinite.toNanos, TimeUnit.NANOSECONDS)
+    else throw new IllegalArgumentException(s"'$s' is not a finite duration")
   }
 }
 
