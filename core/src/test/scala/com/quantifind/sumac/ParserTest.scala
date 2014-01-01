@@ -31,10 +31,13 @@ class ParserTest extends FunSuite with ShouldMatchers {
   test("FileParser") {
     val homeDir = System.getProperty("user.home")
     FileParser.parse("~/foo") should be (new java.io.File(homeDir, "foo"))
-    val winHomeDir = "c:\\users\\foo"
-    System.setProperty("user.home", winHomeDir)
-    FileParser.parse("~/foo") should be (new java.io.File(winHomeDir, "foo"))
-    System.setProperty("user.home", homeDir)
+    try {
+      val winHomeDir = "c:\\users\\foo"
+      System.setProperty("user.home", winHomeDir)
+      FileParser.parse("~/foo") should be (new java.io.File(winHomeDir, "foo"))
+    } finally {
+      System.setProperty("user.home", homeDir)
+    }
     val cwd = System.getProperty("user.dir")
     FileParser.parse("ooga").getAbsolutePath should be (new java.io.File(cwd, "ooga").getAbsolutePath)
   }
