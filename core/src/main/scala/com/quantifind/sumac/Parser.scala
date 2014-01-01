@@ -122,7 +122,7 @@ object FileParser extends SimpleParser[File] {
   val knownTypes: Set[Class[_]] = Set(classOf[File])
 
   def parse(s: String) = {
-    val fullPath = if (s.startsWith("~")) s.replaceFirst("~", System.getProperty("user.home")) else s
+    val fullPath = if (s.startsWith("~")) System.getProperty("user.home")+s.drop(1) else s
     new File(fullPath)
   }
 }
