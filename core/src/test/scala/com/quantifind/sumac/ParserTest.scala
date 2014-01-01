@@ -23,13 +23,20 @@ class ParserTest extends FunSuite with ShouldMatchers {
     DoubleParser.parse("1e-10") should be (1e-10)
     BooleanParser.parse("false") should be (false)
     BooleanParser.parse("true") should be (true)
-    val homeDir = System.getProperty("user.home")
-    FileParser.parse("~/foo") should be (new java.io.File(homeDir, "foo"))
-    val cwd = System.getProperty("user.dir")
-    FileParser.parse("ooga").getAbsolutePath should be (new java.io.File(cwd, "ooga").getAbsolutePath)
     DurationParser.parse("10.seconds") should be (10 seconds)
     DurationParser.parse("10.minutes") should be (10 minutes)
     FiniteDurationParser.parse("3.days") should be (3 days)
+  }
+
+  test("FileParser") {
+    val homeDir = System.getProperty("user.home")
+    FileParser.parse("~/foo") should be (new java.io.File(homeDir, "foo"))
+    val winHomeDir = "c:\\users\\foo"
+    System.setProperty("user.home", winHomeDir)
+    FileParser.parse("~/foo") should be (new java.io.File(winHomeDir, "foo"))
+    System.setProperty("user.home", homeDir)
+    val cwd = System.getProperty("user.dir")
+    FileParser.parse("ooga").getAbsolutePath should be (new java.io.File(cwd, "ooga").getAbsolutePath)
   }
 
   test("ListParser") {
