@@ -127,23 +127,19 @@ object FileParser extends SimpleParser[File] {
   }
 }
 
-class DateParser(val fmts:Map[Regex,String]) extends Parser[AnyRef] {
+class DateParser(val fmts:Map[Regex,String], zone: TimeZone = TimeZone.getTimeZone("UTC")) extends Parser[AnyRef] {
   val knownTypes: Set[Class[_]] = Set(classOf[Date], classOf[Calendar])
   def canParse(tpe: Type) = {
     if (tpe.isInstanceOf[Class[_]]) {
       val tc = tpe.asInstanceOf[Class[_]]
-      knownTypes.exists{ c =>
-        val r = tc.isAssignableFrom(c)
-        r
-      }
+      knownTypes.exists{ _ == tc}
     }
     else false
   }
-  val utc = TimeZone.getTimeZone("UTC")
   val formats = fmts.map {
     case (r, p) =>
       val fmt = new SimpleDateFormat(p)
-      fmt.setTimeZone(utc)
+      fmt.setTimeZone(zone)
       r -> fmt
   }
 
@@ -153,7 +149,7 @@ class DateParser(val fmts:Map[Regex,String]) extends Parser[AnyRef] {
       case dc:Class[_] if dc.isAssignableFrom(classOf[Date]) =>
         d
       case cc:Class[_] if cc.isAssignableFrom(classOf[Calendar]) =>
-        val c = new GregorianCalendar(USDateParser.utc)
+        val c = new GregorianCalendar(zone)
         c.setTimeInMillis(d.getTime)
         c
     }
