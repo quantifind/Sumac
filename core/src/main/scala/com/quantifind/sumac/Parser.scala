@@ -127,22 +127,39 @@ object FileParser extends SimpleParser[File] {
   }
 }
 
-object DateParser extends SimpleParser[Date] {
-  val knownTypes: Set[Class[_]] = Set(classOf[Date])
+class DateParser(val fmts:Map[Regex,String]) extends Parser[AnyRef] {
+  val knownTypes: Set[Class[_]] = Set(classOf[Date], classOf[Calendar])
+  def canParse(tpe: Type) = {
+    if (tpe.isInstanceOf[Class[_]]) {
+      val tc = tpe.asInstanceOf[Class[_]]
+      knownTypes.exists{ c =>
+        val r = tc.isAssignableFrom(c)
+        r
+      }
+    }
+    else false
+  }
   val utc = TimeZone.getTimeZone("UTC")
-  val formats = Map(
-    """\d{4}-\d{2}-\d{2}""".r -> "yyyy-MM-dd",
-    """\d{4}/\d{2}/\d{2}""".r -> "yyyy/MM/dd",
-    """\d{2}-\d{2}-\d{4}""".r -> "MM-dd-yyyy",
-    """\d{2}/\d{2}/\d{4}""".r -> "MM/dd/yyyy"
-  ).map {
+  val formats = fmts.map {
     case (r, p) =>
       val fmt = new SimpleDateFormat(p)
       fmt.setTimeZone(utc)
       r -> fmt
   }
 
-  def parse(s: String) = {
+  def parse(s: String, tpe: Type, currentVal: AnyRef): AnyRef = {
+    val d = parseDate(s)
+    tpe match {
+      case dc:Class[_] if dc.isAssignableFrom(classOf[Date]) =>
+        d
+      case cc:Class[_] if cc.isAssignableFrom(classOf[Calendar]) =>
+        val c = new GregorianCalendar(USDateParser.utc)
+        c.setTimeInMillis(d.getTime)
+        c
+    }
+  }
+
+  def parseDate(s:String) = {
     formats.find {
       case (r, fmt) =>
         if (r.findFirstIn(s).isDefined) {
@@ -165,17 +182,27 @@ object DateParser extends SimpleParser[Date] {
   }
 }
 
-object CalendarParser extends SimpleParser[Calendar] {
-  val knownTypes: Set[Class[_]] = Set(classOf[Calendar])
+object DateTimeFormats {
+  val usFormats =
+    Map(
+      """\d{4}-\d{2}-\d{2}""".r -> "yyyy-MM-dd",
+      """\d{4}/\d{2}/\d{2}""".r -> "yyyy/MM/dd",
+      """\d{2}-\d{2}-\d{4}""".r -> "MM-dd-yyyy",
+      """\d{2}/\d{2}/\d{4}""".r -> "MM/dd/yyyy"
+    )
 
-  def parse(s: String) = {
-    val d = DateParser.parse(s)
-    val c = new GregorianCalendar(DateParser.utc)
-    c.setTimeInMillis(d.getTime)
-    c
-  }
-
+  val stdFormats =
+    Map(
+      """\d{4}-\d{2}-\d{2}""".r -> "yyyy-MM-dd",
+      """\d{4}/\d{2}/\d{2}""".r -> "yyyy/MM/dd",
+      """\d{2}-\d{2}-\d{4}""".r -> "dd-MM-yyyy",
+      """\d{2}/\d{2}/\d{4}""".r -> "dd/MM/yyyy"
+    )
 }
+
+object USDateParser extends DateParser(DateTimeFormats.usFormats)
+
+object StandardDateParser extends DateParser(DateTimeFormats.stdFormats)
 
 //TODO CompoundParser are both a pain to write, and extremely unsafe.  Design needs some work
 
@@ -410,8 +437,6 @@ object ParseHelper {
     RegexParser,
     DurationParser,
     FiniteDurationParser,
-    DateParser,
-    CalendarParser,
     EnumParser,
 
     //collections

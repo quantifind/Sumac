@@ -2,17 +2,12 @@ package com.quantifind.sumac
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import scala.concurrent.duration.Duration
 import scala.concurrent.duration._
 import scala.collection._
 import java.io.File
-import java.util.{Calendar, TimeZone, GregorianCalendar, Date}
+import java.util.{Calendar, TimeZone, Date}
 import java.text.SimpleDateFormat
 
-
-/**
- *
- */
 
 class ParserTest extends FunSuite with ShouldMatchers {
 
@@ -50,7 +45,7 @@ class ParserTest extends FunSuite with ShouldMatchers {
     val parsed = ParseHelper.parseInto("a,b,cdef,g", field.getGenericType, "dummy")
     parsed should be (Some(ValueHolder(List("a", "b", "cdef", "g"), field.getGenericType)))
   }
-  
+
   test("OptionParser") {
     //Doesn't work with primitive types, same problem as ListParser?
     OptionParser.parse("foo", classOf[ContainerOption].getDeclaredField("string").getGenericType, null) should be (Some("foo"): Option[String])
@@ -121,12 +116,21 @@ class ParserTest extends FunSuite with ShouldMatchers {
   }
 
   test("date parser") {
+    def checkDateAndCalendar(parser:Parser[_], s:String, m: Int) {
+      parser.parse(s, classOf[Date], null).asInstanceOf[Date].getMonth() should be (m)
+      parser.parse(s, classOf[Calendar], null).asInstanceOf[Calendar].get(Calendar.MONTH) should be (m)
+    }
+    checkDateAndCalendar(USDateParser,"11/12/2013", 10)
+    checkDateAndCalendar(StandardDateParser, "11/12/2013", 11)
+
     class A extends FieldArgs {
+      registerParser(USDateParser)
       var x: Date = _
     }
     val a = new A()
 
     class B extends FieldArgs {
+      registerParser(USDateParser)
       var x: Calendar = _
     }
     val b = new B()
@@ -168,7 +172,6 @@ class ParserTest extends FunSuite with ShouldMatchers {
 }
 
 class RandomUnknownClass
-
 
 class ContainerA(val title: String, val count: Int, val boundaries: List[String])
 
