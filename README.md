@@ -9,7 +9,7 @@ It is available on maven central.  The last stable release is `0.2`.  An sbt dep
 
     "com.quantifind" %% "sumac" % "0.2"
 
-Integration with 3rd party libraries (in particular, (Joda-Time)[http://www.joda.org/joda-time/] and (Typesafe Configs)[https://github.com/typesafehub/config]
+Integration with 3rd party libraries (in particular, [Joda-Time](http://www.joda.org/joda-time/) and [Typesafe Configs](https://github.com/typesafehub/config)
 is available through the `sumac-ext` package:
 
     "com.quantifind" %% "sumac-ext" % "0.2"
