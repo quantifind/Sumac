@@ -4,15 +4,17 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import java.util.TimeZone
 import java.text.SimpleDateFormat
-import org.joda.time.{DateTimeZone, DateTime}
+import org.joda.time.{ReadableDateTime, DateTimeZone}
 
 class DateTimeParserTest extends FunSuite with ShouldMatchers {
   test("date parser") {
     class B extends FieldArgs {
-      registerParser(DateTimeParser)
-      var x: DateTime = _
+      registerParser(USDateTimeParser)
+      var x: ReadableDateTime = _
+      var y: AnyRef = _
     }
     val b = new B()
+    b.getArgs("").map{_.getName} should not contain ("y")
 
     val tz = TimeZone.getTimeZone("UTC")
     val format = new SimpleDateFormat("yyyy-MM-dd")
