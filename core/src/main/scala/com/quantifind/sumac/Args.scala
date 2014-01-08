@@ -40,6 +40,12 @@ trait Args extends ExternalConfig with Serializable {
     parsedArgs.foreach { case (argAssignable, valueHolder) =>
       argAssignable.setValue(valueHolder.value)
     }
+    if(kvPairs.contains("sumac.debugArgs")) {
+      println("Sumac setup the following args:")
+      getArgs("").foreach { arg =>
+        println(s"\t--${arg.getName}\t${arg.getCurrentValue}")
+      }
+    }
     if (validation)
       runValidation()
   }
