@@ -21,7 +21,7 @@ trait Parser[T] {
    */
   def canParse(tpe: Type): Boolean
 
-  def valueAsString(currentValue: AnyRef): String = {
+  def valueAsString(currentValue: AnyRef, tpe: Type): String = {
     if (currentValue == null)
       Parser.nullString
     else
@@ -176,6 +176,21 @@ class DateParser(val fmts:Map[Regex,String], zone: TimeZone = TimeZone.getTimeZo
       case None => throw new ArgException("no format found to parse \"" + s + "\" into Date")
     }
   }
+
+  private val stdFormat = {
+    val f = new SimpleDateFormat("yyyy-MM-dd")
+    f.setTimeZone(zone)
+    f
+  }
+
+  override def valueAsString(v: AnyRef, t: Type): String = {
+    v match {
+      case d: Date =>
+        stdFormat.format(d)
+      case c: Calendar =>
+        stdFormat.format(c.getTime())
+    }
+  }
 }
 
 object DateTimeFormats {
@@ -209,12 +224,20 @@ object OptionParser extends CompoundParser[Option[_]] {
 
   def parse(s: String, tpe: Type, currentValue: AnyRef) = {
     if (tpe.isInstanceOf[ParameterizedType]) {
-      val ptpe = tpe.asInstanceOf[ParameterizedType]
-      val subtype = ptpe.getActualTypeArguments()(0)
-      val subParser = ParseHelper.findParser(subtype).get
+      val (subtype, subParser) = ParseHelper.getSubParser(tpe)
       val x = subParser.parse(s, subtype, currentValue)
       if (x == null) None else Some(x)
     } else None
+  }
+
+  override def valueAsString(v: AnyRef, tpe: Type): String = {
+    v match {
+      case Some(s) =>
+        val (subtype, subParser) = ParseHelper.getSubParser(tpe)
+        subParser.valueAsString(s.asInstanceOf[AnyRef],subtype)
+      case None =>
+        Parser.nullString
+    }
   }
 }
 
@@ -245,7 +268,7 @@ object EnumParser extends CompoundParser[Enum[_]] {
   }
 }
 
-abstract class CollectionParser[T] extends CompoundParser[T] {
+abstract class CollectionParser[T <: Traversable[_]] extends CompoundParser[T] {
   def targetCollection: Class[T]
 
   def build(stuff: Any*): T
@@ -265,6 +288,14 @@ abstract class CollectionParser[T] extends CompoundParser[T] {
       val sub: Seq[Any] = parts.map(subParser.parse(_, subtype, currentValue)).toSeq
       build(sub: _*)
     } else empty
+  }
+
+  override def valueAsString(v: AnyRef, tpe: Type):String = {
+    (v,tpe) match {
+      case (t: Traversable[_],ptpe: ParameterizedType) =>
+        val (subtype, subparser) = ParseHelper.getSubParser(tpe)
+        t.map{x => subparser.valueAsString(x.asInstanceOf[AnyRef], subtype)}.mkString(",")
+    }
   }
 }
 
@@ -319,6 +350,15 @@ object ArrayParser extends CompoundParser[Array[_]] {
         throw new RuntimeException("unexpected type in array parser: " + tpe)
     }
   }
+
+  override def valueAsString(v: AnyRef, tpe: Type):String = {
+    tpe match {
+      case c: Class[_] =>
+        val subtype = c.getComponentType
+        val subParser = ParseHelper.findParser(subtype).get
+        v.asInstanceOf[Array[AnyRef]].map{subParser.valueAsString(_, subtype)}.mkString(",")
+    }
+  }
 }
 
 object SeqParser extends CollectionParser[Seq[_]] {
@@ -358,11 +398,8 @@ object MapParser extends CompoundParser[Map[_, _]] {
 
   def parse(s: String, tpe: Type, currentValue: AnyRef): Map[_, _] = {
     if (tpe.isInstanceOf[ParameterizedType]) {
-      val ptpe = tpe.asInstanceOf[ParameterizedType]
-      val keyType = ptpe.getActualTypeArguments()(0)
-      val keyParser = ParseHelper.findParser(keyType).get
-      val valueType = ptpe.getActualTypeArguments()(1)
-      val valueParser = ParseHelper.findParser(valueType).get
+      val (keyType, keyParser) = ParseHelper.getSubParser(tpe, 0)
+      val (valueType, valueParser) = ParseHelper.getSubParser(tpe, 1)
       val parts = s.split(",")
       val r = parts.map {
         p =>
@@ -377,6 +414,18 @@ object MapParser extends CompoundParser[Map[_, _]] {
       }.toMap
       r
     } else Map()
+  }
+
+  override def valueAsString(v: AnyRef, tpe: Type):String = {
+    (v,tpe) match {
+      case (t: Map[_,_],ptpe: ParameterizedType) =>
+        val (keyType, keyParser) = ParseHelper.getSubParser(tpe, 0)
+        val (valueType, valueParser) = ParseHelper.getSubParser(tpe, 1)
+        t.map{case(k,v) =>
+          keyParser.valueAsString(k.asInstanceOf[AnyRef],keyType) + ":" + valueParser.valueAsString(v.asInstanceOf[AnyRef], valueType)
+        }.mkString(",")
+
+    }
   }
 
 }
@@ -468,6 +517,12 @@ object ParseHelper {
     synchronized {
       parsers ++= Seq(parser)
     }
+  }
+
+  def getSubParser(tpe:Type, pos: Int = 0): (Type, Parser[_]) = {
+    val ptpe = tpe.asInstanceOf[ParameterizedType]
+    val subtype = ptpe.getActualTypeArguments()(pos)
+    (subtype, ParseHelper.findParser(subtype).get)
   }
 }
 

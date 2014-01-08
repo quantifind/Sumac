@@ -388,7 +388,7 @@ object CustomTypeParser extends Parser[CustomType] {
     val parts = s.split(":")
     CustomType(parts(0), parts(1).toInt)
   }
-  override def valueAsString(currentVal: AnyRef) = {
+  override def valueAsString(currentVal: AnyRef, tpe: Type) = {
     val ct = currentVal.asInstanceOf[CustomType]
     ct.name + ":" + ct.x
   }

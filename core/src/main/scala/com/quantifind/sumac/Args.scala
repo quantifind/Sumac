@@ -74,7 +74,7 @@ trait Args extends ExternalConfig with Serializable {
    * In general, users will not need this function, but it is useful for tools built on top, eg. saving to a property file
    */
   def getStringValues: Map[String,String] = {
-    getArgs("").map{aa => aa.getName -> aa.getParser.valueAsString(aa.getCurrentValue)}.toMap
+    getArgs("").map{aa => aa.getName -> aa.getParser.valueAsString(aa.getCurrentValue, aa.getType)}.toMap
   }
 
   def addValidation(f:  => Unit) {

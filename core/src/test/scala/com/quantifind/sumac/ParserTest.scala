@@ -38,12 +38,12 @@ class ParserTest extends FunSuite with ShouldMatchers {
 
   def checkParseAndBack(p: SimpleParser[_], s: String, v: AnyRef) {
     p.parse(s) should be (v)
-    p.valueAsString(v) should be (s)
+    p.valueAsString(v, null) should be (s)
   }
 
   def checkReparse(p: SimpleParser[_ <: AnyRef], s: String) {
     val v = p.parse(s)
-    val s2 = p.valueAsString(v)
+    val s2 = p.valueAsString(v, null)
     val v2 = p.parse(s2)
     v2 should be (v)
   }
@@ -66,13 +66,14 @@ class ParserTest extends FunSuite with ShouldMatchers {
   }
 
   def collectionCheck[A <: FieldArgs : ClassTag,R](args: A, builder: Seq[Duration] => R) {
-    val s = "10 seconds, 15.seconds, 30 minutes"
+    val in = "10 seconds, 15.seconds, 30 minutes"
+    val out = "10 seconds,15 seconds,30 minutes"
     val exp = builder(Seq(10 seconds, 15 seconds, 30 minutes))
-    args.parse(Array("--x", s))
+    args.parse(Array("--x", in))
 
     val act = args.getArgs("").find{_.getName == "x"}.get.getCurrentValue
     act should be (exp)
-    args.getStringValues should contain ("x" -> s)
+    args.getStringValues("x") should be (out)
 
   }
 
@@ -93,12 +94,17 @@ class ParserTest extends FunSuite with ShouldMatchers {
 
   test("OptionParser") {
     //Doesn't work with primitive types, same problem as ListParser?
-    OptionParser.parse("foo", classOf[ContainerOption].getDeclaredField("string").getGenericType, null) should be (Some("foo"): Option[String])
-    OptionParser.parse(null, classOf[ContainerOption].getDeclaredField("string").getGenericType, null) should be (None: Option[String])
-    OptionParser.parse(Parser.nullString, classOf[ContainerOption].getDeclaredField("string").getGenericType, null) should be (None: Option[String])
+    val stringOptType = classOf[ContainerOption].getDeclaredField("string").getGenericType
+    val listOptType = classOf[ContainerOption].getDeclaredField("listOfString").getGenericType
+    OptionParser.parse("foo",stringOptType , null) should be (Some("foo"): Option[String])
+    OptionParser.parse(null, stringOptType, null) should be (None: Option[String])
+    OptionParser.parse(Parser.nullString, stringOptType, null) should be (None: Option[String])
 
-    OptionParser.parse("a,b,cdef,g", classOf[ContainerOption].getDeclaredField("listOfString").getGenericType, null) should be (Some(List("a", "b", "cdef", "g")): Option[List[String]])
-    pending //valueAsString
+    OptionParser.parse("a,b,cdef,g", listOptType, null) should be (Some(List("a", "b", "cdef", "g")): Option[List[String]])
+
+    OptionParser.valueAsString(Some("foo"), stringOptType) should be ("foo")
+    OptionParser.valueAsString(Some(List("a", "b", "cdef")), listOptType) should be ("a,b,cdef")
+    OptionParser.valueAsString(None, stringOptType) should be (Parser.nullString)
   }
 
   test("ParseHelper") {
@@ -158,11 +164,17 @@ class ParserTest extends FunSuite with ShouldMatchers {
 
   test("date parser") {
     def checkDateAndCalendar(parser:Parser[_], s:String, m: Int) {
-      parser.parse(s, classOf[Date], null).asInstanceOf[Date].getMonth() should be (m)
-      parser.parse(s, classOf[Calendar], null).asInstanceOf[Calendar].get(Calendar.MONTH) should be (m)
+      val d = parser.parse(s, classOf[Date], null).asInstanceOf[Date]
+      d.getMonth() should be (m)
+      val c = parser.parse(s, classOf[Calendar], null).asInstanceOf[Calendar]
+      c.get(Calendar.MONTH) should be (m)
+
+      //value as string should use unambiguous canonical form always
+      parser.valueAsString(d, null) should be ("2013-11-12")
+      parser.valueAsString(c, null) should be ("2013-11-12")
     }
     checkDateAndCalendar(USDateParser,"11/12/2013", 10)
-    checkDateAndCalendar(StandardDateParser, "11/12/2013", 11)
+    checkDateAndCalendar(StandardDateParser, "12/11/2013", 10)
 
     class A extends FieldArgs {
       registerParser(USDateParser)
@@ -191,7 +203,7 @@ class ParserTest extends FunSuite with ShouldMatchers {
         b.parse(Array("--x", p))
         b.x.getTimeInMillis should be (d.getTime)
         b.x.getTimeZone should be (tz)
-        pending //valueAsString
+
       }
     }
   }

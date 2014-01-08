@@ -26,6 +26,8 @@ class DateTimeParserTest extends FunSuite with ShouldMatchers {
         b.parse(Array("--x", p))
         b.x.getMillis should be (d.getTime)
         b.x.getZone should be (DateTimeZone.forID("UTC"))
+
+        b.getStringValues("x") should be ("2013-12-26")
       }
     }
   }
