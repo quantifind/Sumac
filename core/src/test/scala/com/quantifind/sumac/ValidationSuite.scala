@@ -110,6 +110,32 @@ class ValidationSuite extends FunSuite with ShouldMatchers {
     val b2 = new BarArgs()
     val exc = evaluating {b2.parse(Array[String]())} should produce[ArgException]
     exc.getMessage should include("must specify a value for bar.foo")
+
+
+    //make sure the args dont' get muddled at all if a nested arg has the same name
+    val o = new OuterRequired()
+    o.parse(Array("--x", "6", "--inner.x", "7"))
+    o.x should be (6)
+    o.inner.x should be (7)
+
+    def t(s:String*): ArgException = {
+      val a = new OuterRequired()
+      evaluating {a.parse(s.toArray)} should produce[ArgException]
+    }
+
+    val exc1 = t()
+    val exc2 = t("--x", "6")
+    val exc3 = t("--inner.x", "7")
+    val exc4 = t("--x", "1","--inner.x", "7")
+    val exc5 = t("--x", "5","--inner.x", "567")
+    exc1.getMessage should include ("must specify a value for")
+    Seq(exc2,exc5).foreach{_.getMessage should include ("must specify a value for inner.x")}
+    Seq(exc3,exc4).foreach{_.getMessage should include ("must specify a value for x")}
+
+    val o2 = new OuterRequired()
+    o2.parse(Array[String]("--x", "567","--inner.x", "1"))
+    o2.x should be (567)
+    o2.inner.x should be (1)
   }
 }
 
@@ -174,4 +200,16 @@ class FooArgs extends FieldArgs {
 
 class BarArgs extends FieldArgs {
   var bar = new FooArgs()
+}
+
+class OuterRequired extends FieldArgs {
+  @Required
+  var x = 1
+
+  var inner: InnerRequired = _
+}
+
+class InnerRequired extends FieldArgs {
+  @Required
+  var x = 567
 }
