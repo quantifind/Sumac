@@ -2,7 +2,8 @@ package com.quantifind.sumac
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import com.quantifind.sumac.validation.{Positive, Required, Range}
+import com.quantifind.sumac.validation.{FileExists, Positive, Required, Range}
+import java.io.File
 
 class ValidationSuite extends FunSuite with ShouldMatchers {
 
@@ -59,6 +60,27 @@ class ValidationSuite extends FunSuite with ShouldMatchers {
     a.a should be (1)
     a.c should be (7.9f)
   }
+
+
+  test("@FileExists") {
+
+    val file = File.createTempFile("file",".tmp")
+    val fileName = file.getAbsolutePath
+    file.deleteOnExit()
+
+    def parseF(args: Map[String,String], msg: String) {
+      parse(args, msg){new FileExistsArgs()}
+    }
+
+    parseF(Map("f" -> "fakeFile.tmp"), "must specify a file that exists for f")
+    parseF(Map("f" -> null), "must specify a valid file name for ")
+
+    val a = new FileExistsArgs()
+    a.parse(Map("f" -> fileName))
+    a.f should be(fileName)
+
+  }
+
 
   test("@Range") {
     def parseR(args: Map[String,String], msg: String) {
@@ -154,4 +176,9 @@ class UserDefinedAnnotationArgs extends FieldArgs {
 class UnregisteredAnnotationArgs extends FieldArgs {
   @ThreeOrFour
   var x: Int = _
+}
+
+class FileExistsArgs extends FieldArgs {
+  @FileExists
+  var f: String = _
 }
