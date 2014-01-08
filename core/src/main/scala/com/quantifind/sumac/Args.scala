@@ -3,9 +3,12 @@ package com.quantifind.sumac
 import collection._
 
 trait Args extends ExternalConfig with Serializable {
-  def getArgs(argPrefix:String): Traversable[ArgAssignable] = getArgs(argPrefix, false)
+  def getArgs(argPrefix:String): Traversable[ArgAssignable] =
+    getArgs(argPrefix, false, getDefaultArgs.map{a => a.getName -> a}.toMap)
 
-  private[sumac] def getArgs(argPrefix: String, gettingDefaults: Boolean): Traversable[ArgAssignable]
+  private[sumac] def nestedArgs: Vector[Args]
+
+  private[sumac] def getArgs(argPrefix: String, gettingDefaults: Boolean, defaults: Map[String, ArgAssignable]): Traversable[ArgAssignable]
 
   /**
    * Returns the "default" values for the arguments of this class.  Unrelated to the current
@@ -15,7 +18,7 @@ trait Args extends ExternalConfig with Serializable {
    */
   def getDefaultArgs: Traversable[ArgAssignable] = {
     try {
-      this.getClass().newInstance().getArgs("", true)
+      this.getClass().newInstance().getArgs("", true, Map())
     } catch {
       case ie: InstantiationException => Traversable()  //nothing else we can do in this case, really
     }
@@ -55,6 +58,7 @@ trait Args extends ExternalConfig with Serializable {
    */
   def runValidation() {
     validationFunctions.foreach{_()}
+    nestedArgs.foreach{_.runValidation()}
   }
 
   def helpMessage = parser.helpMessage

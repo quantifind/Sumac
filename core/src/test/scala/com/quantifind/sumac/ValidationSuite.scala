@@ -101,6 +101,16 @@ class ValidationSuite extends FunSuite with ShouldMatchers {
     a.parse(Map("b" -> "3"))
     a.b should be (3)
   }
+
+  test("nested validation") {
+    val b = new BarArgs()
+    b.parse(Array[String]("--bar.foo", "hi"))
+    b.bar.foo should be ("hi")
+
+    val b2 = new BarArgs()
+    val exc = evaluating {b2.parse(Array[String]())} should produce[ArgException]
+    exc.getMessage should include("must specify a value for bar.foo")
+  }
 }
 
 class IntRequiredArgs extends FieldArgs {
@@ -154,4 +164,14 @@ class UserDefinedAnnotationArgs extends FieldArgs {
 class UnregisteredAnnotationArgs extends FieldArgs {
   @ThreeOrFour
   var x: Int = _
+}
+
+
+class FooArgs extends FieldArgs {
+  @Required
+  var foo: String = _
+}
+
+class BarArgs extends FieldArgs {
+  var bar = new FooArgs()
 }
