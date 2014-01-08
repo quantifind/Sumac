@@ -64,20 +64,23 @@ class ValidationSuite extends FunSuite with ShouldMatchers {
 
   test("@FileExists") {
 
-    val file = File.createTempFile("file",".tmp")
-    val fileName = file.getAbsolutePath
-    file.deleteOnExit()
+    val tmpFile = File.createTempFile("file",".tmp")
+    val tmpPath = tmpFile.getAbsolutePath
+    tmpFile.deleteOnExit()
 
     def parseF(args: Map[String,String], msg: String) {
       parse(args, msg){new FileExistsArgs()}
     }
 
-    parseF(Map("f" -> "fakeFile.tmp"), "must specify a file that exists for f")
-    parseF(Map("f" -> null), "must specify a valid file name for ")
+    parseF(Map("path" -> "fakeFile.tmp", "file" -> tmpPath), "must specify a file that exists for path, current value = fakeFile.tmp")
+    parseF(Map("path" -> tmpPath, "file" -> "fakeFile.tmp"), "must specify a file that exists for file, current value = fakeFile.tmp")
+    parseF(Map("path" -> null, "file" -> tmpPath), "must specify a valid file name for path")
 
     val a = new FileExistsArgs()
-    a.parse(Map("f" -> fileName))
-    a.f should be(fileName)
+    a.parse(Map("path" -> tmpPath, "file" -> tmpPath))
+    a.file should be(tmpFile)
+    a.path should be(tmpPath)
+
 
   }
 
@@ -180,5 +183,8 @@ class UnregisteredAnnotationArgs extends FieldArgs {
 
 class FileExistsArgs extends FieldArgs {
   @FileExists
-  var f: String = _
+  var path: String = _
+
+  @FileExists
+  var file: File = _
 }
