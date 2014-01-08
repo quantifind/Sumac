@@ -5,6 +5,7 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import java.lang.reflect.Type
 import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, ByteArrayOutputStream}
+import com.quantifind.sumac.validation.Required
 
 /**
  *
