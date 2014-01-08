@@ -21,6 +21,15 @@ class DateTimeParser(fmts:Map[Regex,String], chronology: Chronology = ISOChronol
         new DateTime(d.getTime()).withChronology(chronology)
     }
   }
+
+  override def valueAsString(v: AnyRef, tpe: Type): String = {
+    v match {
+      case dt: DateTime =>
+        valueAsString(new Date(dt.getMillis), classOf[Date])
+      case _ =>
+        super.valueAsString(v,tpe)
+    }
+  }
 }
 
 object USDateTimeParser extends DateTimeParser(DateTimeFormats.usFormats)

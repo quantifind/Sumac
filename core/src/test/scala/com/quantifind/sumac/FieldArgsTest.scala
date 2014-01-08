@@ -5,6 +5,7 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import java.lang.reflect.Type
 import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, ByteArrayOutputStream}
+import com.quantifind.sumac.validation.Required
 
 /**
  *
@@ -388,7 +389,7 @@ object CustomTypeParser extends Parser[CustomType] {
     val parts = s.split(":")
     CustomType(parts(0), parts(1).toInt)
   }
-  override def valueAsString(currentVal: AnyRef) = {
+  override def valueAsString(currentVal: AnyRef, tpe: Type) = {
     val ct = currentVal.asInstanceOf[CustomType]
     ct.name + ":" + ct.x
   }
