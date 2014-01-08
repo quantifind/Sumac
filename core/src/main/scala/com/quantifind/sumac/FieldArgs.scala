@@ -98,6 +98,7 @@ trait FieldArgs extends Args {
     registerAnnotationValidation(classOf[Required])(RequiredCheck)
     registerAnnotationValidation(classOf[Positive])(PositiveCheck)
     registerAnnotationValidation(classOf[Range])(RangeCheck)
+    registerAnnotationValidation(classOf[FileExists])(FileExistsCheck)
   }
 
 }
