@@ -6,7 +6,7 @@ object SumacBuild extends Build {
   lazy val ext = Project("ext", file("ext"), settings = extSettings).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) dependsOn(core)
 
   def sharedSettings = Defaults.defaultSettings ++ Seq(
-    version := "0.3-SNAPSHOT",
+    version := "0.2.1",
     scalaVersion := "2.10.3",
     organization := "com.quantifind",
     scalacOptions := Seq("-deprecation", "-unchecked", "-optimize"), 
