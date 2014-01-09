@@ -64,7 +64,8 @@ object SumacBuild extends Build {
           <name>Ryan LeCompte</name>
           <url>http://github.com/ryanlecompte</url>
         </developer>
-      </developers>)
+      </developers>),
+	  javacOptions ++= Seq("-target", "1.6", "-source", "1.6")
     )
 
   val slf4jVersion = "1.6.1"
