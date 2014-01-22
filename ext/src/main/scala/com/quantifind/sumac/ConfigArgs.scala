@@ -23,6 +23,8 @@ import com.typesafe.config.{Config, ConfigFactory}
 trait ConfigArgs extends ExternalConfig {
   self: Args =>
 
+  protected val stripQuotes = """(^"|"$)""".r
+
   /**
    * the list of config to loads, the rightmost config will be the preferred one, the others will be used as fallback.
    * (in order from right to left)
@@ -85,14 +87,14 @@ trait ConfigArgs extends ExternalConfig {
     //get the ones we are missing
     val missing = expected.diff(originalNames)
     val conf = makeConfig(originalArgs)
-    val newArgs = originalArgs ++ missing.map {
+    val newArgs = originalArgs ++ missing.flatMap {
       name =>
       //and find them in the config file
         val key = s"$configPrefix.$name"
         Try {
-          (name -> conf.getString(key))
+          name -> stripQuotes.replaceAllIn(conf.getValue(key).render, "")
         }.toOption //ignore missing values
-    }.flatten
+    }
     super.readArgs(newArgs)
   }
 
