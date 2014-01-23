@@ -5,14 +5,14 @@ is a very small, lightweight scala library.
 
 ![Sumac Logo](https://raw.github.com/quantifind/Sumac/master/logo/Sumac.png)
 
-It is available on maven central.  The last stable release is `0.2`.  An sbt dependency would look like:
+It is available on maven central.  The last stable release is `0.2.3`.  An sbt dependency would look like:
 
-    "com.quantifind" %% "sumac" % "0.2"
+    "com.quantifind" %% "sumac" % "0.2.3"
 
 Integration with 3rd party libraries (in particular, [Joda-Time](http://www.joda.org/joda-time/) and [Typesafe Config](https://github.com/typesafehub/config))
 is available through the `sumac-ext` package:
 
-    "com.quantifind" %% "sumac-ext" % "0.2"
+    "com.quantifind" %% "sumac-ext" % "0.2.3"
 
 ## Usage
 

@@ -2,6 +2,7 @@ package com.quantifind.sumac.validation
 
 import com.quantifind.sumac.ArgException
 import java.lang.annotation.Annotation
+import java.io.File
 
 object RequiredCheck extends Function4[Any, Any, Annotation, String, Unit] {
 
@@ -46,4 +47,25 @@ object RangeCheck extends Function4[Any, Any, Annotation, String, Unit] {
       case _ => ()
     }
   }
+}
+
+object FileExistsCheck extends Function4[Any, Any, Annotation, String, Unit] {
+
+
+  def apply(defaultValue: Any, currentValue: Any, annot: Annotation, name: String) {
+    Option(currentValue).map{asFile(_)} match {
+      case Some(f) if !f.exists() =>
+        throw new ArgException("must specify a file that exists for %s, current value = %s".format(name, f.toString))
+      case None => throw new ArgException("must specify a valid file name for " + name)
+      case _ => // Valid case
+    }
+  }
+
+  def asFile(v: Any): File = {
+    v match {
+      case s: String => new File(s)
+      case f: File => f
+    }
+  }
+
 }
