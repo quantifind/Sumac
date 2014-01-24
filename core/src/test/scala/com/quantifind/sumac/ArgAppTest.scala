@@ -6,7 +6,7 @@ import org.scalatest.matchers.ShouldMatchers
 class ArgAppTest extends FunSuite with ShouldMatchers {
 
   test("getArgumentClass") {
-    val m = new MyApp()
+    val m = new MyTestApp()
     m.getArgumentClass should be (classOf[MyArgs])
 
     val m2 = new MyNestedArgApp()
@@ -14,7 +14,7 @@ class ArgAppTest extends FunSuite with ShouldMatchers {
   }
 
   test("main") {
-    val m = new MyApp()
+    val m = new MyTestApp()
     m.main(Array("--a", "hello", "--b", "17"))
 
     val m2 = new MyNestedArgApp()
@@ -23,12 +23,12 @@ class ArgAppTest extends FunSuite with ShouldMatchers {
 
 }
 
-class MyArgs extends FieldArgs {
+class MyTestArgs extends FieldArgs {
   var a: String = ""
   var b: Int = 0
 }
 
-class MyApp extends Dummy with ArgApp[MyArgs] with ShouldMatchers {
+class MyTestApp extends Dummy with ArgApp[MyArgs] with ShouldMatchers {
   def main(args: MyArgs) {
     args.a should be ("hello")
     args.b should be (17)
