@@ -14,4 +14,9 @@ project/plugins/project/
 .scala_dependencies
 .idea
 *.iml
+.cache
+.settings
+.classpath
+.~
+.project
 
