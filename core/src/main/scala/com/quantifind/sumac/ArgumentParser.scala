@@ -15,8 +15,10 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
   }
 
   def parse(rawKvs: Map[String,String]): Map[T, ValueHolder[_]] = {
-    if (rawKvs.contains("help"))
-      throw new ArgException(helpMessage)
+    if (rawKvs.contains("help")) {
+      println(helpMessage)
+      System.exit(1)
+    }
     rawKvs.map{case(argName, argValue) =>
       val holder = nameToHolder(argName)
       val result = try {
