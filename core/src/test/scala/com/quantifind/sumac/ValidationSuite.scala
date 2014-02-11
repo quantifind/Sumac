@@ -54,6 +54,7 @@ class ValidationSuite extends FunSuite with ShouldMatchers {
     parseP(Map("a" -> "3"), "must specify a positive value for c")
     parseP(Map("a" -> "3", "c" -> "-3.8"), "must specify a positive value for c")
     parseP(Map("a" -> "-3", "c" -> "3.8"), "must specify a positive value for a")
+    parseP(Map("a" -> "0", "c" -> "1"), "must specify a positive value for a")
 
     val a = new PositiveArgs()
     a.parse(Map("a" -> "1", "c" -> "7.9"))
