@@ -17,7 +17,9 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
   def parse(rawKvs: Map[String,String]): Map[T, ValueHolder[_]] = {
     if (rawKvs.contains("help"))
       throw new ArgException(helpMessage)
-    rawKvs.map{case(argName, argValue) =>
+    rawKvs.filter {
+      case(argName, argValue) => !ArgumentParser.isReserved(argName)
+    }.map{case(argName, argValue) =>
       val holder = nameToHolder(argName)
       val result = try {
         ParseHelper.parseInto(argValue, holder.getType, holder.getCurrentValue) getOrElse {
@@ -42,6 +44,11 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
 }
 
 object ArgumentParser {
+
+  val reservedArguments = Seq("help", "sumac.debugArgs")
+
+  def isReserved(name: String) = reservedArguments.contains(name)
+
   def apply[T <: ArgAssignable](argHolders: Traversable[T]) = {
     // ignore things we don't know how to parse
     new ArgumentParser(argHolders.toSeq.filter(t => ParseHelper.findParser(t.getType).isDefined))
