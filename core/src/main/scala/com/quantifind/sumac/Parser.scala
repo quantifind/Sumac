@@ -400,19 +400,12 @@ object MapParser extends CompoundParser[Map[_, _]] {
     if (tpe.isInstanceOf[ParameterizedType]) {
       val (keyType, keyParser) = ParseHelper.getSubParser(tpe, 0)
       val (valueType, valueParser) = ParseHelper.getSubParser(tpe, 1)
-      val parts = s.split(",")
-      val r = parts.map {
-        p =>
-        //should we trim here, or keep the whitespace?  for now I'll keep the whitespace ...
-          val kv = p.split(":")
-          if (kv.length != 2) {
-            throw new ArgException("maps expect a list of kv pairs, with each key separated from value by \":\" and pairs separated by \",\"")
-          }
-          val k = keyParser.parse(kv(0), keyType, currentValue)
-          val v = valueParser.parse(kv(1), valueType, currentValue)
+      MapCombinatorParser(s) map {
+        case (key, value) =>
+          val k = keyParser.parse(key, keyType, currentValue)
+          val v = valueParser.parse(value, valueType, currentValue)
           k -> v
-      }.toMap
-      r
+      }
     } else Map()
   }
 
@@ -422,7 +415,11 @@ object MapParser extends CompoundParser[Map[_, _]] {
         val (keyType, keyParser) = ParseHelper.getSubParser(tpe, 0)
         val (valueType, valueParser) = ParseHelper.getSubParser(tpe, 1)
         t.map{case(k,v) =>
-          keyParser.valueAsString(k.asInstanceOf[AnyRef],keyType) + ":" + valueParser.valueAsString(v.asInstanceOf[AnyRef], valueType)
+          val key = keyParser.valueAsString(k.asInstanceOf[AnyRef],keyType)
+          val value = valueParser.valueAsString(v.asInstanceOf[AnyRef], valueType)
+          val qK = if(key.contains(':') || key.contains(',')) s""""$key"""" else key
+          val qV = if(value.contains(':') || value.contains(',')) s""""$value"""" else value
+          s"$qK:$qV"
         }.mkString(",")
 
     }
