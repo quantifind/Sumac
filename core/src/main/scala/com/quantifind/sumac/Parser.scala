@@ -284,7 +284,7 @@ abstract class CollectionParser[T <: Traversable[_]] extends CompoundParser[T] {
       val ptpe = tpe.asInstanceOf[ParameterizedType]
       val subtype = ptpe.getActualTypeArguments()(0)
       val subParser = ParseHelper.findParser(subtype).get
-      val parts = s.split(",")
+      val parts = CollectionCombinatorParser(s)
       val sub: Seq[Any] = parts.map(subParser.parse(_, subtype, currentValue)).toSeq
       build(sub: _*)
     } else empty
@@ -294,7 +294,11 @@ abstract class CollectionParser[T <: Traversable[_]] extends CompoundParser[T] {
     (v,tpe) match {
       case (t: Traversable[_],ptpe: ParameterizedType) =>
         val (subtype, subparser) = ParseHelper.getSubParser(tpe)
-        t.map{x => subparser.valueAsString(x.asInstanceOf[AnyRef], subtype)}.mkString(",")
+        t.map{x =>
+            val value = subparser.valueAsString(x.asInstanceOf[AnyRef], subtype)
+            if(value.contains(",")) s""""$value""""
+            else value
+        }.mkString(",")
     }
   }
 }
@@ -337,7 +341,7 @@ object ArrayParser extends CompoundParser[Array[_]] {
       case c: Class[_] =>
         val subtype = c.getComponentType
         val subParser = ParseHelper.findParser(subtype).get
-        val parts = s.split(",")
+        val parts = CollectionCombinatorParser(s).toArray
         val sub: Array[Any] = parts.map(subParser.parse(_, subtype, currentValue))
         //toArray doesn't cut it here ... we end up trying to set Array[Object] on an Array[whatever], which reflection
         // doesn't like
@@ -356,7 +360,11 @@ object ArrayParser extends CompoundParser[Array[_]] {
       case c: Class[_] =>
         val subtype = c.getComponentType
         val subParser = ParseHelper.findParser(subtype).get
-        v.asInstanceOf[Array[AnyRef]].map{subParser.valueAsString(_, subtype)}.mkString(",")
+        v.asInstanceOf[Array[AnyRef]].map{ v =>
+          val value = subParser.valueAsString(v, subtype)
+          if(value.contains(",")) s""""$value""""
+          else value
+        }.mkString(",")
     }
   }
 }
