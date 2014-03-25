@@ -117,6 +117,13 @@ class ValidationSuite extends FunSuite with ShouldMatchers {
     val a2 = new UnregisteredAnnotationArgs()
     a2.parse(Map("x" -> "7"))
     a2.x should be (7)
+
+    val a3 = new UserDefinedAnnotationUpdateArgs()
+    a3.parse(Map("x" -> "17"))
+    a3.x should be (3)
+
+    a3.parse(Map("x" -> "4"))
+    a3.x should be (4)
   }
 
   test("multi-annotation") {
@@ -209,6 +216,16 @@ class UserDefinedAnnotationArgs extends FieldArgs {
   registerAnnotationValidation(classOf[ThreeOrFour]){(_, value, _, name) =>
     if (value != 3 && value != 4) {
       throw new ArgException(name + " must be 3 or 4")
+    }
+  }
+}
+
+class UserDefinedAnnotationUpdateArgs extends FieldArgs {
+  @ThreeOrFour
+  var x: Int = _
+  registerAnnotationValidationUpdate(classOf[ThreeOrFour]){(_, value, _, name, holder) =>
+    if (value != 3 && value !=4) {
+      holder.setValue(3)
     }
   }
 }
