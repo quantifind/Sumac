@@ -25,7 +25,7 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
         }
       } catch {
         case ae: ArgException => throw ae
-        case e: Throwable => throw new ArgException("Error parsing \"%s\" into field \"%s\" (type = %s)\n%s".format(argValue, argName, holder.getType, helpMessage))
+        case e: Throwable => throw new ArgException("Error parsing \"%s\" into field \"%s\" (type = %s)\n%s".format(argValue, argName, holder.getType, helpMessage), e)
       }
       holder -> result
     }
