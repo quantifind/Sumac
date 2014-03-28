@@ -61,4 +61,13 @@ class CollectionCombinatorParserTest extends FunSuite with ShouldMatchers {
 
   }
 
+  test("should allow single quoted items") {
+    val item = CollectionCombinatorParser("""'item,1','item"2',item3,"item,4"""")
+
+    item should contain("item,1")
+    item should contain("item\"2")
+    item should contain("item3")
+    item should contain("item,4")
+  }
+
 }

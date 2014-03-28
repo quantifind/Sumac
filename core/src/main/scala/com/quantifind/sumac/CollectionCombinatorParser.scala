@@ -12,8 +12,8 @@ object CollectionCombinatorParser  extends RegexParsers {
   /**
    * an item  is either anything without a , in it, or a quotes string that might contain a comma
    */
-  val noQuote = """[^",]*"?[^",]*""".r
-  val quoted = "\"" ~> """[^"]+""".r <~ "\""
+  val noQuote = """[^"',]*["']?[^"',]*""".r
+  val quoted = "\"" ~> """[^"]+""".r <~ "\"" | "'" ~> "[^']+".r <~ "'"
   val item: Parser[String] = quoted | noQuote
 
   val list: Parser[Seq[String]] = rep1(item, "," ~> item)
