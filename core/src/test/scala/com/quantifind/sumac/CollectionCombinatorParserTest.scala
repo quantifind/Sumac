@@ -7,7 +7,7 @@ import org.scalatest.matchers.ShouldMatchers
  * User: pierre
  * Date: 3/25/14
  */
-class CollectionConbinatorParserTest extends FunSuite with ShouldMatchers {
+class CollectionCombinatorParserTest extends FunSuite with ShouldMatchers {
 
   test("should parse a single item") {
     val item = CollectionCombinatorParser("item")
@@ -49,6 +49,16 @@ class CollectionConbinatorParserTest extends FunSuite with ShouldMatchers {
     item should contain("item3")
     item should contain("item4,bar")
     item.size should be(4)
+  }
+
+  test("should still allow a quote in unquoted items") {
+    val item = CollectionCombinatorParser("""it"em1,item2,item3""")
+
+    item should contain("it\"em1")
+    item should contain("item2")
+    item should contain("item3")
+    item.size should be(3)
+
   }
 
 }

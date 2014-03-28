@@ -15,7 +15,9 @@ object MapCombinatorParser extends RegexParsers {
   /**
    * a token (key or value) is either anything without a : or , in it, or a quote string with these reserved characters
    */
-  val token: Parser[String] = """[^",:]+""".r | "\"" ~> """[^"]+""".r <~ "\""
+  val noQuote = """[^":,]*"?[^":,]*""".r
+  val quoted = "\"" ~> """[^"]+""".r <~ "\""
+  val token: Parser[String] = quoted | noQuote
 
   /**
    * an entry is a key:value pair
