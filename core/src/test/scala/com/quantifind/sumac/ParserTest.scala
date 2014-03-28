@@ -159,7 +159,7 @@ class ParserTest extends FunSuite with ShouldMatchers {
     a.getStringValues should be (Map("x" -> "/blah/ooga:10 seconds,/foo/bar:1 hour"))
 
     val ex = evaluating {a.parse(Array("--x", "adfadfdfa"))} should produce [IllegalArgumentException]
-    ex.getCause.getMessage should include ("'adfadfdfa' cannot be parsed to a map. Caused by: `:' expected but end of source found")
+    ex.getCause.getMessage should include ("'adfadfdfa' cannot be parsed. Caused by: `:' expected but end of source found")
   }
 
   test("date parser") {
