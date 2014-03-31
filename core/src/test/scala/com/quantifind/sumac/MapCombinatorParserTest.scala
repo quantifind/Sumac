@@ -96,4 +96,16 @@ class MapCombinatorParserTest  extends FunSuite with ShouldMatchers {
     parsed.size should be(3)
 
   }
+
+  test("allow entries with a single double quote in them") {
+    val parsed = MapCombinatorParser("""key"bar:value,foo:bar""")
+    parsed("key\"bar") should be("value")
+    parsed("foo") should be("bar")
+  }
+
+  test("should be happy with single quotes") {
+    val parsed = MapCombinatorParser("""'key"bar':value,'foo:bar':"foo,value"""")
+    parsed("key\"bar") should be("value")
+    parsed("foo:bar") should be("foo,value")
+  }
 }
