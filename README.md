@@ -3,6 +3,8 @@ to differentiate itself from other libraries by making it dead
 simple to define arguments, removing boilerplate and repetition.  It
 is a very small, lightweight scala library.
 
+[![Build Status](https://travis-ci.org/quantifind/Sumac.svg?branch=master)](https://travis-ci.org/quantifind/Sumac)
+
 ![Sumac Logo](https://raw.github.com/quantifind/Sumac/master/logo/Sumac.png)
 
 It is available on maven central.  The last stable release is `0.2.3`.  An sbt dependency would look like:
