@@ -1,5 +1,5 @@
 language: scala
-scala:
-   - 2.10.2
-   - 2.10.3-RC3
+scala: 
+   - 2.10.3
+   - 2.11.0-RC1
 script: sbt ++$TRAVIS_SCALA_VERSION 'project core' test 'project ext' test
