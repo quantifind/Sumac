@@ -5,6 +5,7 @@ object SumacBuild extends Build {
   lazy val core = Project("core", file("core"), settings = coreSettings).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
   lazy val ext = Project("ext", file("ext"), settings = extSettings).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) dependsOn(core)
 
+
   def sharedSettings = Defaults.defaultSettings ++ Seq(
     version := "0.3-SNAPSHOT",
     scalaVersion := "2.10.3",
@@ -22,7 +23,7 @@ object SumacBuild extends Build {
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "1.9.1" % "test"
     ),
-
+	
     // Publishing configuration
 
     publishMavenStyle := true,
@@ -38,7 +39,6 @@ object SumacBuild extends Build {
     publishArtifact in Test := false,
 
     pomIncludeRepository := { x => false },
-
     pomExtra := (
       <url>https://github.com/quantifind/Sumac</url>
       <licenses>
@@ -66,7 +66,7 @@ object SumacBuild extends Build {
         </developer>
       </developers>),
 	  javacOptions ++= Seq("-target", "1.6", "-source", "1.6")
-    )
+    ) ++ ScoverageSbtPlugin.instrumentSettings ++ CoverallsPlugin.coverallsSettings
 
   val slf4jVersion = "1.6.1"
 
@@ -86,4 +86,5 @@ object SumacBuild extends Build {
       "org.joda" % "joda-convert" % "1.2"  //this is needed for joda to work w/ scala
     )
   )
+
 }
