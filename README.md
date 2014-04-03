@@ -4,6 +4,7 @@ simple to define arguments, removing boilerplate and repetition.  It
 is a very small, lightweight scala library.
 
 [![Build Status](https://travis-ci.org/quantifind/Sumac.svg?branch=master)](https://travis-ci.org/quantifind/Sumac)
+[![Coverage Status](https://coveralls.io/repos/quantifind/Sumac/badge.png?branch=master)](https://coveralls.io/r/quantifind/Sumac?branch=master)
 
 ![Sumac Logo](https://raw.github.com/quantifind/Sumac/master/logo/Sumac.png)
 
