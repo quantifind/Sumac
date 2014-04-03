@@ -66,7 +66,7 @@ object SumacBuild extends Build {
         </developer>
       </developers>),
 	  javacOptions ++= Seq("-target", "1.6", "-source", "1.6")
-    ) ++ 	ScoverageSbtPlugin.instrumentSettings
+    ) ++ ScoverageSbtPlugin.instrumentSettings ++ CoverallsPlugin.coverallsSettings
 
   val slf4jVersion = "1.6.1"
 
