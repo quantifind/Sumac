@@ -14,6 +14,11 @@ project/plugins/project/
 .scala_dependencies
 .idea
 *.iml
+.cache
+.settings
+.classpath
+.~
+.project
 
 /test_output/PropertiesConfigTest/load_properties_test.properties
 /arg_builder_test_output.properties
