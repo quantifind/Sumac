@@ -4,13 +4,13 @@ import Keys._
 object SumacBuild extends Build {
   lazy val core = Project("core", file("core"), settings = coreSettings).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
   lazy val ext = Project("ext", file("ext"), settings = extSettings).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) dependsOn(core)
-
+  lazy val extZk = Project("ext-zk", file("ext-zk"), settings = extZkSettings).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) dependsOn(core)
 
   def sharedSettings = Defaults.defaultSettings ++ Seq(
     version := "0.3-SNAPSHOT",
     scalaVersion := "2.10.3",
     organization := "com.quantifind",
-    scalacOptions := Seq("-deprecation", "-unchecked", "-optimize"), 
+    scalacOptions := Seq("-deprecation", "-unchecked", "-optimize"),
     unmanagedJars in Compile <<= baseDirectory map { base => (base / "lib" ** "*.jar").classpath },
     retrieveManaged := true,
     transitiveClassifiers in Scope.GlobalScope := Seq("sources"),
@@ -73,17 +73,22 @@ object SumacBuild extends Build {
   def coreSettings = sharedSettings ++ Seq(
     name := "Sumac"
   )
-  
+
   def extSettings = sharedSettings ++ Seq(
     name := "Sumac-ext",
+    libraryDependencies ++= Seq(
+      "com.typesafe" % "config" % "1.0.2",
+      "joda-time" % "joda-time" % "2.3",
+      "org.joda" % "joda-convert" % "1.2"  //this is needed for joda to work w/ scala
+    )
+  )
+  def extZkSettings = sharedSettings ++ Seq(
+    name := "Sumac-ext-zk",
     resolvers ++= Seq(
       "Twitter Repo" at "http://maven.twttr.com/"
     ),
     libraryDependencies ++= Seq(
-      "com.twitter"   % "util-zk_2.10"   % "6.10.0",
-      "com.typesafe" % "config" % "1.0.2",
-      "joda-time" % "joda-time" % "2.3",
-      "org.joda" % "joda-convert" % "1.2"  //this is needed for joda to work w/ scala
+      "com.twitter"   % "util-zk_2.10"   % "6.10.0"
     )
   )
 
