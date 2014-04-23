@@ -162,6 +162,20 @@ class ParserTest extends FunSuite with Matchers {
     ex.getCause.getMessage should include ("'adfadfdfa' cannot be parsed. Caused by: `:' expected but end of source found")
   }
 
+  test("map of Seq parser") {
+    class A extends FieldArgs {
+      var complex: Map[String, Seq[String]] = _
+    }
+
+    val a = new A()
+
+    a.parse(Array("--complex", "key1:'v1,v2,v3',key2:'v4,v5,v6'"))
+    a.complex should be (Map(
+      "key1" -> Seq("v1", "v2", "v3"),
+      "key2" -> Seq("v4", "v5", "v6")
+    ))
+  }
+  
   test("date parser") {
     def checkDateAndCalendar(parser:Parser[_], s:String, m: Int) {
       val d = parser.parse(s, classOf[Date], null).asInstanceOf[Date]
