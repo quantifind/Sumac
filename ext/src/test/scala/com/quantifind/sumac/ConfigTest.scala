@@ -1,7 +1,7 @@
 package com.quantifind.sumac
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.matchers.Matchers
 import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 import scala.collection.Map
@@ -14,7 +14,7 @@ import scala.collection.Map
  * User: andrews
  * Date: 12/18/13
  */
-class ConfigTest extends FunSuite with ShouldMatchers {
+class ConfigTest extends FunSuite with Matchers {
 
   test("should load config from file and fallback to it") {
 
@@ -104,7 +104,7 @@ class ConfigTest extends FunSuite with ShouldMatchers {
         if (arg1.equals(Some(10 seconds))) throw new IllegalArgumentException(s"test arg1 = $arg1")
       }
     }
-    val ex = intercept[IllegalArgumentException] {
+    val ex = an IllegalArgumentException should be thrownBy {
       test.parse(Array[String]())
     }
     ex.getMessage should be("test arg1 = Some(10 seconds)")

@@ -1,25 +1,25 @@
 package com.quantifind.sumac
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
 /**
  * Test the Map parser combinator
  * User: andrews
  * Date: 3/24/14
  */
-class MapCombinatorParserTest  extends FunSuite with ShouldMatchers {
+class MapCombinatorParserTest  extends FunSuite with Matchers {
 
   test("should not parse something wrong") {
-    evaluating {
+    an[IllegalArgumentException] should be thrownBy {
       MapCombinatorParser("akdfaskdf")
-    } should produce[IllegalArgumentException]
+    }
   }
 
   test("should not parse unquoted things") {
-    evaluating {
+    an[IllegalArgumentException] should be thrownBy {
       MapCombinatorParser("akdfaskdf:kaklfjd,;dlksjdf")
-    } should produce[IllegalArgumentException]
+    }
   }
 
   test("should parse a single entry") {

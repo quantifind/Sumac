@@ -2,9 +2,9 @@ package com.quantifind.sumac
 
 import org.scalatest.FunSuite
 import collection._
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
-class ExternalConfigTest extends FunSuite with ShouldMatchers {
+class ExternalConfigTest extends FunSuite with Matchers {
   test("modifying args"){
     val args = new ExtArgs() with DefaultNumeroUno
     args.parse(Array("--x", "5", "--y", "hi there"))

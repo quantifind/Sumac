@@ -1,7 +1,7 @@
 package com.quantifind.sumac
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import scala.concurrent.duration._
 import scala.collection._
 import java.io.File
@@ -10,7 +10,7 @@ import java.text.SimpleDateFormat
 import scala.reflect.ClassTag
 
 
-class ParserTest extends FunSuite with ShouldMatchers {
+class ParserTest extends FunSuite with Matchers {
 
   test("SimpleParser") {
     checkParseAndBack(StringParser, "ooga", "ooga")
@@ -158,7 +158,7 @@ class ParserTest extends FunSuite with ShouldMatchers {
     ))
     a.getStringValues should be (Map("x" -> "/blah/ooga:10 seconds,/foo/bar:1 hour"))
 
-    val ex = evaluating {a.parse(Array("--x", "adfadfdfa"))} should produce [IllegalArgumentException]
+    val ex = the[IllegalArgumentException] thrownBy  {a.parse(Array("--x", "adfadfdfa"))}
     ex.getCause.getMessage should include ("'adfadfdfa' cannot be parsed. Caused by: `:' expected but end of source found")
   }
 
@@ -220,7 +220,7 @@ class ParserTest extends FunSuite with ShouldMatchers {
 
 
 
-    val ex = evaluating{a.parse(Array("--x", "foobar"))} should produce [ArgException]
+    val ex = the[ArgException] thrownBy {a.parse(Array("--x", "foobar"))}
     ex.getMessage should include ("foobar is not in set of enum values: " + MyEnum.values.mkString(","))
   }
 

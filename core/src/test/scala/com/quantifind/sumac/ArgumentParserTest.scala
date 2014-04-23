@@ -1,10 +1,10 @@
 package com.quantifind.sumac
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import scala.collection._
 
-class ArgumentParserTest extends FunSuite with ShouldMatchers {
+class ArgumentParserTest extends FunSuite with Matchers {
 
   test("parse") {
     val c = SimpleClass("a", 0, 1.4, 2)
