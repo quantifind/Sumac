@@ -1,7 +1,7 @@
 package com.quantifind.sumac
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.Matchers
+import org.scalatest.Matchers
 import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 import scala.collection.Map
@@ -104,7 +104,7 @@ class ConfigTest extends FunSuite with Matchers {
         if (arg1.equals(Some(10 seconds))) throw new IllegalArgumentException(s"test arg1 = $arg1")
       }
     }
-    val ex = an IllegalArgumentException should be thrownBy {
+    val ex = the[IllegalArgumentException] thrownBy {
       test.parse(Array[String]())
     }
     ex.getMessage should be("test arg1 = Some(10 seconds)")

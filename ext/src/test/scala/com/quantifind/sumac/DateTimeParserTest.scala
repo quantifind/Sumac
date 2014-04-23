@@ -1,7 +1,7 @@
 package com.quantifind.sumac
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.Matchers
+import org.scalatest.Matchers
 import java.util.TimeZone
 import java.text.SimpleDateFormat
 import org.joda.time.{ReadableDateTime, DateTimeZone}
