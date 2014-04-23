@@ -7,8 +7,8 @@ object SumacBuild extends Build {
   lazy val extZk = Project("ext-zk", file("ext-zk"), settings = extZkSettings).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) dependsOn(core)
 
   def sharedSettings = Defaults.defaultSettings ++ Seq(
-    version := "0.3-SNAPSHOT",
-    scalaVersion := "2.10.3",
+    version := "0.3.0-SNAPSHOT",
+    scalaVersion := "2.11.0",
     organization := "com.quantifind",
     scalacOptions := Seq("-deprecation", "-unchecked", "-optimize"),
     unmanagedJars in Compile <<= baseDirectory map { base => (base / "lib" ** "*.jar").classpath },
@@ -21,9 +21,20 @@ object SumacBuild extends Build {
       "JBoss Repository" at "http://repository.jboss.org/nexus/content/repositories/releases/"
     ),
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "1.9.1" % "test"
-    ),
-	
+      "org.scalatest" %% "scalatest" % "2.1.3" % "test"
+    ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
+      // add scala-parser-combinators dependency when needed (for Scala 2.11 and newer) in a robust way
+      // this mechanism supports cross-version publishing
+      // taken from: http://github.com/scala/scala-module-dependency-sample
+      // if scala 2.11+ is used, add dependency on scala-parser-combinators module
+      case Some((2, scalaMajor)) if scalaMajor >= 11 =>
+        Seq("org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.1")
+      case _ =>
+        Nil //it's in 2.10 core
+    }),
+
+    crossScalaVersions := Seq("2.10.3", "2.11.0"),
+
     // Publishing configuration
 
     publishMavenStyle := true,
@@ -65,8 +76,8 @@ object SumacBuild extends Build {
           <url>http://github.com/ryanlecompte</url>
         </developer>
       </developers>),
-	  javacOptions ++= Seq("-target", "1.6", "-source", "1.6")
-    ) ++ ScoverageSbtPlugin.instrumentSettings ++ CoverallsPlugin.coverallsSettings
+      javacOptions ++= Seq("-target", "1.6", "-source", "1.6")
+    ) //++ ScoverageSbtPlugin.instrumentSettings ++ CoverallsPlugin.coverallsSettings // waiting for 2.11.0 release
 
   val slf4jVersion = "1.6.1"
 
