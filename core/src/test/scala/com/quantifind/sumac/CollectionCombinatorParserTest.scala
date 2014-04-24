@@ -1,13 +1,13 @@
 package com.quantifind.sumac
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
 /**
  * User: pierre
  * Date: 3/25/14
  */
-class CollectionCombinatorParserTest extends FunSuite with ShouldMatchers {
+class CollectionCombinatorParserTest extends FunSuite with Matchers {
 
   test("should parse a single item") {
     val item = CollectionCombinatorParser("item")

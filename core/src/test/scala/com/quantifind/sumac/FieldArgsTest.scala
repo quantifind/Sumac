@@ -2,7 +2,7 @@ package com.quantifind.sumac
 
 import types.{SelectInput,MultiSelectInput}
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import java.lang.reflect.Type
 import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, ByteArrayOutputStream}
 import com.quantifind.sumac.validation.Required
@@ -11,7 +11,7 @@ import com.quantifind.sumac.validation.Required
  *
  */
 
-class FieldArgsTest extends FunSuite with ShouldMatchers {
+class FieldArgsTest extends FunSuite with Matchers {
 
   test("parseStrings") {
     val o = new StringHolder(null, null) with FieldArgs
@@ -43,12 +43,12 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     o.name should be ("bugaloo")
     o.flag should be (true)
   }
-  
+
   test("parseOptions") {
     val o = new ArgsWithOptions()
-    
-    // check default behavior 
-    o.parse(Array[String]())    
+
+    // check default behavior
+    o.parse(Array[String]())
     o.optStringNone should be (None: Option[String])
     o.optStringSome should be (Some("ooga"))
     o.optListStringNone should be (None: Option[List[String]])
@@ -63,17 +63,17 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
 
   test("help message") {
     val o = new StringHolder(null, null) with FieldArgs
-    val exc1 = evaluating {o.parse(Array("--xyz", "hello"))} should produce [ArgException]
+    val exc1 = the[ArgException] thrownBy  {o.parse(Array("--xyz", "hello"))}
     //the format is still ugly, but at least there is some info there
     "\\-\\-name\\s.*String".r.findFirstIn(exc1.getMessage()) should be ('defined)
     "\\-\\-comment\\s.*String".r.findFirstIn(exc1.getMessage()) should be ('defined)
 
     val o2 = new MixedTypes(null, 0) with FieldArgs
-    val exc2 = evaluating {o2.parse(Array("--foo", "bar"))} should produce [ArgException]
+    val exc2 = the[ArgException] thrownBy {o2.parse(Array("--foo", "bar"))}
     "\\-\\-name\\s.*String".r findFirstIn(exc2.getMessage) should be ('defined)
     "\\-\\-count\\s.*[Ii]nt".r findFirstIn(exc2.getMessage) should be ('defined)  //java or scala types, I'll take either for now
 
-    val exc3 = evaluating {o2.parse(Array("--count", "ooga"))} should produce [ArgException]
+    val exc3 = the[ArgException] thrownBy  {o2.parse(Array("--count", "ooga"))}
     //this message really should be much better.  (a) the number format exception should come first and (b) should indicate that it was while processing the "count" argument
     "\\-\\-name\\s.*String".r findFirstIn(exc3.getMessage) should be ('defined)
     "\\-\\-count\\s.*[Ii]nt".r findFirstIn(exc3.getMessage) should be ('defined)  //java or scala types, I'll take either for now
@@ -89,12 +89,12 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     o.name should be ("blah")
 
     //it will throw an exception if we pass in an argument for a field that it didn't know what to do with
-    val exc = evaluating {o.parse(Array("--funky", ""))} should produce [ArgException]
+    val exc = the[ArgException] thrownBy  {o.parse(Array("--funky", ""))}
     exc.getMessage should include ("unknown option funky")
 
     //on the other hand, FieldArgsExceptionOnUnparseable will throw an exception no matter what we do
     val o2 = new SpecialTypes("", null) with FieldArgsExceptionOnUnparseable
-    val exc2 = evaluating {o2.parse(Array("--name", "blah"))} should produce [ArgException]
+    val exc2 = the[ArgException] thrownBy  {o2.parse(Array("--name", "blah"))}
     exc2.getMessage should include ("type")
     exc2.getMessage should include ("MyFunkyType")
   }
@@ -103,7 +103,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
   test("good error msg") {
     val o = new MixedTypes("", 0) with FieldArgs
 
-    val exc1 = evaluating {o.parse(Array("--count", "hi"))} should produce [ArgException]
+    val exc1 = the[ArgException] thrownBy  {o.parse(Array("--count", "hi"))}
     //don't actually need the message to look *exactly* like this, but extremely useful for it to at least say what it was trying to parse
     exc1.getMessage should startWith ("""Error parsing "hi" into field "count" (type = int)""")
   }
@@ -117,7 +117,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
 
   test("help") {
     val s = new IgnoredArgs()
-    val exc = evaluating {s.parse(Array("--help"))} should produce [ArgException]
+    val exc = the[ArgException] thrownBy  {s.parse(Array("--help"))}
     """unknown option""".r findFirstIn (exc.getMessage) should be ('empty)
     """\-\-x\s.*[Ii]nt""".r findFirstIn(exc.getMessage) should be ('defined)
   }
@@ -131,7 +131,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     System.identityHashCode(s.select) should be (id)
     s.select.options should be (Set("a", "b", "c"))
 
-    evaluating {s.parse(Array("--select", "q"))} should produce [ArgException]
+    an[ArgException] should be thrownBy {s.parse(Array("--select", "q"))}
   }
 
   test("selectInput order") {
@@ -141,14 +141,14 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     case class SelectInputArgs(var select: SelectInput[String] = SelectInput(orderedChoices:_*)) extends FieldArgs
     val s = new SelectInputArgs()
     val id = System.identityHashCode(s.select)
-    
+
     val index = nextInt(max).toString
     s.parse(Array("--select", index))
     s.select.value should be (Some(index))
     System.identityHashCode(s.select) should be (id)
     s.select.options.toList should be (orderedChoices)
 
-    evaluating {s.parse(Array("--select", "q"))} should produce [ArgException]
+    an [ArgException] should be thrownBy  {s.parse(Array("--select", "q"))}
   }
 
   test("multiSelectInput") {
@@ -163,9 +163,9 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     s.parse(Array("--multiSelect", "b,c"))
     s.multiSelect.value should be (Set("b", "c"))
 
-    evaluating {s.parse(Array("--multiSelect", "q"))} should produce [ArgException]
-    evaluating {s.parse(Array("--multiSelect", "b,q"))} should produce [ArgException]
-    evaluating {s.parse(Array("--multiSelect", "q,b"))} should produce [ArgException]
+    an [ArgException] should be thrownBy  {s.parse(Array("--multiSelect", "q"))}
+    an[ArgException] should be thrownBy  {s.parse(Array("--multiSelect", "b,q"))}
+    an[ArgException] should be thrownBy  {s.parse(Array("--multiSelect", "q,b"))}
 
   }
 
@@ -214,8 +214,8 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     c.y should be (181)
     c.z should be (1.81)
 
-    evaluating {c.parse(Array("--x", "17"))} should produce [ArgException]
-    evaluating {c.parse(Array("--z", "1"))} should produce [ArgException]
+    an[ArgException] should be thrownBy {c.parse(Array("--x", "17"))}
+    an[ArgException] should be thrownBy  {c.parse(Array("--z", "1"))}
   }
 
 
@@ -239,7 +239,7 @@ class FieldArgsTest extends FunSuite with ShouldMatchers {
     c.y should be ("blah")
     c.z should be (134)
 
-    evaluating {c.parse(Array("--z", "0"))} should produce [Exception]
+    an[Exception] should be thrownBy {c.parse(Array("--z", "0"))}
   }
 
   test("private fields ignored") {

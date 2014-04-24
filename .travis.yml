@@ -1,5 +1,6 @@
 language: scala
 scala:
    - 2.10.3
+   - 2.11.0
 secure: "QwmhJleRjLHIlXw8Cqg3LCiSKtbraZ6h1HVUSZdDsY5Li7nDyLvgE0n0LOo7/zGDBC7N6K0oWt+o2d6hSqKOMzSW417GQDcsQNqSqtQLYEDTMXNd8/XGa9ifrBH2PEVcZf9McejYe2QZXH5bRGJgkUkNWDx0I9E9hFWNBHvfjkE="
-script: sbt ++$TRAVIS_SCALA_VERSION 'project core' coveralls test 'project ext' test
+script: sbt ++$TRAVIS_SCALA_VERSION 'project core' test 'project ext' test 
