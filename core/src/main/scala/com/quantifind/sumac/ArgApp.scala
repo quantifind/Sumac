@@ -64,8 +64,3 @@ object MyMain extends ArgMain[MyArgs] {
     println(args.b)
   }
 }
-
-//object MyApp extends ArgApp[MyArgs] {
-//  println(argHolder.a)
-//  println(argHolder.b)
-//}
