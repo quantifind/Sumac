@@ -1,15 +1,15 @@
 package com.quantifind.sumac
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import com.quantifind.sumac.validation.{FileExists, Positive, Required, Range}
 import java.io.File
 
-class ValidationSuite extends FunSuite with ShouldMatchers {
+class ValidationSuite extends FunSuite with Matchers {
 
   def parse(args: Map[String,String], msg: String)(builder: => FieldArgs) {
     val a = builder
-    val exc = withClue(args){evaluating {a.parse(args)} should produce[ArgException]}
+    val exc = withClue(args){the[ArgException] thrownBy {a.parse(args)}}
     withClue(args){exc.getMessage should include(msg)}
   }
 
@@ -31,7 +31,7 @@ class ValidationSuite extends FunSuite with ShouldMatchers {
 
     //make sure that the checks still apply when called programmatically (doesn't depend on strings at all)
     intArgs.a = 0
-    evaluating {intArgs.runValidation()} should produce[ArgException]
+    the[ArgException] thrownBy {intArgs.runValidation()}
 
 
     def parseString(args: Map[String,String], msg: String) = {
@@ -141,7 +141,7 @@ class ValidationSuite extends FunSuite with ShouldMatchers {
     b.bar.foo should be ("hi")
 
     val b2 = new BarArgs()
-    val exc = evaluating {b2.parse(Array[String]())} should produce[ArgException]
+    val exc = the[ArgException] thrownBy  {b2.parse(Array[String]())}
     exc.getMessage should include("must specify a value for bar.foo")
 
 
@@ -153,7 +153,7 @@ class ValidationSuite extends FunSuite with ShouldMatchers {
 
     def t(s:String*): ArgException = {
       val a = new OuterRequired()
-      evaluating {a.parse(s.toArray)} should produce[ArgException]
+      the[ArgException] thrownBy {a.parse(s.toArray)} 
     }
 
     val exc1 = t()

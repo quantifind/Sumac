@@ -3,9 +3,9 @@ package com.quantifind.sumac
 import org.scalatest.FunSuite
 import java.io.{PrintWriter, File}
 import java.util.Properties
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
-class PropertiesConfigTest extends FunSuite with ShouldMatchers {
+class PropertiesConfigTest extends FunSuite with Matchers {
 
   val testOutDir = new File("test_output/" + getClass.getSimpleName)
   testOutDir.mkdirs()
