@@ -43,12 +43,12 @@ class FieldArgsTest extends FunSuite with Matchers {
     o.name should be ("bugaloo")
     o.flag should be (true)
   }
-  
+
   test("parseOptions") {
     val o = new ArgsWithOptions()
-    
-    // check default behavior 
-    o.parse(Array[String]())    
+
+    // check default behavior
+    o.parse(Array[String]())
     o.optStringNone should be (None: Option[String])
     o.optStringSome should be (Some("ooga"))
     o.optListStringNone should be (None: Option[List[String]])
@@ -63,13 +63,13 @@ class FieldArgsTest extends FunSuite with Matchers {
 
   test("help message") {
     val o = new StringHolder(null, null) with FieldArgs
-    val exc1 = the[ArgException] thrownBy  {o.parse(Array("--xyz", "hello"))} 
+    val exc1 = the[ArgException] thrownBy  {o.parse(Array("--xyz", "hello"))}
     //the format is still ugly, but at least there is some info there
     "\\-\\-name\\s.*String".r.findFirstIn(exc1.getMessage()) should be ('defined)
     "\\-\\-comment\\s.*String".r.findFirstIn(exc1.getMessage()) should be ('defined)
 
     val o2 = new MixedTypes(null, 0) with FieldArgs
-    val exc2 = the[ArgException] thrownBy {o2.parse(Array("--foo", "bar"))} 
+    val exc2 = the[ArgException] thrownBy {o2.parse(Array("--foo", "bar"))}
     "\\-\\-name\\s.*String".r findFirstIn(exc2.getMessage) should be ('defined)
     "\\-\\-count\\s.*[Ii]nt".r findFirstIn(exc2.getMessage) should be ('defined)  //java or scala types, I'll take either for now
 
@@ -131,7 +131,7 @@ class FieldArgsTest extends FunSuite with Matchers {
     System.identityHashCode(s.select) should be (id)
     s.select.options should be (Set("a", "b", "c"))
 
-    the[ArgException] thrownBy  {s.parse(Array("--select", "q"))}
+    an[ArgException] should be thrownBy {s.parse(Array("--select", "q"))}
   }
 
   test("selectInput order") {
@@ -141,14 +141,14 @@ class FieldArgsTest extends FunSuite with Matchers {
     case class SelectInputArgs(var select: SelectInput[String] = SelectInput(orderedChoices:_*)) extends FieldArgs
     val s = new SelectInputArgs()
     val id = System.identityHashCode(s.select)
-    
+
     val index = nextInt(max).toString
     s.parse(Array("--select", index))
     s.select.value should be (Some(index))
     System.identityHashCode(s.select) should be (id)
     s.select.options.toList should be (orderedChoices)
 
-    the[ArgException] thrownBy  {s.parse(Array("--select", "q"))}
+    an [ArgException] should be thrownBy  {s.parse(Array("--select", "q"))}
   }
 
   test("multiSelectInput") {
@@ -163,9 +163,9 @@ class FieldArgsTest extends FunSuite with Matchers {
     s.parse(Array("--multiSelect", "b,c"))
     s.multiSelect.value should be (Set("b", "c"))
 
-    the[ArgException] thrownBy  {s.parse(Array("--multiSelect", "q"))}
-    the[ArgException] thrownBy  {s.parse(Array("--multiSelect", "b,q"))}
-    the[ArgException] thrownBy  {s.parse(Array("--multiSelect", "q,b"))}
+    an [ArgException] should be thrownBy  {s.parse(Array("--multiSelect", "q"))}
+    an[ArgException] should be thrownBy  {s.parse(Array("--multiSelect", "b,q"))}
+    an[ArgException] should be thrownBy  {s.parse(Array("--multiSelect", "q,b"))}
 
   }
 
@@ -214,8 +214,8 @@ class FieldArgsTest extends FunSuite with Matchers {
     c.y should be (181)
     c.z should be (1.81)
 
-    the[ArgException] thrownBy  {c.parse(Array("--x", "17"))}
-    the[ArgException] thrownBy  {c.parse(Array("--z", "1"))}
+    an[ArgException] should be thrownBy {c.parse(Array("--x", "17"))}
+    an[ArgException] should be thrownBy  {c.parse(Array("--z", "1"))}
   }
 
 
@@ -239,7 +239,7 @@ class FieldArgsTest extends FunSuite with Matchers {
     c.y should be ("blah")
     c.z should be (134)
 
-    the[Exception]thrownBy  {c.parse(Array("--z", "0"))}
+    an[Exception] should be thrownBy {c.parse(Array("--z", "0"))}
   }
 
   test("private fields ignored") {
