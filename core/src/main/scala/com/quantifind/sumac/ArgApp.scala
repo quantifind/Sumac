@@ -35,8 +35,14 @@ trait ArgMain[T <: FieldArgs] extends Argable[T] {
   }
 
   private def mainHelper(rawArgs: Array[String]) {
-    argHolder.parse(rawArgs)
-    main(argHolder)
+    try {
+      argHolder.parse(rawArgs)
+      main(argHolder)
+    } catch {
+      case ex: ArgException =>
+        println(ex.getMessage)
+        System.exit(1)
+    }
   }
 
   def main(args: T)
@@ -47,8 +53,14 @@ trait ArgFunction[T <: FieldArgs, U] extends Function[T, U] with Argable[T]
 @deprecated("you should avoid using this until a replacement to DelayedInit has been introduced to scala.", "24/04/2014")
 trait ArgApp[T <: FieldArgs] extends Argable[T] with App {
   override def main(args: Array[String]) {
-    argHolder.parse(args)
-    super.main(args)
+    try {
+      argHolder.parse(args)
+      super.main(args)
+    } catch {
+      case ex: ArgException =>
+        println(ex.getMessage)
+        System.exit(1)
+    }
   }
 }
 
