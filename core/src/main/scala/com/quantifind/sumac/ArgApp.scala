@@ -38,7 +38,7 @@ trait ArgMain[T <: FieldArgs] extends Argable[T] {
     try {
       argHolder.parse(rawArgs)
     } catch {
-      case ex: ArgException =>
+      case ex: FeedbackException =>
         println(ex.getMessage)
         System.exit(1)
     }
@@ -56,7 +56,7 @@ trait ArgApp[T <: FieldArgs] extends Argable[T] with App {
     try {
       argHolder.parse(args)
     } catch {
-      case ex: ArgException =>
+      case ex: FeedbackException =>
         println(ex.getMessage)
         System.exit(1)
     }

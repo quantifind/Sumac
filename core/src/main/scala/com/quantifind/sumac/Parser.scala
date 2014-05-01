@@ -173,7 +173,7 @@ class DateParser(val fmts:Map[Regex,String], zone: TimeZone = TimeZone.getTimeZo
         fmt.synchronized {
           fmt.parse(s)
         }
-      case None => throw new ArgException("no format found to parse \"" + s + "\" into Date")
+      case None => throw new FeedbackException("no format found to parse \"" + s + "\" into Date")
     }
   }
 
@@ -260,7 +260,7 @@ object EnumParser extends CompoundParser[Enum[_]] {
         } match {
           case Some(x) => x.asInstanceOf[Enum[_]]
           case None =>
-            throw new ArgException(s + " is not in set of enum values: " + enums.mkString(","))
+            throw new FeedbackException(s + " is not in set of enum values: " + enums.mkString(","))
         }
       case _ =>
         throw new RuntimeException("unexpected type in enum parser: " + tpe)
