@@ -63,13 +63,13 @@ object SumacBuild extends Build {
       setReleaseVersion,
       BranchRelease.makeBranch,           //make a new rel/$version branch
       commitReleaseVersion,               // all changes happen here
+      tagRelease,                         //we tag where the next release starts from
       BranchRelease.publishSignedArtifacts,
       releaseTask(sonatypeReleaseAll),
       BranchRelease.pushBranch,
       BranchRelease.moveToPreviousBranch,
       setNextVersion,                     // bump to the next snapshot version
       commitNextVersion,
-      tagRelease,                         //we tag where the next release starts from
       pushChanges
     ),
 
