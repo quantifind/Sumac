@@ -65,16 +65,17 @@ trait FieldArgs extends Args {
     field: FieldArgAssignable,
     default: Any,
     annot: Annotation,
-    check: (Any, Any, Annotation, String) => Unit
+    check: (Any, Any, Annotation, String, ArgAssignable) => Unit
   ) extends (() => Unit) {
     def apply() {
-      check(default, field.getCurrentValue, annot, field.getName)
+      check(default, field.getCurrentValue, annot, field.getName, field)
     }
     override def toString() = "annotation check of " + field.getName
   }
 
   @transient
-  private[sumac] val annotationValidationFunctions = mutable.Map[Class[_ <: Annotation], (Any,Any, Annotation, String) => Unit]()
+  private[sumac] val annotationValidationFunctions =
+    mutable.Map[Class[_ <: Annotation], (Any,Any, Annotation, String, ArgAssignable) => Unit]()
 
 
   /**
@@ -89,15 +90,23 @@ trait FieldArgs extends Args {
    *                           first argument is the default value of the argument, the second is the current value,
    *                           the third is the annotation, and the fourth is the name of the argument (for error msgs).
    */
-  def registerAnnotationValidation(annotation: Class[_ <: Annotation])(validationFunction: (Any,Any, Annotation, String) => Unit) {
+  def registerAnnotationValidationUpdate(annotation: Class[_ <: Annotation])(validationFunction: (Any,Any, Annotation, String, ArgAssignable) => Unit) {
     annotationValidationFunctions += annotation -> validationFunction
   }
+
+  def registerAnnotationValidation(annotation: Class[_ <: Annotation])(validationFunction: (Any,Any, Annotation, String) => Unit) {
+    registerAnnotationValidationUpdate(annotation){(a:Any,b:Any,c:Annotation,d:String,e:ArgAssignable) => validationFunction(a,b,c,d)}
+  }
+
+
+
 
   {
     //some built-in annotation validations
     registerAnnotationValidation(classOf[Required])(RequiredCheck)
     registerAnnotationValidation(classOf[Positive])(PositiveCheck)
     registerAnnotationValidation(classOf[Range])(RangeCheck)
+    registerAnnotationValidation(classOf[FileExists])(FileExistsCheck)
   }
 
 }

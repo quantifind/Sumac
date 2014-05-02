@@ -15,21 +15,21 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
   }
 
   def parse(rawKvs: Map[String,String]): Map[T, ValueHolder[_]] = {
-    if (rawKvs.contains("help"))
-      throw new ArgException(helpMessage)
-    rawKvs.filter {
-      case(argName, argValue) => !ArgumentParser.isReserved(argName)
-    }.map{case(argName, argValue) =>
-      val holder = nameToHolder(argName)
-      val result = try {
-        ParseHelper.parseInto(argValue, holder.getType, holder.getCurrentValue) getOrElse {
-          throw new ArgException("don't know how to parse type: " + holder.getType)
+    if (rawKvs.contains("help")) {
+      throw new FeedbackException(helpMessage)
+    }
+    rawKvs.collect {
+      case(argName, argValue) if !ArgumentParser.isReserved(argName) =>
+        val holder = nameToHolder(argName)
+        val result = try {
+          ParseHelper.parseInto(argValue, holder.getType, holder.getCurrentValue) getOrElse {
+            throw new FeedbackException("don't know how to parse type: " + holder.getType)
+          }
+        } catch {
+          case ae: ArgException => throw ae
+          case e: Throwable => throw new ArgException("Error parsing \"%s\" into field \"%s\" (type = %s)\n%s".format(argValue, argName, holder.getType, helpMessage), e)
         }
-      } catch {
-        case ae: ArgException => throw ae
-        case e: Throwable => throw new ArgException("Error parsing \"%s\" into field \"%s\" (type = %s)\n%s".format(argValue, argName, holder.getType, helpMessage))
-      }
-      holder -> result
+        holder -> result
     }
   }
 
@@ -63,12 +63,12 @@ object ArgumentParser {
           acc("help") = null
           acc
         case arg :: _ if (!arg.startsWith("--")) =>
-          throw new ArgException("expecting argument name beginning with \"--\", instead got %s".format(arg))
+          throw new FeedbackException("expecting argument name beginning with \"--\", instead got %s".format(arg))
         case name :: value :: tail =>
           val suffix = name.drop(2)
           acc(suffix) = value
           parse(tail, acc)
-        case _ => throw new ArgException("gave a non-key value argument")
+        case _ => throw new FeedbackException("gave a non-key value argument")
       }
     }
     parse(args.toList)
@@ -129,6 +129,14 @@ object FieldArgAssignable{
   }
 }
 
-case class ArgException(msg: String, cause: Throwable) extends IllegalArgumentException(msg, cause) {
+class ArgException(msg: String, cause: Throwable) extends IllegalArgumentException(msg, cause) {
   def this(msg: String) = this(msg, null)
 }
+
+object ArgException {
+  def apply(msg: String, cause: Throwable) = new ArgException(msg, cause)
+}
+
+class FeedbackException(msg: String) extends ArgException(msg, null)
+
+
