@@ -1,5 +1,9 @@
 *.class
 *.log
+.settings
+.project
+.classpath
+*~
 build
 
 # sbt specific
