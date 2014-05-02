@@ -23,12 +23,7 @@ class ArgAppTest extends FunSuite with Matchers {
 
 }
 
-class MyArgs extends FieldArgs {
-  var a: String = ""
-  var b: Int = 0
-}
-
-class MyApp extends Dummy with ArgApp[MyArgs] with Matchers {
+class MyApp extends Dummy with ArgApp[MyArgs] with ShouldMatchers {
   def main(args: MyArgs) {
     args.a should be ("hello")
     args.b should be (17)
