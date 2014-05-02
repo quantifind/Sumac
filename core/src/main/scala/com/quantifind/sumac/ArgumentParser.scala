@@ -7,7 +7,7 @@ import collection._
 
 class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
   lazy val nameToHolder:Map[String,T] = (LinkedHashMap.empty ++ argHolders.map(a => a.getName -> a)).withDefault { arg =>
-    throw new FeedbackException("unknown option %s\n%s".format(arg, helpMessage))
+    throw new ArgException("unknown option %s\n%s".format(arg, helpMessage))
   }
 
   def parse(args: Array[String]): Map[T, ValueHolder[_]] = {
@@ -15,19 +15,21 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
   }
 
   def parse(rawKvs: Map[String,String]): Map[T, ValueHolder[_]] = {
-    if (rawKvs.contains("help"))
+    if (rawKvs.contains("help")) {
       throw new FeedbackException(helpMessage)
-    rawKvs.map{case(argName, argValue) =>
-      val holder = nameToHolder(argName)
-      val result = try {
-        ParseHelper.parseInto(argValue, holder.getType, holder.getCurrentValue) getOrElse {
-          throw new FeedbackException("don't know how to parse type: " + holder.getType)
+    }
+    rawKvs.collect {
+      case(argName, argValue) if !ArgumentParser.isReserved(argName) =>
+        val holder = nameToHolder(argName)
+        val result = try {
+          ParseHelper.parseInto(argValue, holder.getType, holder.getCurrentValue) getOrElse {
+            throw new FeedbackException("don't know how to parse type: " + holder.getType)
+          }
+        } catch {
+          case ae: ArgException => throw ae
+          case e: Throwable => throw new ArgException("Error parsing \"%s\" into field \"%s\" (type = %s)\n%s".format(argValue, argName, holder.getType, helpMessage), e)
         }
-      } catch {
-        case ae: ArgException => throw ae
-        case e: Throwable => throw new ArgException("Error parsing \"%s\" into field \"%s\" (type = %s)\n%s".format(argValue, argName, holder.getType, helpMessage), e)
-      }
-      holder -> result
+        holder -> result
     }
   }
 
@@ -42,6 +44,11 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
 }
 
 object ArgumentParser {
+
+  val reservedArguments = Seq("help", "sumac.debugArgs")
+
+  def isReserved(name: String) = reservedArguments.contains(name)
+
   def apply[T <: ArgAssignable](argHolders: Traversable[T]) = {
     // ignore things we don't know how to parse
     new ArgumentParser(argHolders.toSeq.filter(t => ParseHelper.findParser(t.getType).isDefined))

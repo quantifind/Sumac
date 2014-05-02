@@ -31,6 +31,17 @@ class ArgumentParserTest extends FunSuite with Matchers {
     }
   }
 
+  test("reserved arguments should be filtered") {
+    val c = SimpleClass("a", 0, 1.4, 2)
+    val fieldArgs = classOf[SimpleClass].getDeclaredFields.map{f => FieldArgAssignable("",f, c)}
+    val argParser = new ArgumentParser(fieldArgs)
+
+    val parsed = getSimpleNameToArgMap(argParser.parse(Array("--count", "5", "--dummy", "7.4e3", "--name", "ooga", "--sumac.debugArgs", "true")))
+
+    parsed should not contain key("sumac.debugArgs")
+
+  }
+
   def getSimpleNameToArgMap(parsedArgs : Map[_ <: ArgAssignable, ValueHolder[_]]) = {
     parsedArgs.map{kv => kv._1.getName -> kv._2.value}.toMap[String, Any]
   }
