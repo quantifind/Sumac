@@ -1,5 +1,8 @@
 import sbt._
 import sbt.Keys._
+import com.typesafe.sbt.SbtPgp.PgpKeys.publishSigned
+
+import xerial.sbt.Sonatype.SonatypeKeys._
 
 import sbtrelease.ReleaseStateTransformations._
 import sbtrelease.ReleasePlugin.ReleaseKeys._
@@ -7,6 +10,7 @@ import sbtrelease.ReleasePlugin
 import sbtrelease.ReleaseStep
 import sbtrelease.Utilities._
 import sbtrelease.Vcs
+import sbtrelease.releaseTask
 
 import annotation.tailrec
 
@@ -17,7 +21,11 @@ object SumacBuild extends Build {
   lazy val ext = Project("ext", file("ext"), settings = extSettings).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) dependsOn(core)
   lazy val extZk = Project("ext-zk", file("ext-zk"), settings = extZkSettings).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) dependsOn(core)
 
-  def sharedSettings = Defaults.defaultSettings ++ ReleasePlugin.releaseSettings ++ BranchRelease.branchSettings ++ Seq(
+  def sharedSettings = Defaults.defaultSettings ++
+  ReleasePlugin.releaseSettings ++
+  BranchRelease.branchSettings ++
+  xerial.sbt.Sonatype.sonatypeSettings ++
+  Seq(
     // version is managed by sbt-release in version.sbt
     scalaVersion := "2.11.0",
     organization := "com.quantifind",
@@ -55,7 +63,8 @@ object SumacBuild extends Build {
       setReleaseVersion,
       BranchRelease.makeBranch,           //make a new rel/$version branch
       commitReleaseVersion,               // all changes happen here
-      publishArtifacts,
+      BranchRelease.publishSignedArtifacts,
+      releaseTask(sonatypeReleaseAll),
       BranchRelease.pushBranch,
       BranchRelease.moveToPreviousBranch,
       setNextVersion,                     // bump to the next snapshot version
@@ -75,7 +84,7 @@ object SumacBuild extends Build {
     },
 
     publishArtifact in Test := false,
-
+    profileName := "com.quantifind",
     pomIncludeRepository := { x => false },
     pomExtra := (
       <url>https://github.com/quantifind/Sumac</url>
@@ -103,10 +112,10 @@ object SumacBuild extends Build {
           <url>http://github.com/ryanlecompte</url>
           </developer>
         <developer>
-        <id>pierre</id>
-        <name>Pierre Andrews</name>
-        <url>http://github.com/Mortimerp9</url>
-          </developer>
+          <id>pierre</id>
+          <name>Pierre Andrews</name>
+          <url>http://github.com/Mortimerp9</url>
+        </developer>
       </developers>),
       javacOptions ++= Seq("-target", "1.6", "-source", "1.6")
     ) //++ ScoverageSbtPlugin.instrumentSettings ++ CoverallsPlugin.coverallsSettings // waiting for 2.11.0 release
@@ -261,6 +270,27 @@ object BranchRelease {
   lazy val branchSettings = Seq[Setting[_]](
     branchName <<= (version in ThisBuild) map ( v => s"rel/$v" )
   )
+
+  //////////////////////////////////////////////////////////////////////
+  // signed publish
+  //////////////////////////////////////////////////////////////////////
+
+  lazy val publishSignedArtifacts = ReleaseStep(
+    action = publishSignedArtifactsAction,
+    check = st => {
+      // getPublishTo fails if no publish repository is set up.
+      val ex = st.extract
+      val ref = ex.get(thisProjectRef)
+      Classpaths.getPublishTo(ex.get(publishTo in Global in ref))
+      st
+    },
+    enableCrossBuild = true
+  )
+  private lazy val publishSignedArtifactsAction = { st: State =>
+    val extracted = st.extract
+    val ref = extracted.get(thisProjectRef)
+    extracted.runAggregated(publishSigned in Global in ref, st)
+  }
 
 }
 
