@@ -36,6 +36,9 @@ trait ConfigArgs extends ExternalConfig {
    */
   var useDefaultConfig = true
 
+  private var _loadedConfig: Config = _
+  final def loadedConfig: Option[Config] = Option(_loadedConfig)
+
   /**
    * the prefix to use to search for values in the config file. The values will be searched with the key:
    * configPrefix + '.' + argumentName
@@ -86,13 +89,13 @@ trait ConfigArgs extends ExternalConfig {
     val originalNames = originalArgs.keys.toSeq
     //get the ones we are missing
     val missing = expected.diff(originalNames)
-    val conf = makeConfig(originalArgs)
+    _loadedConfig = makeConfig(originalArgs)
     val newArgs = originalArgs ++ missing.flatMap {
       name =>
       //and find them in the config file
         val key = s"$configPrefix.$name"
         Try {
-          name -> stripQuotes.replaceAllIn(conf.getValue(key).render, "")
+          name -> stripQuotes.replaceAllIn(_loadedConfig.getValue(key).render, "")
         }.toOption //ignore missing values
     }
     super.readArgs(newArgs)
