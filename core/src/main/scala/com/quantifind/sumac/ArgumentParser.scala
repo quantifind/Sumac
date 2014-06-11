@@ -50,6 +50,8 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
 object ArgumentParser {
 
   val reservedArguments = Seq("help", "sumac.debugArgs")
+  // backslash follower by newline for newline, carriage return, and combinations
+  val newlineCharacters = Seq("\\\n", "\\\r", "\\\n\r", "\\\r\n")
 
   def isReserved(name: String) = reservedArguments.contains(name)
 
@@ -59,7 +61,10 @@ object ArgumentParser {
   }
 
   def argCLIStringToArgList(commandLineArgs: String): Array[String] = {
-    commandLineArgs.split("\\s+")
+    val removeNewlines = newlineCharacters.foldLeft[String](commandLineArgs){case(currentArgString, character) =>
+      currentArgString.replaceAllLiterally(character, "")
+    }
+    removeNewlines.split("\\s+")
   }
 
   def argListToKvMap(args: Array[String]): Map[String,String] = {

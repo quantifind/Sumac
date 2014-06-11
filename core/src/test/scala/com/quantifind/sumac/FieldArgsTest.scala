@@ -29,6 +29,11 @@ class FieldArgsTest extends FunSuite with Matchers {
     val o = new StringHolder(null, null) with FieldArgs
     o.parse("--name hello")
     o.name should be ("hello")
+    o.parse(
+      """--name \
+        goodbye
+      """)
+    o.name should be ("goodbye")
   }
 
   test("parseMixed") {

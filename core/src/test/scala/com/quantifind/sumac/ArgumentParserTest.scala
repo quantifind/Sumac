@@ -56,6 +56,14 @@ class ArgumentParserTest extends FunSuite with Matchers {
   def getSimpleNameToArgMap(parsedArgs : Map[_ <: ArgAssignable, ValueHolder[_]]) = {
     parsedArgs.map{kv => kv._1.getName -> kv._2.value}.toMap[String, Any]
   }
+
+  test("remove newlines") {
+    ArgumentParser.argCLIStringToArgList(
+      """--x 5 \
+         --y 6 \
+         --z 8 \
+      """) should be (Array("--x", "5", "--y", "6", "--z", "8"))
+  }
 }
 
 
