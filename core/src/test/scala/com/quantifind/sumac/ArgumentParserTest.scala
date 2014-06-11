@@ -29,6 +29,17 @@ class ArgumentParserTest extends FunSuite with Matchers {
       parsed should contain key ("name")
       parsed("name") should be ("ooga")
     }
+
+    {
+      val parsed = getSimpleNameToArgMap(argParser.parse("--count  5  --dummy 7.4e3 --name ooga"))
+      parsed.size should be (3)
+      parsed should contain key ("count")
+      parsed("count") should be (5)
+      parsed should contain key ("dummy")
+      parsed("dummy") should be (7.4e3)
+      parsed should contain key ("name")
+      parsed("name") should be ("ooga")
+    }
   }
 
   test("reserved arguments should be filtered") {

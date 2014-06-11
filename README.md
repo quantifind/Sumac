@@ -19,7 +19,7 @@ is available through the `sumac-ext` package:
 
 ## Usage
 
-Full usage can be found on the[wiki](https://github.com/quantifind/Sumac/wiki), but we can go over the basics quickly.
+Full usage can be found on the [wiki](https://github.com/quantifind/Sumac/wiki), but we can go over the basics quickly.
 Define a basic container object which extends `FieldArgs`.  Every field of the object
 becomes a command line argument with the same name.  Then use `parse()` to process the command line arguments.
 

@@ -10,6 +10,10 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
     throw new ArgException("unknown option %s\n%s".format(arg, helpMessage))
   }
 
+  def parse(commandLineArgs: String): Map[T, ValueHolder[_]] = {
+    parse(ArgumentParser.argCLIStringToArgList(commandLineArgs))
+  }
+
   def parse(args: Array[String]): Map[T, ValueHolder[_]] = {
     parse(ArgumentParser.argListToKvMap(args))
   }
@@ -52,6 +56,10 @@ object ArgumentParser {
   def apply[T <: ArgAssignable](argHolders: Traversable[T]) = {
     // ignore things we don't know how to parse
     new ArgumentParser(argHolders.toSeq.filter(t => ParseHelper.findParser(t.getType).isDefined))
+  }
+
+  def argCLIStringToArgList(commandLineArgs: String): Array[String] = {
+    commandLineArgs.split("\\s+")
   }
 
   def argListToKvMap(args: Array[String]): Map[String,String] = {

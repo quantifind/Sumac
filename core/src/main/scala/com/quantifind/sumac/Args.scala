@@ -30,6 +30,10 @@ trait Args extends ExternalConfig with Serializable {
   @transient
   var validationFunctions: Seq[() => Unit] = Seq()
 
+  def parse(commandLineArgs: String) {
+    parse(ArgumentParser.argCLIStringToArgList(commandLineArgs))
+  }
+
   def parse(args: Array[String]) {
     parse(ArgumentParser.argListToKvMap(args))
   }
