@@ -29,6 +29,17 @@ class ArgumentParserTest extends FunSuite with Matchers {
       parsed should contain key ("name")
       parsed("name") should be ("ooga")
     }
+
+    {
+      val parsed = getSimpleNameToArgMap(argParser.parse("--count  5  --dummy 7.4e3 --name ooga"))
+      parsed.size should be (3)
+      parsed should contain key ("count")
+      parsed("count") should be (5)
+      parsed should contain key ("dummy")
+      parsed("dummy") should be (7.4e3)
+      parsed should contain key ("name")
+      parsed("name") should be ("ooga")
+    }
   }
 
   test("reserved arguments should be filtered") {
@@ -44,6 +55,14 @@ class ArgumentParserTest extends FunSuite with Matchers {
 
   def getSimpleNameToArgMap(parsedArgs : Map[_ <: ArgAssignable, ValueHolder[_]]) = {
     parsedArgs.map{kv => kv._1.getName -> kv._2.value}.toMap[String, Any]
+  }
+
+  test("remove newlines") {
+    ArgumentParser.argCLIStringToArgList(
+      """--x "5 \\\\\" 6\"\\" \
+         --y 6 \
+         --blank "" \
+         """ + "--z '\t\n'") should be (Array("--x", """5 \\\\\" 6\"\\""", "--y", "6","--blank", "", "--z", "\t\n"))
   }
 }
 

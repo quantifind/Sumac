@@ -25,6 +25,17 @@ class FieldArgsTest extends FunSuite with Matchers {
     o.comment should be ("stuff")
   }
 
+  test("parseCommandLine") {
+    val o = new StringHolder(null, null) with FieldArgs
+    o.parse("--name hello")
+    o.name should be ("hello")
+    o.parse(
+      """--name \
+        goodbye
+      """)
+    o.name should be ("goodbye")
+  }
+
   test("parseMixed") {
     val o = new MixedTypes(null, 0) with FieldArgs
 
