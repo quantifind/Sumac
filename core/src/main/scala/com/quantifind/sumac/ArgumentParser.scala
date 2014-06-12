@@ -51,7 +51,8 @@ object ArgumentParser {
 
   val reservedArguments = Seq("help", "sumac.debugArgs")
   // backslash follower by newline for newline, carriage return, and combinations
-  val newlineCharacters = Seq("\\\n", "\\\r", "\\\n\r", "\\\r\n")
+  // Newlines have to come first!
+  val newlineCharacters = Seq("\\\n", "\\\r", "\\\n\r", "\\\r\n", "\n", "\r", "\r\n", "\n\r")
 
   def isReserved(name: String) = reservedArguments.contains(name)
 
@@ -61,10 +62,53 @@ object ArgumentParser {
   }
 
   def argCLIStringToArgList(commandLineArgs: String): Array[String] = {
+
+    def splitRespectingQuotes(s: String): Array[String] = {
+      var openQuote: Option[Char] = None
+      var stringBuilder: StringBuilder = new StringBuilder
+      var splitArray: Array[String] = Array()
+      var escaping: Boolean = false
+
+      s.foreach{case(char) => {
+        char match {
+          case '\\' => {
+            if(escaping) {
+              stringBuilder ++= "\\\\"
+            }
+            escaping = !escaping
+          }
+          case s if "\\s".r.findFirstIn(s.toString).isDefined && openQuote.isEmpty => {
+            if(stringBuilder.size > 0) {
+              splitArray = splitArray ++ Array(stringBuilder.toString())
+              stringBuilder = new StringBuilder
+            }
+          }
+          case s if openQuote == Some(s) => {
+            if(escaping) {
+              escaping = false
+              stringBuilder ++= "\\\""
+            } else {
+              openQuote = None
+              splitArray = splitArray ++ Array(stringBuilder.toString())
+              stringBuilder = new StringBuilder
+            }
+          }
+          case s if s == '"' || s == '\'' && openQuote.isEmpty && !escaping => {
+            openQuote = Some(s)
+          }
+          case _ => {
+            stringBuilder += char
+          }
+        }
+      }}
+
+      if(stringBuilder.isEmpty) splitArray else splitArray ++ Array(stringBuilder.toString)
+    }
+
     val removeNewlines = newlineCharacters.foldLeft[String](commandLineArgs){case(currentArgString, character) =>
       currentArgString.replaceAllLiterally(character, "")
-    }
-    removeNewlines.split("\\s+")
+    }.trim()
+    splitRespectingQuotes(removeNewlines)
   }
 
   def argListToKvMap(args: Array[String]): Map[String,String] = {

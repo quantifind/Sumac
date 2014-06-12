@@ -59,10 +59,11 @@ class ArgumentParserTest extends FunSuite with Matchers {
 
   test("remove newlines") {
     ArgumentParser.argCLIStringToArgList(
-      """--x 5 \
+      """--x "5 \\\\\" 6\"\\" \
          --y 6 \
-         --z 8 \
-      """) should be (Array("--x", "5", "--y", "6", "--z", "8"))
+         --z '' \
+         --blank "" \
+      """) should be (Array("--x", """5 \\\\\" 6\"\\""", "--y", "6", "--z", "", "--blank", ""))
   }
 }
 
