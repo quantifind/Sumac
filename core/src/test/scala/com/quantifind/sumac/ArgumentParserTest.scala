@@ -61,9 +61,8 @@ class ArgumentParserTest extends FunSuite with Matchers {
     ArgumentParser.argCLIStringToArgList(
       """--x "5 \\\\\" 6\"\\" \
          --y 6 \
-         --z '' \
          --blank "" \
-      """) should be (Array("--x", """5 \\\\\" 6\"\\""", "--y", "6", "--z", "", "--blank", ""))
+         """ + "--z '\t\n'") should be (Array("--x", """5 \\\\\" 6\"\\""", "--y", "6","--blank", "", "--z", "\t\n"))
   }
 }
 

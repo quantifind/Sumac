@@ -52,7 +52,7 @@ object ArgumentParser {
   val reservedArguments = Seq("help", "sumac.debugArgs")
   // backslash follower by newline for newline, carriage return, and combinations
   // Newlines have to come first!
-  val newlineCharacters = Seq("\\\n", "\\\r", "\\\n\r", "\\\r\n", "\n", "\r", "\r\n", "\n\r")
+  val newlineCharacters = Seq("\\\n", "\\\r", "\\\n\r", "\\\r\n")
 
   def isReserved(name: String) = reservedArguments.contains(name)
 
@@ -63,27 +63,37 @@ object ArgumentParser {
 
   def argCLIStringToArgList(commandLineArgs: String): Array[String] = {
 
+    /**
+     * Helper method for preserving quoted strings while splitting on whitespace
+     */
     def splitRespectingQuotes(s: String): Array[String] = {
       var openQuote: Option[Char] = None
       var stringBuilder: StringBuilder = new StringBuilder
       var splitArray: Array[String] = Array()
       var escaping: Boolean = false
 
+      // Crawl through string character-by-character
       s.foreach{case(char) => {
         char match {
           case '\\' => {
+            // If encounter backslash (escape character) keep note for checking next character
+            // Append two backslashes if we encounter two backslashes in a row.
             if(escaping) {
               stringBuilder ++= "\\\\"
             }
             escaping = !escaping
           }
           case s if "\\s".r.findFirstIn(s.toString).isDefined && openQuote.isEmpty => {
+            // If we encounter whitespace and aren't inside of a quote
+            // add this string to the array and start a new string
             if(stringBuilder.size > 0) {
               splitArray = splitArray ++ Array(stringBuilder.toString())
               stringBuilder = new StringBuilder
             }
           }
           case s if openQuote == Some(s) => {
+            // If we are closing an open quote (by matching " to " or ' to ')
+            // First check if its escaped, otherwise end this quote block.
             if(escaping) {
               escaping = false
               stringBuilder ++= "\\\""
@@ -94,9 +104,15 @@ object ArgumentParser {
             }
           }
           case s if s == '"' || s == '\'' && openQuote.isEmpty && !escaping => {
+            // check if we are encountering an open quote that isn't escaped
             openQuote = Some(s)
           }
           case _ => {
+            // If no other condition is met, append the character, and append a backslash if we previously saw one
+            if(escaping) {
+              stringBuilder += '\\'
+              escaping = !escaping
+            }
             stringBuilder += char
           }
         }
