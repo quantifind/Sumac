@@ -27,6 +27,8 @@ trait Parser[T] {
     else
       currentValue.toString
   }
+
+  def allowedValues(tpe: Type, currentValue: AnyRef): Option[Set[String]] = None
 }
 
 object Parser {
@@ -266,6 +268,16 @@ object EnumParser extends CompoundParser[Enum[_]] {
         throw new RuntimeException("unexpected type in enum parser: " + tpe)
     }
   }
+
+  override def allowedValues(tpe: Type, currentValue: AnyRef): Option[Set[String]] = {
+    tpe match {
+      case c: Class[_] =>
+        Some(c.getEnumConstants.map{_.asInstanceOf[Enum[_]].name}.toSet)
+      case _ =>
+        throw new RuntimeException("unexpected type in enum parser: " + tpe)
+    }
+  }
+
 }
 
 abstract class CollectionParser[T <: Traversable[_]] extends CompoundParser[T] {
@@ -453,6 +465,11 @@ object SelectInputParser extends CompoundParser[SelectInput[_]] {
       //we don't return a new object, just modify the existing one
       currentVal
     } else throw new UnsupportedOperationException()
+  }
+
+  override def allowedValues(tpe: Type, currentValue: AnyRef): Option[Set[String]] = {
+    val currentVal = currentValue.asInstanceOf[SelectInput[Any]] //not really Any, but not sure how to make the compiler happy ...
+    Some(currentVal.options.map{_.toString})
   }
 }
 
