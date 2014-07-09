@@ -36,7 +36,7 @@ object SumacBuild extends Build {
         Some("snapshots" at qf + "ext-snapshots")
     },
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "1.9.1" % "test"
+      "org.scalatest" %% "scalatest" % "2.1.3" % "test"
     ),
     resolvers ++= Seq(
       "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
