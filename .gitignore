@@ -1,5 +1,9 @@
 *.class
 *.log
+.settings
+.project
+.classpath
+*~
 build
 
 # sbt specific
@@ -15,3 +19,6 @@ project/plugins/project/
 .idea
 *.iml
 
+/test_output/PropertiesConfigTest/load_properties_test.properties
+/arg_builder_test_output.properties
+/test_output/PropertiesConfigTest/roundtrip_properties_test.properties

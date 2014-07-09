@@ -3,8 +3,23 @@ to differentiate itself from other libraries by making it dead
 simple to define arguments, removing boilerplate and repetition.  It
 is a very small, lightweight scala library.
 
+[![Build Status](https://travis-ci.org/quantifind/Sumac.svg?branch=master)](https://travis-ci.org/quantifind/Sumac)
+[![Coverage Status](https://coveralls.io/repos/quantifind/Sumac/badge.png?branch=master)](https://coveralls.io/r/quantifind/Sumac?branch=master)
+
+![Sumac Logo](https://raw.github.com/quantifind/Sumac/master/logo/Sumac.png)
+
+It is available on maven central.  The last stable release is `0.3.0`.  An sbt dependency would look like:
+
+    "com.quantifind" %% "sumac" % "0.3.0"
+
+Integration with 3rd party libraries (in particular, [Joda-Time](http://www.joda.org/joda-time/) and [Typesafe Config](https://github.com/typesafehub/config))
+is available through the `sumac-ext` package:
+
+    "com.quantifind" %% "sumac-ext" % "0.3.0"
+
 ## Usage
 
+Full usage can be found on the [wiki](https://github.com/quantifind/Sumac/wiki), but we can go over the basics quickly.
 Define a basic container object which extends `FieldArgs`.  Every field of the object
 becomes a command line argument with the same name.  Then use `parse()` to process the command line arguments.
 
@@ -124,17 +139,12 @@ Every argument holder can ensure it received valid arguments via custom validati
       addValidation{ if (count < 0) throw new ArgException("count must be >= 0")}
     }
 
-## Status / TODO / Roadmap
+## More Info
 
-We use this library heavily in production sytems.  Of course, that just means we're used to its
-quirks :)  There are still a lot of things we'd like to add (and would love contributions from anyone!)
+Lots more details about using Sumac can be found on the [wiki](https://github.com/quantifind/Sumac/wiki).  
 
-* Support for primitives as a type parameter (eg., List[Int] doesn't work now)
-* Automatically support types with an apply(String) method.  (hint: http://stackoverflow.com/questions/9172775/get-companion-object-of-class-by-given-generic-type-scala)
-* Nested objects, args named via "."
-* turn scaladoc into description.  may require compiler plugin
-* export to properties and typesafe config object. (This is already supported in master, but not thoroughly
-    tested and the api may change.)
+Sumac is open source, and we hope to get involvement from the community.  We'd love to get some pull requests.  Also, even if you don't
+have a fix, feel free to report bugs or just request new features through the [github issue tracker](https://github.com/quantifind/Sumac/issues?state=open).
 
 ## Credits
 

@@ -3,9 +3,12 @@ package com.quantifind.sumac
 import collection._
 
 trait Args extends ExternalConfig with Serializable {
-  def getArgs(argPrefix:String): Traversable[ArgAssignable] = getArgs(argPrefix, false)
+  def getArgs(argPrefix:String): Traversable[ArgAssignable] =
+    getArgs(argPrefix, false, getDefaultArgs.map{a => a.getName -> a}.toMap)
 
-  private[sumac] def getArgs(argPrefix: String, gettingDefaults: Boolean): Traversable[ArgAssignable]
+  private[sumac] def nestedArgs: Vector[Args]
+
+  private[sumac] def getArgs(argPrefix: String, gettingDefaults: Boolean, defaults: Map[String, ArgAssignable]): Traversable[ArgAssignable]
 
   /**
    * Returns the "default" values for the arguments of this class.  Unrelated to the current
@@ -15,7 +18,7 @@ trait Args extends ExternalConfig with Serializable {
    */
   def getDefaultArgs: Traversable[ArgAssignable] = {
     try {
-      this.getClass().newInstance().getArgs("", true)
+      this.getClass().newInstance().getArgs("", true, Map())
     } catch {
       case ie: InstantiationException => Traversable()  //nothing else we can do in this case, really
     }
@@ -27,6 +30,10 @@ trait Args extends ExternalConfig with Serializable {
   @transient
   var validationFunctions: Seq[() => Unit] = Seq()
 
+  def parse(commandLineArgs: String) {
+    parse(ArgumentParser.argCLIStringToArgList(commandLineArgs))
+  }
+
   def parse(args: Array[String]) {
     parse(ArgumentParser.argListToKvMap(args))
   }
@@ -36,6 +43,12 @@ trait Args extends ExternalConfig with Serializable {
     val parsedArgs = parser.parse(modifiedKvPairs)
     parsedArgs.foreach { case (argAssignable, valueHolder) =>
       argAssignable.setValue(valueHolder.value)
+    }
+    if(kvPairs.contains("sumac.debugArgs")) {
+      println("Sumac setup the following args:")
+      getArgs("").foreach { arg =>
+        println(s"\t--${arg.getName}\t${arg.getCurrentValue}")
+      }
     }
     if (validation)
       runValidation()
@@ -55,6 +68,7 @@ trait Args extends ExternalConfig with Serializable {
    */
   def runValidation() {
     validationFunctions.foreach{_()}
+    nestedArgs.foreach{_.runValidation()}
   }
 
   def helpMessage = parser.helpMessage
@@ -74,7 +88,7 @@ trait Args extends ExternalConfig with Serializable {
    * In general, users will not need this function, but it is useful for tools built on top, eg. saving to a property file
    */
   def getStringValues: Map[String,String] = {
-    getArgs("").map{aa => aa.getName -> aa.getParser.valueAsString(aa.getCurrentValue)}.toMap
+    getArgs("").map{aa => aa.getName -> aa.getParser.valueAsString(aa.getCurrentValue, aa.getType)}.toMap
   }
 
   def addValidation(f:  => Unit) {

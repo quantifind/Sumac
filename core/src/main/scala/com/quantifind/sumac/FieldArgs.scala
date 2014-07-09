@@ -11,11 +11,11 @@ import com.quantifind.sumac.validation._
  * know how to parse.
  */
 trait FieldArgs extends Args {
-  private[sumac] override def getArgs(argPrefix:String, gettingDefaults: Boolean) = {
+  private[sumac] override def getArgs(argPrefix:String, gettingDefaults: Boolean, defaults: Map[String, ArgAssignable]) = {
     val args: Seq[Seq[ArgAssignable]] = ReflectionUtils.getAllDeclaredFields(getClass) collect {
       case f: Field if (isValidField(f)) => {
         val fa = FieldArgAssignable(argPrefix, f, this)
-        if(!gettingDefaults) addAnnotationValidations(fa)
+        if(!gettingDefaults) addAnnotationValidations(fa, defaults)
         Seq(fa)
       }
       case nested: Field if (isNestedArgField(nested)) =>
@@ -24,12 +24,16 @@ trait FieldArgs extends Args {
           val t = nested.getType.newInstance()
           nested.set(this, t)
           t
-        }
-        val subArgs: Seq[ArgAssignable] = v.asInstanceOf[Args].getArgs(argPrefix + nested.getName + ".", gettingDefaults).toSeq
+        }.asInstanceOf[Args]
+        nestedArgs :+= v
+        val subArgs: Seq[ArgAssignable] = v.getArgs(argPrefix + nested.getName + ".", gettingDefaults, defaults).toSeq
         subArgs
     }
     args.flatten
   }
+
+  @Ignore
+  private[sumac] var nestedArgs = Vector[Args]()
 
   def isSumacHelperField(f: Field): Boolean = f.getName == "parser" || f.getName == "bitmap$0"
 
@@ -46,8 +50,7 @@ trait FieldArgs extends Args {
     f.getDeclaringClass.getMethods.exists{_.getName() == f.getName + "_$eq"}
   }
 
-  private[sumac] def addAnnotationValidations(f: FieldArgAssignable) {
-    val defaultVals = getDefaultArgs.map{a => a.getName -> a}.toMap
+  private[sumac] def addAnnotationValidations(f: FieldArgAssignable, defaultVals: Map[String, ArgAssignable]) {
     //Q: do inherited annotations mean anything on a field?  does it matter if I use getAnnotations vs getDeclaredAnnotations?
     f.field.getAnnotations.foreach { annot =>
       annotationValidationFunctions.get(annot.annotationType()).foreach{func =>
@@ -62,16 +65,17 @@ trait FieldArgs extends Args {
     field: FieldArgAssignable,
     default: Any,
     annot: Annotation,
-    check: (Any, Any, Annotation, String) => Unit
+    check: (Any, Any, Annotation, String, ArgAssignable) => Unit
   ) extends (() => Unit) {
     def apply() {
-      check(default, field.getCurrentValue, annot, field.getName)
+      check(default, field.getCurrentValue, annot, field.getName, field)
     }
     override def toString() = "annotation check of " + field.getName
   }
 
   @transient
-  private[sumac] val annotationValidationFunctions = mutable.Map[Class[_ <: Annotation], (Any,Any, Annotation, String) => Unit]()
+  private[sumac] val annotationValidationFunctions =
+    mutable.Map[Class[_ <: Annotation], (Any,Any, Annotation, String, ArgAssignable) => Unit]()
 
 
   /**
@@ -86,15 +90,23 @@ trait FieldArgs extends Args {
    *                           first argument is the default value of the argument, the second is the current value,
    *                           the third is the annotation, and the fourth is the name of the argument (for error msgs).
    */
-  def registerAnnotationValidation(annotation: Class[_ <: Annotation])(validationFunction: (Any,Any, Annotation, String) => Unit) {
+  def registerAnnotationValidationUpdate(annotation: Class[_ <: Annotation])(validationFunction: (Any,Any, Annotation, String, ArgAssignable) => Unit) {
     annotationValidationFunctions += annotation -> validationFunction
   }
+
+  def registerAnnotationValidation(annotation: Class[_ <: Annotation])(validationFunction: (Any,Any, Annotation, String) => Unit) {
+    registerAnnotationValidationUpdate(annotation){(a:Any,b:Any,c:Annotation,d:String,e:ArgAssignable) => validationFunction(a,b,c,d)}
+  }
+
+
+
 
   {
     //some built-in annotation validations
     registerAnnotationValidation(classOf[Required])(RequiredCheck)
     registerAnnotationValidation(classOf[Positive])(PositiveCheck)
     registerAnnotationValidation(classOf[Range])(RangeCheck)
+    registerAnnotationValidation(classOf[FileExists])(FileExistsCheck)
   }
 
 }
