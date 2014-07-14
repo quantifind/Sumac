@@ -1,5 +1,7 @@
 package com.quantifind.sumac
 
+import com.quantifind.sumac.validation.Required
+
 import scala.annotation.tailrec
 import java.lang.reflect.{Type, Field}
 import collection.mutable.LinkedHashMap
@@ -158,6 +160,10 @@ trait ArgAssignable {
   def getCurrentValue: AnyRef
   def getParser: Parser[_]
   def setValue(value: Any)
+
+  def allowedValues: Option[Set[String]] = getParser.allowedValues(getType, getCurrentValue)
+  def required: Boolean = false
+
   override def toString() = {
     var t = "--" + getName + "\t" + getType
     if (getDescription != getName)
@@ -170,6 +176,7 @@ trait ArgAssignable {
 class FieldArgAssignable(val prefix: String, val field: Field, val obj: Object, val parser: Parser[_]) extends ArgAssignable {
   field.setAccessible(true)
   val annotationOpt = Option(field.getAnnotation(classOf[Arg]))
+  override val required = field.getAnnotation(classOf[Required]) != null
   def getParser = parser
 
   def getName = {

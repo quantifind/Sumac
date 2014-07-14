@@ -3,6 +3,9 @@ package com.quantifind.sumac
 import annotation.tailrec
 import java.lang.reflect.{Type, ParameterizedType, Field}
 
+import scala.reflect.ClassTag
+
+
 object ReflectionUtils {
 
   @tailrec
@@ -39,5 +42,19 @@ object ReflectionUtils {
         case _ => false
       }
     }.map{_.asInstanceOf[ParameterizedType]}
+  }
+
+  def construct[T](clz: Class[T]): T = {
+    val ctors = clz.getDeclaredConstructors
+    ctors.find(_.getGenericParameterTypes.length == 0) match {
+      case Some(ctor) =>
+        ctor.setAccessible(true)
+        ctor.newInstance().asInstanceOf[T]
+      case None => throw new AssertionError("No zero-arg constructor found")
+    }
+  }
+
+  def construct[T](tag: ClassTag[T]): T = {
+    construct(tag.runtimeClass.asInstanceOf[Class[T]])
   }
 }

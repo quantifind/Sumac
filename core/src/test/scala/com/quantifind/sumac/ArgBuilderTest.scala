@@ -27,9 +27,12 @@ class ArgBuilderTest extends FunSuite with Matchers {
     args.propertyFile should be (null)
   }
 
+  val dir = new File("test_output/" + getClass.getSimpleName)
+  dir.mkdirs()
+
   test("prompting & saving") {
     val args = new BuilderTestArgs()
-    val propFile = "arg_builder_test_output.properties"
+    val propFile = new File(dir, "arg_builder_test_output.properties").getAbsolutePath
     val input = fixedInputStream(
       //empty string name
       "","\"\"",

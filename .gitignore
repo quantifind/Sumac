@@ -5,6 +5,7 @@
 .classpath
 *~
 build
+test_output
 
 # sbt specific
 dist/*
@@ -18,7 +19,3 @@ project/plugins/project/
 .scala_dependencies
 .idea
 *.iml
-
-/test_output/PropertiesConfigTest/load_properties_test.properties
-/arg_builder_test_output.properties
-/test_output/PropertiesConfigTest/roundtrip_properties_test.properties
