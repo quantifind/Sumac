@@ -133,14 +133,14 @@ object SumacBuild extends Build {
     libraryDependencies ++= Seq(
       "com.typesafe" % "config" % "1.0.2",
       "joda-time" % "joda-time" % "2.3",
-      "org.joda" % "joda-convert" % "1.2",  //this is needed for joda to work w/ scala
+      "org.joda" % "joda-convert" % "1.6",  //this is needed for joda to work w/ scala
       //scalatra section
       "org.scalatra" %% "scalatra" % ScalatraVersion,
       "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
       "org.scalatra" %% "scalatra-swagger" % ScalatraVersion,
       "org.json4s"   %% "json4s-jackson" % "3.2.10",
       "org.json4s"   %% "json4s-native" % "3.2.10",
-      "org.eclipse.jetty" % "jetty-webapp" % "9.1.3.v20140225",
+      "org.eclipse.jetty" % "jetty-webapp" % "9.1.3.v20140225" % "provided",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value
       //end scalatra section
     )
