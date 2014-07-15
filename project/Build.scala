@@ -23,7 +23,7 @@ object SumacBuild extends Build {
 
   val qf = "http://repo.quantifind.com/content/repositories/"
   def sharedSettings = Defaults.defaultSettings ++ Seq(
-    version := "0.3.1-9618433-SNAPSHOT",
+    version := "0.3.1-d4a9a8d-SNAPSHOT",
     scalaVersion := "2.10.3",
     organization := "com.quantifind",
     scalacOptions := Seq("-deprecation", "-unchecked", "-optimize"),
