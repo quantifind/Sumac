@@ -2,7 +2,7 @@ package com.quantifind.sumac.scalatra
 
 import java.lang.reflect.Type
 import java.lang.reflect.ParameterizedType
-import com.quantifind.sumac.types.SelectInput
+import com.quantifind.sumac.types.{MultiSelectInput, SelectInput}
 import com.quantifind.sumac.{ReflectionUtils, Args}
 import org.joda.time.DateTime
 import org.scalatra._
@@ -78,6 +78,8 @@ object SumacSupport {
         val raw = ReflectionUtils.getRawClass(pt)
         if (raw == classOf[SelectInput[_]]) {
           DataType.String
+        } else if (raw == classOf[MultiSelectInput[_]]) {
+          DataType.GenArray(DataType.String)
         } else {
           val st = toScalaType(pt)
           DatatypeHelper.getDatatype(st)

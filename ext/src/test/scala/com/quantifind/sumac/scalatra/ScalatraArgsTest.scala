@@ -1,6 +1,6 @@
 package com.quantifind.sumac.scalatra
 
-import com.quantifind.sumac.types.SelectInput
+import com.quantifind.sumac.types.{MultiSelectInput, SelectInput}
 import com.quantifind.sumac.{Arg, StandardDateTimeParse, FieldArgs}
 import com.quantifind.sumac.validation.{Positive, Required}
 import org.joda.time.DateTime
@@ -83,6 +83,7 @@ class ComplexArgs extends SomeArgs {
   var req: Int = -1
 
   var options = SelectInput("a", "b", "c")
+  var multi = MultiSelectInput("d", "e", "f")
 
   var jEnum: MyArgEnum = _
 
