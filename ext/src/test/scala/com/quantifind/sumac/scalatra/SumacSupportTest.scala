@@ -126,6 +126,8 @@ class SumacSupportTest extends ScalatraFunSuite {
           enums.asJArray.arr.map{_.asString} should be (List("a", "b", "c"))
         case "jEnum" =>
           enums.asJArray.arr.map{_.asString} should be (List(MyArgEnum.values: _*).map{_.name})
+        case "multi" =>
+          enums.asJArray.arr.map{_.asString} should be (List("d", "e", "f"))
         case _ =>
           enums should be (JNothing)
       }
