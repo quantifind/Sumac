@@ -490,6 +490,11 @@ object MultiSelectInputParser extends CompoundParser[MultiSelectInput[_]] {
       currentVal
     } else throw new UnsupportedOperationException()
   }
+
+  override def allowedValues(tpe: Type, currentValue: AnyRef): Option[Set[String]] = {
+    val currentVal = currentValue.asInstanceOf[MultiSelectInput[Any]] //not really Any, but not sure how to make the compiler happy ...
+    Some(currentVal.options.map{_.toString})
+  }
 }
 
 object ParseHelper {

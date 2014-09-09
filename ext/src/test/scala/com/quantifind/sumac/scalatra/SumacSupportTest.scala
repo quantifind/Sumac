@@ -102,8 +102,10 @@ class SumacSupportTest extends ScalatraFunSuite {
   def verifyParams(path: String, parameters: JArray) {
     val names = parameters.arr.map{v => (v \ "name").asString}.toSet
     path match {
-      case "/blah/foo/{bar}" => names should be (Set("bar", "count"))
-      case "/blah/required/{bar}" => names should be (Set("bar", "count", "req", "stuff", "options", "jEnum", "zimzam"))
+      case "/blah/foo/{bar}" =>
+        names should be (Set("bar", "count"))
+      case "/blah/required/{bar}" =>
+        names should be (Set("bar", "count", "req", "stuff", "options", "multi", "jEnum", "zimzam"))
     }
     parameters.arr.foreach{x => verifyParam(x.asJObject)}
   }
@@ -124,6 +126,8 @@ class SumacSupportTest extends ScalatraFunSuite {
           enums.asJArray.arr.map{_.asString} should be (List("a", "b", "c"))
         case "jEnum" =>
           enums.asJArray.arr.map{_.asString} should be (List(MyArgEnum.values: _*).map{_.name})
+        case "multi" =>
+          enums.asJArray.arr.map{_.asString} should be (List("d", "e", "f"))
         case _ =>
           enums should be (JNothing)
       }
@@ -145,6 +149,9 @@ class SumacSupportTest extends ScalatraFunSuite {
           typ should be ("array")
           (items \ "type").asString should be ("string")
           (items \ "format").asString should be ("date-time")
+        case "multi" =>
+          typ should be ("array")
+          (items \ "type").asString should be ("string")
         case _ =>
           typ should be ("string")
           format should be (JNothing)
