@@ -2,7 +2,7 @@ package com.quantifind.sumac
 
 import com.twitter.zk.{ZNode, ZkClient}
 import com.twitter.conversions.time._
-import com.twitter.util.{Duration, Timer, JavaTimer}
+import com.twitter.util.{Await, Duration, Timer, JavaTimer}
 import collection.JavaConverters._
 import collection._
 
@@ -44,17 +44,19 @@ trait ZkArgs extends ExternalConfig {
 
 object ZkArgHelper {
 
-  def basicZkClient(zkConn: String, timeout: Duration)(implicit timer: Timer) = ZkClient(zkConn, timeout).withAcl(org.apache.zookeeper.ZooDefs.Ids.OPEN_ACL_UNSAFE.asScala)
+  def basicZkClient(zkConn: String, timeout: Duration)(implicit timer: Timer) = {
+    ZkClient(zkConn, timeout).withAcl(org.apache.zookeeper.ZooDefs.Ids.OPEN_ACL_UNSAFE.asScala)
+  }
 
   def getArgsFromZk(zkClient: ZkClient, path: String)(implicit timer: Timer): Map[String,String] = {
     val n = zkClient(path)
     if (nodeExists(n)) {
       val childrenOp = zkClient.apply(path).getChildren
-      val children = childrenOp.apply().apply()
-      val childToData = children.children.map{child =>
-        child.name -> new String(child.getData.apply().apply().bytes)
+      val children = Await.result(childrenOp.apply())
+      val childToData = children.children.map { child =>
+        child.name -> new String(Await.result(child.getData.apply()).bytes)
       }.toMap
-      zkClient.release().apply()
+      Await.all(zkClient.release())
       childToData
     } else {
       Map()
@@ -68,26 +70,26 @@ object ZkArgHelper {
       deleteRecursively(node)
 
     //now recreate the node, and its children w/ all the values
-    node.create().apply()
-    args.foreach{case(k,v) =>
-      node.create(child=Some(k), data = v.getBytes).apply()
+    Await.all(node.create())
+    args.foreach { case (k, v) =>
+      Await.result(node.create(child = Some(k), data = v.getBytes))
     }
   }
 
   def nodeExists(node: ZNode): Boolean = {
     //there has got to be a better way ...
     try {
-      node.exists.apply().apply().stat != null
+      Await.result(node.exists.apply()).stat != null
     } catch {
       case ex: Exception => false
     }
   }
 
   def deleteRecursively(node: ZNode) {
-    node.getChildren()().children.foreach{child =>
+    Await.result(node.getChildren()).children.foreach { child =>
       deleteRecursively(child)
     }
-    node.delete()()
+    node.delete()
   }
 
 }
