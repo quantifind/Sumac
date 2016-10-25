@@ -12,6 +12,10 @@ lazy val commonSettings = Seq(
   unmanagedJars in Compile <<= baseDirectory map { base => (base / "lib" ** "*.jar").classpath },
   retrieveManaged := true,
   transitiveClassifiers in Scope.GlobalScope := Seq("sources"),
+  publishTo := Some("Artifactory Realm" at
+    "http://c24-mtv-02-38.dev.quantifind.com:8081/artifactory/qtdn"),
+  credentials += Credentials("Artifactory Realm",
+    "c24-mtv-02-38.dev.quantifind.com", "qf", "APCLFTmSwbpC9gDT"),
   resolvers ++= Seq(
     "sonatype-snapshots" at "http://oss.sonatype.org/content/repositories/snapshots",
     "sonatype-releases"  at "http://oss.sonatype.org/content/repositories/releases",
@@ -72,4 +76,5 @@ lazy val extZk = project.in(file("ext-zk")).dependsOn(core).
   )
 
 lazy val root = project.in(file(".")).
+  settings(commonSettings: _*).
   aggregate(core, ext, extZk)
