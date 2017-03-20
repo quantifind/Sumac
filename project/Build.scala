@@ -120,13 +120,13 @@ object SumacBuild extends Build {
       javacOptions ++= Seq("-target", "1.6", "-source", "1.6")
     ) //++ ScoverageSbtPlugin.instrumentSettings ++ CoverallsPlugin.coverallsSettings // waiting for 2.11.0 release
 
-  val slf4jVersion = "1.6.1"
+  val slf4jVersion = "1.7.12"
 
   def coreSettings = sharedSettings ++ Seq(
     name := "Sumac"
   )
 
-  val ScalatraVersion = "2.3.0"
+  val ScalatraVersion = "2.3.1"
 
   def extSettings = sharedSettings ++ Seq(
     name := "Sumac-ext",
@@ -138,8 +138,8 @@ object SumacBuild extends Build {
       "org.scalatra" %% "scalatra" % ScalatraVersion,
       "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
       "org.scalatra" %% "scalatra-swagger" % ScalatraVersion,
-      "org.json4s"   %% "json4s-jackson" % "3.2.10",
-      "org.json4s"   %% "json4s-native" % "3.2.10",
+      "org.json4s"   %% "json4s-jackson" % "3.2.11",
+      "org.json4s"   %% "json4s-native" % "3.2.11",
       "org.eclipse.jetty" % "jetty-webapp" % "9.1.3.v20140225" % "provided",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value
       //end scalatra section
@@ -151,7 +151,7 @@ object SumacBuild extends Build {
       "Twitter Repo" at "http://maven.twttr.com/"
     ),
     libraryDependencies ++= Seq(
-      "com.twitter"   % "util-zk_2.10"   % "6.10.0"
+      "com.twitter"   %% "util-zk"   % "6.26.0"
     )
   )
 
