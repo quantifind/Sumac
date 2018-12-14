@@ -369,7 +369,7 @@ case class SpecialTypes(var name: String, var funky: MyFunkyType)
 case class MyFunkyType(var x: String)
 
 
-class SomeApp extends ArgApp[SomeArgs] {
+class SomeApp extends ArgMain[SomeArgs] {
   def main(args: SomeArgs) {}
 }
 
