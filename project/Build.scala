@@ -3,11 +3,11 @@ import Keys._
 
 object SumacBuild extends Build {
   lazy val core = Project("core", file("core"), settings = coreSettings)
-  lazy val zk = Project("zk", file("zk"), settings = zkSettings) dependsOn(core)
+  //lazy val zk = Project("zk", file("zk"), settings = zkSettings) dependsOn(core)
 
   def sharedSettings = Defaults.defaultSettings ++ Seq(
-    version := "0.2-SNAPSHOT",
-    scalaVersion := "2.9.3",
+    version := "0.4-SNAPSHOT",
+    scalaVersion := "2.12.8",
     organization := "com.quantifind",
     scalacOptions := Seq("-deprecation", "-unchecked", "-optimize"), 
     unmanagedJars in Compile <<= baseDirectory map { base => (base / "lib" ** "*.jar").classpath },
@@ -20,7 +20,7 @@ object SumacBuild extends Build {
       "JBoss Repository" at "http://repository.jboss.org/nexus/content/repositories/releases/"
     ),
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "1.9.1" % "test"
+      "org.scalatest" %% "scalatest" % "3.0.5" % "test"
     ),
 
     // Publishing configuration
@@ -79,7 +79,7 @@ object SumacBuild extends Build {
       "Twitter Repo" at "http://maven.twttr.com/"
     ),
     libraryDependencies ++= Seq(
-      "com.twitter"   % "util-zk"   % "5.3.10"
+      "com.twitter"  %% "util-zk"   % "18.12.0"
     )
   )
 }

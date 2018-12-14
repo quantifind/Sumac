@@ -2,13 +2,13 @@ package com.quantifind.sumac
 
 import org.scalatest.{Tag, FunSuite}
 import com.twitter.conversions.time._
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import com.twitter.util.JavaTimer
 import java.io.{FileInputStream, File}
 import java.util.Properties
 
 
-class ZkArgsTest extends FunSuite with ShouldMatchers {
+class ZkArgsTest extends FunSuite with Matchers {
 
   val runZkTests = false
   val zkTestHost = "localhost:2181"

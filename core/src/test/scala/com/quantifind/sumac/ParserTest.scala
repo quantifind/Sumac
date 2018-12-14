@@ -1,13 +1,13 @@
 package com.quantifind.sumac
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
 /**
  *
  */
 
-class ParserTest extends FunSuite with ShouldMatchers {
+class ParserTest extends FunSuite with Matchers {
 
   test("SimpleParser") {
     StringParser.parse("ooga") should be ("ooga")

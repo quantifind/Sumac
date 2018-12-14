@@ -1,10 +1,10 @@
 package com.quantifind.sumac
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import java.io._
 
-class ArgBuilderTest extends FunSuite with ShouldMatchers {
+class ArgBuilderTest extends FunSuite with Matchers {
 
   val nullOutput = new PrintStream(new OutputStream {
     def write(p1: Int) {}
