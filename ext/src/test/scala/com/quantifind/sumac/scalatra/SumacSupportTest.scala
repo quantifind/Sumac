@@ -93,23 +93,22 @@ class SumacSupportTest extends ScalatraFunSuite {
       apis.arr.length should be (2)
       apis.arr.foreach{api =>
         val path = (api \ "path").asString
-        val parameters = api \ "operations" \ "parameters"
-        verifyParams(path, parameters.asJArray)
+        val parameters = (api \ "operations" \ "parameters").asJArray
+        parameters.arr.length should be (1)
+        verifyParams(path, parameters.arr(0).asJArray)
       }
     }
   }
 
   def verifyParams(path: String, parameters: JArray) {
-    // TODO figure out what has changed here -- the swagger spec itself?  just some json4s detail?
-    val fixedParams = parameters.arr.flatMap{_.asJArray.arr}
-    val names = fixedParams.map{v => (v \ "name").asString }.toSet
+    val names = parameters.arr.map{v => (v \ "name").asString}.toSet
     path match {
       case "/blah/foo/{bar}" =>
         names should be (Set("bar", "count"))
       case "/blah/required/{bar}" =>
         names should be (Set("bar", "count", "req", "stuff", "options", "multi", "jEnum", "zimzam"))
     }
-    fixedParams.foreach{x => verifyParam(x.asJObject)}
+    parameters.arr.foreach{x => verifyParam(x.asJObject)}
   }
 
   def verifyParam(param: JObject) {
