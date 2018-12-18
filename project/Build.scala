@@ -19,7 +19,6 @@ object SumacBuild extends Build {
   
   lazy val core = Project("core", file("core"), settings = coreSettings)
   lazy val ext = Project("ext", file("ext"), settings = extSettings).dependsOn(core)
-//  lazy val extZk = Project("ext-zk", file("ext-zk"), settings = extZkSettings).dependsOn(core)
 
   def sharedSettings = Defaults.defaultSettings ++
   ReleasePlugin.releaseSettings ++
@@ -143,15 +142,6 @@ object SumacBuild extends Build {
       "org.eclipse.jetty" % "jetty-webapp" % "9.1.3.v20140225" % "provided",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value
       //end scalatra section
-    )
-  )
-  def extZkSettings = sharedSettings ++ Seq(
-    name := "Sumac-ext-zk",
-    resolvers ++= Seq(
-      "Twitter Repo" at "http://maven.twttr.com/"
-    ),
-    libraryDependencies ++= Seq(
-      "com.twitter"   %% "util-zk"   % "6.39.0"
     )
   )
 
