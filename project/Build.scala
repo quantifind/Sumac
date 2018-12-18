@@ -17,6 +17,10 @@ import annotation.tailrec
 
 object SumacBuild extends Build {
   
+  // We need to explicitly define the root project, so we can apply the settings for cross-compiling
+  lazy val root = (project in file("."))
+    .aggregate(core, ext)
+    .settings(sharedSettings)
   lazy val core = Project("core", file("core"), settings = coreSettings)
   lazy val ext = Project("ext", file("ext"), settings = extSettings).dependsOn(core)
 
