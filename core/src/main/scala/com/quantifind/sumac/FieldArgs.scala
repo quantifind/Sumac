@@ -14,7 +14,7 @@ trait FieldArgs extends Args {
   private[sumac] override def getArgs(
       argPrefix:String,
       gettingDefaults: Boolean,
-      defaults: Map[String, ArgAssignable]) = {
+      defaults: Map[String, ArgAssignable]): Seq[ArgAssignable] = {
     val args: Seq[Seq[ArgAssignable]] = ReflectionUtils.getAllDeclaredFields(getClass) collect {
       case f: Field if (isValidField(f)) => {
         val fa = FieldArgAssignable(argPrefix, f, this, parsers)
@@ -107,9 +107,6 @@ trait FieldArgs extends Args {
   def registerAnnotationValidation(annotation: Class[_ <: Annotation])(validationFunction: (Any,Any, Annotation, String) => Unit) {
     registerAnnotationValidationUpdate(annotation){(a:Any,b:Any,c:Annotation,d:String,e:ArgAssignable) => validationFunction(a,b,c,d)}
   }
-
-
-
 
   {
     //some built-in annotation validations

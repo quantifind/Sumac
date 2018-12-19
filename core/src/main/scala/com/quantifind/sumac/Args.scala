@@ -84,7 +84,7 @@ trait Args extends ExternalConfig with Serializable {
    * registers the parser *globally*, not just for this object.
    */
   def registerParser[T](parser: Parser[T]) {
-    parsers :+= parser
+    parsers =  parser +: parsers
   }
 
   /**
