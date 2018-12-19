@@ -184,14 +184,14 @@ class FieldArgsTest extends FunSuite with Matchers {
 
     {
       val m = new MixedTypes(null, 0) with FieldArgs
-      val names = m.parser.nameToHolder.keySet
+      val names = m.argParser.nameToHolder.keySet
       names should be (Set("name", "count"))
     }
 
 
     {
       val s = new SomeApp()
-      val names = s.getArgHolder.parser.nameToHolder.keySet
+      val names = s.getArgHolder.argParser.nameToHolder.keySet
       names should be (Set("x", "y"))
     }
 
@@ -201,7 +201,7 @@ class FieldArgsTest extends FunSuite with Matchers {
 
   test("annotations") {
     val c = new ClassWithSomeAnnotations() with FieldArgs
-    c.parser.nameToHolder.values.foreach { f =>
+    c.argParser.nameToHolder.values.foreach { f =>
       f.getName match {
         case "foo" =>
           f.getDescription should be ("foo")
@@ -259,7 +259,7 @@ class FieldArgsTest extends FunSuite with Matchers {
     c.parse(Array("--x","7"))
     c.x should be (7)
 
-    c.parser.nameToHolder should not contain key ("q")
+    c.argParser.nameToHolder should not contain key ("q")
   }
 
   test("vals ignored") {
@@ -268,7 +268,7 @@ class FieldArgsTest extends FunSuite with Matchers {
     c.parse(Array("--x", "19"))
     c.x should be (19)
 
-    c.parser.nameToHolder should not contain key ("y")
+    c.argParser.nameToHolder should not contain key ("y")
   }
 
   test("respect ignore annotation") {
@@ -276,7 +276,7 @@ class FieldArgsTest extends FunSuite with Matchers {
     c.parse(Array("--x", "123"))
     c.x should be (123)
 
-    c.parser.nameToHolder should not contain key ("y")
+    c.argParser.nameToHolder should not contain key ("y")
   }
 
   test("getStringValues") {
@@ -396,11 +396,11 @@ object CustomTypeParser extends Parser[CustomType] {
   def canParse(tpe:Type) = {
     ParseHelper.checkType(tpe, classOf[CustomType])
   }
-  def parse(s: String, tpe: Type, currentVal: AnyRef) = {
+  def parse(s: String, tpe: Type, currentVal: AnyRef, parsers: Seq[Parser[_]]) = {
     val parts = s.split(":")
     CustomType(parts(0), parts(1).toInt)
   }
-  override def valueAsString(currentVal: AnyRef, tpe: Type) = {
+  override def valueAsString(currentVal: AnyRef, tpe: Type, parsers: Seq[Parser[_]]) = {
     val ct = currentVal.asInstanceOf[CustomType]
     ct.name + ":" + ct.x
   }

@@ -12,7 +12,7 @@ import scala.util.Try
 import java.util.concurrent.TimeUnit
 
 trait Parser[T] {
-  def parse(s: String, tpe: Type, currentValue: AnyRef): T
+  def parse(s: String, tpe: Type, currentValue: AnyRef, parsers: Seq[Parser[_]]): T
 
   /**
    * return true if this parser knows how to parse the given type
@@ -21,7 +21,7 @@ trait Parser[T] {
    */
   def canParse(tpe: Type): Boolean
 
-  def valueAsString(currentValue: AnyRef, tpe: Type): String = {
+  def valueAsString(currentValue: AnyRef, tpe: Type, parsers: Seq[Parser[_]]): String = {
     if (currentValue == null)
       Parser.nullString
     else
@@ -43,7 +43,7 @@ trait SimpleParser[T] extends Parser[T] {
     else false
   }
 
-  def parse(s: String, tpe: Type, currentValue: AnyRef) = parse(s)
+  def parse(s: String, tpe: Type, currentValue: AnyRef, parsers: Seq[Parser[_]]): T = parse(s)
 
   def parse(s: String): T
 }
@@ -145,7 +145,7 @@ class DateParser(val fmts:Map[Regex,String], zone: TimeZone = TimeZone.getTimeZo
       r -> fmt
   }
 
-  def parse(s: String, tpe: Type, currentVal: AnyRef): AnyRef = {
+  def parse(s: String, tpe: Type, currentVal: AnyRef, parsers: Seq[Parser[_]]): AnyRef = {
     val d = parseDate(s)
     tpe match {
       case dc:Class[_] if dc.isAssignableFrom(classOf[Date]) =>
@@ -185,7 +185,7 @@ class DateParser(val fmts:Map[Regex,String], zone: TimeZone = TimeZone.getTimeZo
     f
   }
 
-  override def valueAsString(v: AnyRef, t: Type): String = {
+  override def valueAsString(v: AnyRef, t: Type, parsers: Seq[Parser[_]]): String = {
     v match {
       case d: Date =>
         stdFormat.format(d)
@@ -224,19 +224,19 @@ object OptionParser extends CompoundParser[Option[_]] {
     ParseHelper.checkType(tpe, classOf[Option[_]])
   }
 
-  def parse(s: String, tpe: Type, currentValue: AnyRef) = {
+  def parse(s: String, tpe: Type, currentValue: AnyRef, parsers: Seq[Parser[_]]) = {
     if (tpe.isInstanceOf[ParameterizedType]) {
-      val (subtype, subParser) = ParseHelper.getSubParser(tpe)
-      val x = subParser.parse(s, subtype, currentValue)
+      val (subtype, subParser) = ParseHelper.getSubParser(tpe, parsers)
+      val x = subParser.parse(s, subtype, currentValue, parsers)
       if (x == null) None else Some(x)
     } else None
   }
 
-  override def valueAsString(v: AnyRef, tpe: Type): String = {
+  override def valueAsString(v: AnyRef, tpe: Type, parsers: Seq[Parser[_]]): String = {
     v match {
       case Some(s) =>
-        val (subtype, subParser) = ParseHelper.getSubParser(tpe)
-        subParser.valueAsString(s.asInstanceOf[AnyRef],subtype)
+        val (subtype, subParser) = ParseHelper.getSubParser(tpe, parsers)
+        subParser.valueAsString(s.asInstanceOf[AnyRef],subtype, parsers)
       case None =>
         Parser.nullString
     }
@@ -253,7 +253,7 @@ object EnumParser extends CompoundParser[Enum[_]] {
     }
   }
 
-  def parse(s: String, tpe: Type, currentValue: AnyRef) = {
+  def parse(s: String, tpe: Type, currentValue: AnyRef, parsers: Seq[Parser[_]]) = {
     tpe match {
       case c: Class[_] =>
         val enums = c.getEnumConstants
@@ -291,23 +291,24 @@ abstract class CollectionParser[T <: Traversable[_]] extends CompoundParser[T] {
     ParseHelper.checkType(tpe, targetCollection)
   }
 
-  def parse(s: String, tpe: Type, currentValue: AnyRef) = {
+  def parse(s: String, tpe: Type, currentValue: AnyRef, parsers: Seq[Parser[_]]) = {
     if (tpe.isInstanceOf[ParameterizedType]) {
       val ptpe = tpe.asInstanceOf[ParameterizedType]
       val subtype = ptpe.getActualTypeArguments()(0)
-      val subParser = ParseHelper.findParser(subtype).get
+      val subParser = ParseHelper.findParser(subtype, parsers).get
       val parts = CollectionCombinatorParser(s)
-      val sub: Seq[Any] = parts.map(subParser.parse(_, subtype, currentValue)).toSeq
+      val sub: Seq[Any] = parts.map(subParser.parse(_, subtype, currentValue, parsers))
       build(sub: _*)
     } else empty
   }
 
-  override def valueAsString(v: AnyRef, tpe: Type):String = {
+  override def valueAsString(v: AnyRef, tpe: Type, parsers: Seq[Parser[_]]):String = {
     (v,tpe) match {
       case (t: Traversable[_],ptpe: ParameterizedType) =>
-        val (subtype, subparser) = ParseHelper.getSubParser(tpe)
+        println(s"trying to get subparser for $tpe from $parsers")
+        val (subtype, subparser) = ParseHelper.getSubParser(tpe, parsers)
         t.map{x =>
-            val value = subparser.valueAsString(x.asInstanceOf[AnyRef], subtype)
+            val value = subparser.valueAsString(x.asInstanceOf[AnyRef], subtype, parsers)
             if(value.contains(",")) s""""$value""""
             else value
         }.mkString(",")
@@ -348,13 +349,13 @@ object ArrayParser extends CompoundParser[Array[_]] {
     }
   }
 
-  override def parse(s: String, tpe: Type, currentValue: AnyRef) = {
+  override def parse(s: String, tpe: Type, currentValue: AnyRef, parsers: Seq[Parser[_]]) = {
     tpe match {
       case c: Class[_] =>
         val subtype = c.getComponentType
-        val subParser = ParseHelper.findParser(subtype).get
+        val subParser = ParseHelper.findParser(subtype, parsers).get
         val parts = CollectionCombinatorParser(s).toArray
-        val sub: Array[Any] = parts.map(subParser.parse(_, subtype, currentValue))
+        val sub: Array[Any] = parts.map(subParser.parse(_, subtype, currentValue, parsers))
         //toArray doesn't cut it here ... we end up trying to set Array[Object] on an Array[whatever], which reflection
         // doesn't like
         val o = java.lang.reflect.Array.newInstance(subtype, sub.size)
@@ -367,13 +368,13 @@ object ArrayParser extends CompoundParser[Array[_]] {
     }
   }
 
-  override def valueAsString(v: AnyRef, tpe: Type):String = {
+  override def valueAsString(v: AnyRef, tpe: Type, parsers: Seq[Parser[_]]):String = {
     tpe match {
       case c: Class[_] =>
         val subtype = c.getComponentType
-        val subParser = ParseHelper.findParser(subtype).get
+        val subParser = ParseHelper.findParser(subtype, parsers).get
         v.asInstanceOf[Array[AnyRef]].map{ v =>
-          val value = subParser.valueAsString(v, subtype)
+          val value = subParser.valueAsString(v, subtype, parsers)
           if(value.contains(",")) s""""$value""""
           else value
         }.mkString(",")
@@ -416,27 +417,27 @@ object MapParser extends CompoundParser[Map[_, _]] {
     ParseHelper.checkType(tpe, classOf[Map[_, _]])
   }
 
-  def parse(s: String, tpe: Type, currentValue: AnyRef): Map[_, _] = {
+  def parse(s: String, tpe: Type, currentValue: AnyRef, parsers: Seq[Parser[_]]): Map[_, _] = {
     if (tpe.isInstanceOf[ParameterizedType]) {
-      val (keyType, keyParser) = ParseHelper.getSubParser(tpe, 0)
-      val (valueType, valueParser) = ParseHelper.getSubParser(tpe, 1)
+      val (keyType, keyParser) = ParseHelper.getSubParser(tpe, parsers, 0)
+      val (valueType, valueParser) = ParseHelper.getSubParser(tpe, parsers, 1)
       MapCombinatorParser(s) map {
         case (key, value) =>
-          val k = keyParser.parse(key, keyType, currentValue)
-          val v = valueParser.parse(value, valueType, currentValue)
+          val k = keyParser.parse(key, keyType, currentValue, parsers)
+          val v = valueParser.parse(value, valueType, currentValue, parsers)
           k -> v
       }
     } else Map()
   }
 
-  override def valueAsString(v: AnyRef, tpe: Type):String = {
+  override def valueAsString(v: AnyRef, tpe: Type, parsers: Seq[Parser[_]]):String = {
     (v,tpe) match {
       case (t: Map[_,_],ptpe: ParameterizedType) =>
-        val (keyType, keyParser) = ParseHelper.getSubParser(tpe, 0)
-        val (valueType, valueParser) = ParseHelper.getSubParser(tpe, 1)
+        val (keyType, keyParser) = ParseHelper.getSubParser(tpe, parsers, 0)
+        val (valueType, valueParser) = ParseHelper.getSubParser(tpe, parsers, 1)
         t.map{case(k,v) =>
-          val key = keyParser.valueAsString(k.asInstanceOf[AnyRef],keyType)
-          val value = valueParser.valueAsString(v.asInstanceOf[AnyRef], valueType)
+          val key = keyParser.valueAsString(k.asInstanceOf[AnyRef],keyType, parsers)
+          val value = valueParser.valueAsString(v.asInstanceOf[AnyRef], valueType, parsers)
           val qK = if(key.contains(':') || key.contains(',')) s""""$key"""" else key
           val qV = if(value.contains(':') || value.contains(',')) s""""$value"""" else value
           s"$qK:$qV"
@@ -453,13 +454,13 @@ object SelectInputParser extends CompoundParser[SelectInput[_]] {
     ParseHelper.checkType(tpe, classOf[SelectInput[_]])
   }
 
-  def parse(s: String, tpe: Type, currentValue: AnyRef) = {
+  def parse(s: String, tpe: Type, currentValue: AnyRef, parsers: Seq[Parser[_]]) = {
     val currentVal = currentValue.asInstanceOf[SelectInput[Any]] //not really Any, but not sure how to make the compiler happy ...
     if (tpe.isInstanceOf[ParameterizedType]) {
       val ptpe = tpe.asInstanceOf[ParameterizedType]
       val subtype = ptpe.getActualTypeArguments()(0)
-      val subParser = ParseHelper.findParser(subtype).get
-      val parsed = subParser.parse(s, subtype, currentVal.value)
+      val subParser = ParseHelper.findParser(subtype, parsers).get
+      val parsed = subParser.parse(s, subtype, currentVal.value, parsers)
       if (currentVal.options(parsed)) currentVal.value = Some(parsed)
       else throw new IllegalArgumentException(parsed + " is not the allowed values: " + currentVal.options)
       //we don't return a new object, just modify the existing one
@@ -474,15 +475,15 @@ object SelectInputParser extends CompoundParser[SelectInput[_]] {
 }
 
 object MultiSelectInputParser extends CompoundParser[MultiSelectInput[_]] {
-  def canParse(tpe: Type) = ParseHelper.checkType(tpe, classOf[MultiSelectInput[_]])
+  override def canParse(tpe: Type) = ParseHelper.checkType(tpe, classOf[MultiSelectInput[_]])
 
-  def parse(s: String, tpe: Type, currentValue: AnyRef) = {
+  override def parse(s: String, tpe: Type, currentValue: AnyRef, parsers: Seq[Parser[_]]) = {
     val currentVal = currentValue.asInstanceOf[MultiSelectInput[Any]] //not really Any, but not sure how to make the compiler happy ...
     if (tpe.isInstanceOf[ParameterizedType]) {
       val ptpe = tpe.asInstanceOf[ParameterizedType]
       val subtype = ptpe.getActualTypeArguments()(0)
-      val subParser = ParseHelper.findParser(subtype).get
-      val parsed: Set[Any] = s.split(",").map(subParser.parse(_, subtype, "dummy")).toSet
+      val subParser = ParseHelper.findParser(subtype, parsers).get
+      val parsed: Set[Any] = s.split(",").map(subParser.parse(_, subtype, "dummy", parsers)).toSet
       val illegal = parsed.diff(currentVal.options)
       if (illegal.isEmpty) currentVal.value = parsed
       else throw new IllegalArgumentException(illegal.toString + " is not the allowed values: " + currentVal.options)
@@ -498,7 +499,7 @@ object MultiSelectInputParser extends CompoundParser[MultiSelectInput[_]] {
 }
 
 object ParseHelper {
-  var parsers: Seq[Parser[_]] = Seq(
+  val defaultParsers: Seq[Parser[_]] = Seq(
     StringParser,
     IntParser,
     LongParser,
@@ -526,11 +527,13 @@ object ParseHelper {
     MultiSelectInputParser
   )
 
-  def findParser(tpe: Type): Option[Parser[_]] = parsers.find(_.canParse(tpe))
+  def findParser(tpe: Type, parsers: Seq[Parser[_]]): Option[Parser[_]] = parsers.find(_.canParse(tpe))
 
-  def parseInto[T](s: String, tpe: Type, currentValue: AnyRef): Option[ValueHolder[T]] = {
+  def parseInto[T](s: String, tpe: Type, currentValue: AnyRef, parsers: Seq[Parser[_]]): Option[ValueHolder[T]] = {
     //could change this to be a map, at least for the simple types
-    findParser(tpe).map(parser => ValueHolder[T](parser.parse(s, tpe, currentValue).asInstanceOf[T], tpe))
+    findParser(tpe, parsers).map { parser =>
+      ValueHolder[T](parser.parse(s, tpe, currentValue, parsers).asInstanceOf[T], tpe)
+    }
   }
 
   def checkType(tpe: Type, targetClassSet: Class[_]*) = {
@@ -540,16 +543,10 @@ object ParseHelper {
     targetClassSet.exists(targetClass => helper(tpe, targetClass))
   }
 
-  def registerParser[T](parser: Parser[T]) {
-    synchronized {
-      parsers ++= Seq(parser)
-    }
-  }
-
-  def getSubParser(tpe:Type, pos: Int = 0): (Type, Parser[_]) = {
+  def getSubParser(tpe:Type, parsers: Seq[Parser[_]], pos: Int = 0): (Type, Parser[_]) = {
     val ptpe = tpe.asInstanceOf[ParameterizedType]
     val subtype = ptpe.getActualTypeArguments()(pos)
-    (subtype, ParseHelper.findParser(subtype).get)
+    (subtype, ParseHelper.findParser(subtype, parsers).get)
   }
 }
 

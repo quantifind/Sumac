@@ -14,7 +14,7 @@ class DateTimeParser(fmts:Map[Regex,String], chronology: Chronology = ISOChronol
     classOf[DateTime], classOf[Date], classOf[Calendar], classOf[ReadableDateTime]
   )
 
-  override def parse(s:String, tpe: Type, currentVal: AnyRef) = {
+  override def parse(s:String, tpe: Type, currentVal: AnyRef, parsers: Seq[Parser[_]]) = {
     tpe match {
       case dt: Class[_] if dt.isAssignableFrom(classOf[DateTime]) =>
         val d = parseDate(s)
@@ -22,12 +22,12 @@ class DateTimeParser(fmts:Map[Regex,String], chronology: Chronology = ISOChronol
     }
   }
 
-  override def valueAsString(v: AnyRef, tpe: Type): String = {
+  override def valueAsString(v: AnyRef, tpe: Type, parsers: Seq[Parser[_]]): String = {
     v match {
       case dt: DateTime =>
-        valueAsString(new Date(dt.getMillis), classOf[Date])
+        valueAsString(new Date(dt.getMillis), classOf[Date], parsers)
       case _ =>
-        super.valueAsString(v,tpe)
+        super.valueAsString(v,tpe, parsers)
     }
   }
 }

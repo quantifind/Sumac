@@ -8,7 +8,11 @@ trait Args extends ExternalConfig with Serializable {
 
   private[sumac] def nestedArgs: Vector[Args]
 
-  private[sumac] def getArgs(argPrefix: String, gettingDefaults: Boolean, defaults: Map[String, ArgAssignable]): Traversable[ArgAssignable]
+  private[sumac] def getArgs(
+      argPrefix: String,
+      gettingDefaults: Boolean,
+      defaults: Map[String, ArgAssignable]): Traversable[ArgAssignable]
+
 
   /**
    * Returns the "default" values for the arguments of this class.  Unrelated to the current
@@ -25,7 +29,9 @@ trait Args extends ExternalConfig with Serializable {
   }
 
   @transient
-  lazy val parser = ArgumentParser(getArgs(""))
+  private[sumac] var parsers: Seq[Parser[_]] = ParseHelper.defaultParsers
+  @transient
+  private[sumac] lazy val argParser = ArgumentParser(getArgs(""), parsers)
   @Ignore
   @transient
   var validationFunctions: Seq[() => Unit] = Seq()
@@ -40,7 +46,7 @@ trait Args extends ExternalConfig with Serializable {
 
   def parse(kvPairs: Map[String,String], validation: Boolean = true) {
     val modifiedKvPairs = if (validation) readArgs(kvPairs) else kvPairs
-    val parsedArgs = parser.parse(modifiedKvPairs)
+    val parsedArgs = argParser.parse(modifiedKvPairs)
     parsedArgs.foreach { case (argAssignable, valueHolder) =>
       argAssignable.setValue(valueHolder.value)
     }
@@ -71,14 +77,14 @@ trait Args extends ExternalConfig with Serializable {
     nestedArgs.foreach{_.runValidation()}
   }
 
-  def helpMessage = parser.helpMessage
+  def helpMessage = argParser.helpMessage
 
   /**
    * add the ability to parse your own custom types.  Note that this
    * registers the parser *globally*, not just for this object.
    */
   def registerParser[T](parser: Parser[T]) {
-    ParseHelper.registerParser(parser)
+    parsers :+= parser
   }
 
   /**
@@ -88,7 +94,9 @@ trait Args extends ExternalConfig with Serializable {
    * In general, users will not need this function, but it is useful for tools built on top, eg. saving to a property file
    */
   def getStringValues: Map[String,String] = {
-    getArgs("").map{aa => aa.getName -> aa.getParser.valueAsString(aa.getCurrentValue, aa.getType)}.toMap
+    getArgs("").map { aa: ArgAssignable =>
+      aa.getName -> aa.getParser.valueAsString(aa.getCurrentValue, aa.getType, parsers)
+    }.toMap
   }
 
   def addValidation(f:  => Unit) {

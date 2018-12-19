@@ -8,8 +8,8 @@ class ArgumentParserTest extends FunSuite with Matchers {
 
   test("parse") {
     val c = SimpleClass("a", 0, 1.4, 2)
-    val fieldArgs = classOf[SimpleClass].getDeclaredFields.map{f => FieldArgAssignable("",f, c)}
-    val argParser = new ArgumentParser(fieldArgs)
+    val fieldArgs = classOf[SimpleClass].getDeclaredFields.map{f => FieldArgAssignable("",f, c, ParseHelper.defaultParsers)}
+    val argParser = new ArgumentParser(fieldArgs, ParseHelper.defaultParsers)
 
     {
       val parsed = getSimpleNameToArgMap(argParser.parse(Array("--name", "foo")))
@@ -44,8 +44,8 @@ class ArgumentParserTest extends FunSuite with Matchers {
 
   test("reserved arguments should be filtered") {
     val c = SimpleClass("a", 0, 1.4, 2)
-    val fieldArgs = classOf[SimpleClass].getDeclaredFields.map{f => FieldArgAssignable("",f, c)}
-    val argParser = new ArgumentParser(fieldArgs)
+    val fieldArgs = classOf[SimpleClass].getDeclaredFields.map{f => FieldArgAssignable("",f, c, ParseHelper.defaultParsers)}
+    val argParser = new ArgumentParser(fieldArgs, ParseHelper.defaultParsers)
 
     val parsed = getSimpleNameToArgMap(argParser.parse(Array("--count", "5", "--dummy", "7.4e3", "--name", "ooga", "--sumac.debugArgs", "true")))
 

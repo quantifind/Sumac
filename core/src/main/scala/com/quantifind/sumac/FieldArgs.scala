@@ -11,10 +11,13 @@ import com.quantifind.sumac.validation._
  * know how to parse.
  */
 trait FieldArgs extends Args {
-  private[sumac] override def getArgs(argPrefix:String, gettingDefaults: Boolean, defaults: Map[String, ArgAssignable]) = {
+  private[sumac] override def getArgs(
+      argPrefix:String,
+      gettingDefaults: Boolean,
+      defaults: Map[String, ArgAssignable]) = {
     val args: Seq[Seq[ArgAssignable]] = ReflectionUtils.getAllDeclaredFields(getClass) collect {
       case f: Field if (isValidField(f)) => {
-        val fa = FieldArgAssignable(argPrefix, f, this)
+        val fa = FieldArgAssignable(argPrefix, f, this, parsers)
         if(!gettingDefaults) addAnnotationValidations(fa, defaults)
         Seq(fa)
       }
@@ -35,10 +38,17 @@ trait FieldArgs extends Args {
   @Ignore
   private[sumac] var nestedArgs = Vector[Args]()
 
-  def isSumacHelperField(f: Field): Boolean = f.getName == "parser" || f.getName == "bitmap$0"
+  def isSumacHelperField(f: Field): Boolean = {
+    f.getName == "parser" ||
+      f.getName == "bitmap$0" ||
+      f.getName == "parsers"
+  }
 
   def isValidField(f: Field): Boolean = {
-    ParseHelper.findParser(f.getType).isDefined && !isSumacHelperField(f) && hasSetter(f) && !f.isAnnotationPresent(classOf[Ignore])
+    ParseHelper.findParser(f.getType, parsers).isDefined &&
+      !isSumacHelperField(f) &&
+      hasSetter(f) &&
+      !f.isAnnotationPresent(classOf[Ignore])
   }
 
   def isNestedArgField(f: Field): Boolean = {
