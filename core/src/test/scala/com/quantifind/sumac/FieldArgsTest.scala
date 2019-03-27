@@ -1,15 +1,10 @@
 package com.quantifind.sumac
 
-import types.{SelectInput,MultiSelectInput}
+import com.quantifind.sumac.types.{SelectInput,MultiSelectInput}
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
 import java.lang.reflect.Type
 import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, ByteArrayOutputStream}
-import com.quantifind.sumac.validation.Required
-
-/**
- *
- */
 
 class FieldArgsTest extends FunSuite with Matchers {
 
@@ -184,14 +179,14 @@ class FieldArgsTest extends FunSuite with Matchers {
 
     {
       val m = new MixedTypes(null, 0) with FieldArgs
-      val names = m.parser.nameToHolder.keySet
+      val names = m.argParser.nameToHolder.keySet
       names should be (Set("name", "count"))
     }
 
 
     {
       val s = new SomeApp()
-      val names = s.getArgHolder.parser.nameToHolder.keySet
+      val names = s.getArgHolder.argParser.nameToHolder.keySet
       names should be (Set("x", "y"))
     }
 
@@ -201,7 +196,7 @@ class FieldArgsTest extends FunSuite with Matchers {
 
   test("annotations") {
     val c = new ClassWithSomeAnnotations() with FieldArgs
-    c.parser.nameToHolder.values.foreach { f =>
+    c.argParser.nameToHolder.values.foreach { f =>
       f.getName match {
         case "foo" =>
           f.getDescription should be ("foo")
@@ -259,7 +254,7 @@ class FieldArgsTest extends FunSuite with Matchers {
     c.parse(Array("--x","7"))
     c.x should be (7)
 
-    c.parser.nameToHolder should not contain key ("q")
+    c.argParser.nameToHolder should not contain key ("q")
   }
 
   test("vals ignored") {
@@ -268,7 +263,7 @@ class FieldArgsTest extends FunSuite with Matchers {
     c.parse(Array("--x", "19"))
     c.x should be (19)
 
-    c.parser.nameToHolder should not contain key ("y")
+    c.argParser.nameToHolder should not contain key ("y")
   }
 
   test("respect ignore annotation") {
@@ -276,7 +271,7 @@ class FieldArgsTest extends FunSuite with Matchers {
     c.parse(Array("--x", "123"))
     c.x should be (123)
 
-    c.parser.nameToHolder should not contain key ("y")
+    c.argParser.nameToHolder should not contain key ("y")
   }
 
   test("getStringValues") {
@@ -354,8 +349,58 @@ class FieldArgsTest extends FunSuite with Matchers {
     }
   }
 
+  test("parsers are locally scoped") {
+    // args classes with two different parsers for the same type, neither interferes with each other
+    val a = new ArgsWithCustomType
+    val b = new ArgsWithAlternateCustomTypeParser
+    // run a couple of times just to make sure the second set of args parsed doesn't mess up the first
+    (0 until 2).foreach { _ =>
+      a.parse(Array("--x", "7", "--y", "hithere:345", "--z", "oogabooga"))
+      a.x should be(7)
+      a.y should be(CustomType("hithere", 345))
+      a.z should be("oogabooga")
+
+      b.parse(Array("--x", "7", "--y", "oogabooga", "--z", "hithere,345"))
+      b.x should be(7)
+      b.y should be("oogabooga")
+      b.z should be(CustomType("hithere", 345))
+    }
+  }
+
+  test("override builtin parsers") {
+    // our Args class registers a custom parser for Strings, it should have precedence
+    val args = new ArgsWithCustomParser
+    args.parse(Array("--s", "x"))
+    args.s should be ("x_foo")
+  }
+
+  test("registering parsers in nested args") {
+    val combinedArgs = new NestedArgsWithDifferentParsers
+    combinedArgs.parse(Array(
+      "--a.x", "7", "--a.y", "hithere:345", "--a.z", "blah",
+      "--b.x", "42", "--b.y", "foo", "--b.z", "byebye,123"
+    ))
+    combinedArgs.a.x should be (7)
+    combinedArgs.a.y should be (CustomType("hithere", 345))
+    combinedArgs.a.z should be ("blah")
+
+    combinedArgs.b.x should be (42)
+    combinedArgs.b.y should be ("foo")
+    combinedArgs.b.z should be (CustomType("byebye", 123))
+  }
+
 }
 
+class ArgsWithCustomParser extends FieldArgs {
+  var s: String = null
+  registerParser(CustomStringParser)
+}
+
+object CustomStringParser extends SimpleParser[String] {
+  override val knownTypes: Set[Class[_]] = Set(classOf[String])
+
+  override def parse(s: String): String = s + "_foo"
+}
 
 case class StringHolder(var name: String, var comment: String)
 
@@ -379,7 +424,6 @@ class SomeArgs extends FieldArgs {
 }
 
 
-
 class ClassWithSomeAnnotations {
   var foo: String = _
   @Arg(name="ooga", description="this is an integer argument")
@@ -396,11 +440,11 @@ object CustomTypeParser extends Parser[CustomType] {
   def canParse(tpe:Type) = {
     ParseHelper.checkType(tpe, classOf[CustomType])
   }
-  def parse(s: String, tpe: Type, currentVal: AnyRef) = {
+  def parse(s: String, tpe: Type, currentVal: AnyRef, parsers: Seq[Parser[_]]) = {
     val parts = s.split(":")
     CustomType(parts(0), parts(1).toInt)
   }
-  override def valueAsString(currentVal: AnyRef, tpe: Type) = {
+  override def valueAsString(currentVal: AnyRef, tpe: Type, parsers: Seq[Parser[_]]) = {
     val ct = currentVal.asInstanceOf[CustomType]
     ct.name + ":" + ct.x
   }
@@ -411,6 +455,27 @@ class ArgsWithCustomType extends FieldArgs {
   var x: Int = _
   var y: CustomType = _
   var z: String = _
+}
+
+object AnotherParserForCustomType extends SimpleParser[CustomType] {
+  override val knownTypes: collection.Set[Class[_]] = Set(classOf[CustomType])
+
+  override def parse(s: String): CustomType = {
+    val parts = s.split(",")
+    CustomType(parts(0), parts(1).toInt)
+  }
+}
+
+class ArgsWithAlternateCustomTypeParser extends FieldArgs {
+  registerParser(AnotherParserForCustomType)
+  var x: Int = _
+  var y: String = _
+  var z: CustomType = _
+}
+
+class NestedArgsWithDifferentParsers extends FieldArgs {
+  var a: ArgsWithCustomType = _
+  var b: ArgsWithAlternateCustomTypeParser = _
 }
 
 

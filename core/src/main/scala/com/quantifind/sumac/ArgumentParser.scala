@@ -7,9 +7,12 @@ import java.lang.reflect.{Type, Field}
 import collection.mutable.LinkedHashMap
 import collection._
 
-class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
-  lazy val nameToHolder:Map[String,T] = (LinkedHashMap.empty ++ argHolders.map(a => a.getName -> a)).withDefault { arg =>
-    throw new ArgException("unknown option %s\n%s".format(arg, helpMessage))
+private[sumac] class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T], parsers: Seq[Parser[_]]) {
+
+  var nameToHolder: Map[String,T] = {
+    (LinkedHashMap.empty ++ argHolders.map(a => a.getName -> a)).withDefault { arg =>
+      throw new ArgException("unknown option %s\n%s".format(arg, helpMessage))
+    }
   }
 
   def parse(commandLineArgs: String): Map[T, ValueHolder[_]] = {
@@ -28,7 +31,7 @@ class ArgumentParser[T <: ArgAssignable] (val argHolders: Seq[T]) {
       case(argName, argValue) if !ArgumentParser.isReserved(argName) =>
         val holder = nameToHolder(argName)
         val result = try {
-          ParseHelper.parseInto(argValue, holder.getType, holder.getCurrentValue) getOrElse {
+          ParseHelper.parseInto(argValue, holder.getType, holder.getCurrentValue, holder.getParsers) getOrElse {
             throw new FeedbackException("don't know how to parse type: " + holder.getType)
           }
         } catch {
@@ -58,9 +61,8 @@ object ArgumentParser {
 
   def isReserved(name: String) = reservedArguments.contains(name)
 
-  def apply[T <: ArgAssignable](argHolders: Traversable[T]) = {
-    // ignore things we don't know how to parse
-    new ArgumentParser(argHolders.toSeq.filter(t => ParseHelper.findParser(t.getType).isDefined))
+  def apply[T <: ArgAssignable](argHolders: Traversable[T], parsers: Seq[Parser[_]]) = {
+    new ArgumentParser(argHolders.toSeq, parsers)
   }
 
   def argCLIStringToArgList(commandLineArgs: String): Array[String] = {
@@ -159,6 +161,12 @@ trait ArgAssignable {
   def getType: Type
   def getCurrentValue: AnyRef
   def getParser: Parser[_]
+
+  /**
+   * The parsers that are in scope for this particular argument.  With nested args, this can be
+   * different in each subArgs
+   */
+  def getParsers: Seq[Parser[_]]
   def setValue(value: Any)
 
   def allowedValues: Option[Set[String]] = getParser.allowedValues(getType, getCurrentValue)
@@ -173,11 +181,17 @@ trait ArgAssignable {
   }
 }
 
-class FieldArgAssignable(val prefix: String, val field: Field, val obj: Object, val parser: Parser[_]) extends ArgAssignable {
+class FieldArgAssignable(
+    val prefix: String,
+    val field: Field,
+    val obj: Object,
+    val parser: Parser[_],
+    val parsers: Seq[Parser[_]]) extends ArgAssignable {
   field.setAccessible(true)
   val annotationOpt = Option(field.getAnnotation(classOf[Arg]))
   override val required = field.getAnnotation(classOf[Required]) != null
   def getParser = parser
+  def getParsers = parsers
 
   def getName = {
     prefix + {
@@ -200,12 +214,12 @@ class FieldArgAssignable(val prefix: String, val field: Field, val obj: Object, 
 }
 
 object FieldArgAssignable{
-  def apply(argPrefix: String, field: Field, obj: Object): FieldArgAssignable = {
+  def apply(argPrefix: String, field: Field, obj: Object, parsers: Seq[Parser[_]]): FieldArgAssignable = {
     val tpe = field.getGenericType
-    val parser = ParseHelper.findParser(tpe) getOrElse {
+    val parser = ParseHelper.findParser(tpe, parsers) getOrElse {
       throw new ArgException("don't know how to parse type: " + tpe)
     }
-    new FieldArgAssignable(argPrefix, field, obj, parser)
+    new FieldArgAssignable(argPrefix, field, obj, parser, parsers)
   }
 }
 

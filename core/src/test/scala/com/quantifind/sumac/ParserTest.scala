@@ -38,12 +38,12 @@ class ParserTest extends FunSuite with Matchers {
 
   def checkParseAndBack(p: SimpleParser[_], s: String, v: AnyRef) {
     p.parse(s) should be (v)
-    p.valueAsString(v, null) should be (s)
+    p.valueAsString(v, null, ParseHelper.defaultParsers) should be (s)
   }
 
   def checkReparse(p: SimpleParser[_ <: AnyRef], s: String) {
     val v = p.parse(s)
-    val s2 = p.valueAsString(v, null)
+    val s2 = p.valueAsString(v, null, ParseHelper.defaultParsers)
     val v2 = p.parse(s2)
     v2 should be (v)
   }
@@ -82,7 +82,7 @@ class ParserTest extends FunSuite with Matchers {
 
     //Is there is better way to get a handle on parameterized types????
     val field = classOf[ContainerA].getDeclaredField("boundaries")
-    val parsed = ParseHelper.parseInto("a,b,cdef,g", field.getGenericType, "dummy")
+    val parsed = ParseHelper.parseInto("a,b,cdef,g", field.getGenericType, "dummy", ParseHelper.defaultParsers)
     parsed should be (Some(ValueHolder(List("a", "b", "cdef", "g"), field.getGenericType)))
 
     class ListTestClass extends FieldArgs {
@@ -96,22 +96,22 @@ class ParserTest extends FunSuite with Matchers {
     //Doesn't work with primitive types, same problem as ListParser?
     val stringOptType = classOf[ContainerOption].getDeclaredField("string").getGenericType
     val listOptType = classOf[ContainerOption].getDeclaredField("listOfString").getGenericType
-    OptionParser.parse("foo",stringOptType , null) should be (Some("foo"): Option[String])
-    OptionParser.parse(null, stringOptType, null) should be (None: Option[String])
-    OptionParser.parse(Parser.nullString, stringOptType, null) should be (None: Option[String])
+    OptionParser.parse("foo",stringOptType , null, ParseHelper.defaultParsers) should be (Some("foo"): Option[String])
+    OptionParser.parse(null, stringOptType, null, ParseHelper.defaultParsers) should be (None: Option[String])
+    OptionParser.parse(Parser.nullString, stringOptType, null, ParseHelper.defaultParsers) should be (None: Option[String])
 
-    OptionParser.parse("a,b,cdef,g", listOptType, null) should be (Some(List("a", "b", "cdef", "g")): Option[List[String]])
+    OptionParser.parse("a,b,cdef,g", listOptType, null, ParseHelper.defaultParsers) should be (Some(List("a", "b", "cdef", "g")): Option[List[String]])
 
-    OptionParser.valueAsString(Some("foo"), stringOptType) should be ("foo")
-    OptionParser.valueAsString(Some(List("a", "b", "cdef")), listOptType) should be ("a,b,cdef")
-    OptionParser.valueAsString(None, stringOptType) should be (Parser.nullString)
+    OptionParser.valueAsString(Some("foo"), stringOptType, ParseHelper.defaultParsers) should be ("foo")
+    OptionParser.valueAsString(Some(List("a", "b", "cdef")), listOptType, ParseHelper.defaultParsers) should be ("a,b,cdef")
+    OptionParser.valueAsString(None, stringOptType, ParseHelper.defaultParsers) should be (Parser.nullString)
   }
 
   test("ParseHelper") {
-    ParseHelper.parseInto("ooga", classOf[String], "dummy") should be (Some(ValueHolder("ooga", classOf[String])))
-    ParseHelper.parseInto("5.6", classOf[Double], "dummy") should be (Some(ValueHolder(5.6, classOf[Double])))
-    ParseHelper.parseInto("5.6", classOf[String], "dummy") should be (Some(ValueHolder("5.6", classOf[String])))
-    ParseHelper.parseInto("abc", classOf[RandomUnknownClass], "dummy") should be (None)
+    ParseHelper.parseInto("ooga", classOf[String], "dummy", ParseHelper.defaultParsers) should be (Some(ValueHolder("ooga", classOf[String])))
+    ParseHelper.parseInto("5.6", classOf[Double], "dummy", ParseHelper.defaultParsers) should be (Some(ValueHolder(5.6, classOf[Double])))
+    ParseHelper.parseInto("5.6", classOf[String], "dummy", ParseHelper.defaultParsers) should be (Some(ValueHolder("5.6", classOf[String])))
+    ParseHelper.parseInto("abc", classOf[RandomUnknownClass], "dummy", ParseHelper.defaultParsers) should be (None)
   }
 
   test("array parser") {
@@ -178,14 +178,14 @@ class ParserTest extends FunSuite with Matchers {
   
   test("date parser") {
     def checkDateAndCalendar(parser:Parser[_], s:String, m: Int) {
-      val d = parser.parse(s, classOf[Date], null).asInstanceOf[Date]
+      val d = parser.parse(s, classOf[Date], null, ParseHelper.defaultParsers).asInstanceOf[Date]
       d.getMonth() should be (m)
-      val c = parser.parse(s, classOf[Calendar], null).asInstanceOf[Calendar]
+      val c = parser.parse(s, classOf[Calendar], null, ParseHelper.defaultParsers).asInstanceOf[Calendar]
       c.get(Calendar.MONTH) should be (m)
 
       //value as string should use unambiguous canonical form always
-      parser.valueAsString(d, null) should be ("2013-11-12")
-      parser.valueAsString(c, null) should be ("2013-11-12")
+      parser.valueAsString(d, null, ParseHelper.defaultParsers) should be ("2013-11-12")
+      parser.valueAsString(c, null, ParseHelper.defaultParsers) should be ("2013-11-12")
     }
     checkDateAndCalendar(USDateParser,"11/12/2013", 10)
     checkDateAndCalendar(StandardDateParser, "12/11/2013", 10)

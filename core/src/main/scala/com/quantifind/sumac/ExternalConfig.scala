@@ -51,7 +51,7 @@ trait PreParse extends ExternalConfig {
   self: Args =>
 
   abstract override def readArgs(originalArgs: Map[String, String]): Map[String, String] = {
-    val parsedArgs = parser.parse(originalArgs)
+    val parsedArgs = argParser.parse(originalArgs)
     parsedArgs.foreach { case (argAssignable, valueHolder) =>
       argAssignable.setValue(valueHolder.value)
     }
