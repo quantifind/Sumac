@@ -44,20 +44,6 @@ trait ArgMain[T <: FieldArgs] extends Argable[T] {
 
 trait ArgFunction[T <: FieldArgs, U] extends Function[T, U] with Argable[T]
 
-@deprecated("you should avoid using this until a replacement to DelayedInit has been introduced to scala.", "24/04/2014")
-trait ArgApp[T <: FieldArgs] extends Argable[T] with App {
-  override def main(args: Array[String]) {
-    try {
-      argHolder.parse(args)
-    } catch {
-      case ex: FeedbackException =>
-        println(ex.getMessage)
-        System.exit(1)
-    }
-    super.main(args)
-  }
-}
-
 //below is just for testing, but want it in compiled classes ...
 
 class MyArgs extends FieldArgs {

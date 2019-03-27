@@ -17,9 +17,12 @@ import annotation.tailrec
 
 object SumacBuild extends Build {
   
-  lazy val core = Project("core", file("core"), settings = coreSettings).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
-  lazy val ext = Project("ext", file("ext"), settings = extSettings).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) dependsOn(core)
-  lazy val extZk = Project("ext-zk", file("ext-zk"), settings = extZkSettings).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) dependsOn(core)
+  // We need to explicitly define the root project, so we can apply the settings for cross-compiling
+  lazy val root = (project in file("."))
+    .aggregate(core, ext)
+    .settings(sharedSettings)
+  lazy val core = Project("core", file("core"), settings = coreSettings)
+  lazy val ext = Project("ext", file("ext"), settings = extSettings).dependsOn(core)
 
   def sharedSettings = Defaults.defaultSettings ++
   ReleasePlugin.releaseSettings ++
@@ -27,7 +30,7 @@ object SumacBuild extends Build {
   xerial.sbt.Sonatype.sonatypeSettings ++
   Seq(
     // version is managed by sbt-release in version.sbt
-    scalaVersion := "2.11.0",
+    scalaVersion := "2.12.8",
     organization := "com.quantifind",
     scalacOptions := Seq("-deprecation", "-unchecked", "-optimize"),
     unmanagedJars in Compile <<= baseDirectory map { base => (base / "lib" ** "*.jar").classpath },
@@ -40,19 +43,19 @@ object SumacBuild extends Build {
       "JBoss Repository" at "http://repository.jboss.org/nexus/content/repositories/releases/"
     ),
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "2.1.3" % "test"
+      "org.scalatest" %% "scalatest" % "3.0.5" % "test"
     ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
       // add scala-parser-combinators dependency when needed (for Scala 2.11 and newer) in a robust way
       // this mechanism supports cross-version publishing
       // taken from: http://github.com/scala/scala-module-dependency-sample
       // if scala 2.11+ is used, add dependency on scala-parser-combinators module
       case Some((2, scalaMajor)) if scalaMajor >= 11 =>
-        Seq("org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.1")
+        Seq("org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.7")
       case _ =>
         Nil //it's in 2.10 core
     }),
 
-    crossScalaVersions := Seq("2.10.3", "2.11.0"),
+    crossScalaVersions := Seq("2.11.0", "2.12.8"),
 
     // Publishing configuration
 
@@ -126,7 +129,7 @@ object SumacBuild extends Build {
     name := "Sumac"
   )
 
-  val ScalatraVersion = "2.3.1"
+  val ScalatraVersion = "2.5.4"
 
   def extSettings = sharedSettings ++ Seq(
     name := "Sumac-ext",
@@ -138,20 +141,11 @@ object SumacBuild extends Build {
       "org.scalatra" %% "scalatra" % ScalatraVersion,
       "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
       "org.scalatra" %% "scalatra-swagger" % ScalatraVersion,
-      "org.json4s"   %% "json4s-jackson" % "3.2.11",
-      "org.json4s"   %% "json4s-native" % "3.2.11",
+      "org.json4s"   %% "json4s-jackson" % "3.5.4",
+      "org.json4s"   %% "json4s-native" % "3.5.4",
       "org.eclipse.jetty" % "jetty-webapp" % "9.1.3.v20140225" % "provided",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value
       //end scalatra section
-    )
-  )
-  def extZkSettings = sharedSettings ++ Seq(
-    name := "Sumac-ext-zk",
-    resolvers ++= Seq(
-      "Twitter Repo" at "http://maven.twttr.com/"
-    ),
-    libraryDependencies ++= Seq(
-      "com.twitter"   %% "util-zk"   % "6.26.0"
     )
   )
 

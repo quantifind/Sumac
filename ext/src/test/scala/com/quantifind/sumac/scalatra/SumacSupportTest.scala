@@ -93,8 +93,9 @@ class SumacSupportTest extends ScalatraFunSuite {
       apis.arr.length should be (2)
       apis.arr.foreach{api =>
         val path = (api \ "path").asString
-        val parameters = api \ "operations" \ "parameters"
-        verifyParams(path, parameters.asJArray)
+        val parameters = (api \ "operations" \ "parameters").asJArray
+        parameters.arr.length should be (1)
+        verifyParams(path, parameters.arr(0).asJArray)
       }
     }
   }
