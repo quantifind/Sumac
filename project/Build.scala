@@ -129,8 +129,6 @@ object SumacBuild extends Build {
     name := "Sumac"
   )
 
-  val ScalatraVersion = "2.5.4"
-
   def extSettings = sharedSettings ++ Seq(
     name := "Sumac-ext",
     libraryDependencies ++= Seq(
