@@ -305,7 +305,6 @@ abstract class CollectionParser[T <: Traversable[_]] extends CompoundParser[T] {
   override def valueAsString(v: AnyRef, tpe: Type, parsers: Seq[Parser[_]]):String = {
     (v,tpe) match {
       case (t: Traversable[_],ptpe: ParameterizedType) =>
-        println(s"trying to get subparser for $tpe from $parsers")
         val (subtype, subparser) = ParseHelper.getSubParser(tpe, parsers)
         t.map{x =>
             val value = subparser.valueAsString(x.asInstanceOf[AnyRef], subtype, parsers)
