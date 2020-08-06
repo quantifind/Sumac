@@ -1,4 +1,4 @@
-resolvers += Resolver.url("sbt-plugin-releases", new URL("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns)
+resolvers += Resolver.url("sbt-plugin-releases", new URL("https://packages.atlassian.com/maven-external/"))(Resolver.ivyStylePatterns)
 
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "0.2.1")
 
