@@ -1,10 +1,8 @@
 package com.quantifind.sumac
 
-import org.scalatest.FunSuite
-import org.scalatest.Matchers
-import com.typesafe.config.ConfigFactory
+import org.scalatest.funsuite.AnyFunSuiteLike
+import org.scalatest.matchers.should.Matchers
 import scala.concurrent.duration._
-import scala.collection.Map
 
 /**
  * Test ConfigArgs
@@ -14,7 +12,7 @@ import scala.collection.Map
  * User: andrews
  * Date: 12/18/13
  */
-class ConfigTest extends FunSuite with Matchers {
+class ConfigTest extends AnyFunSuiteLike with Matchers {
 
   test("should load config from file and fallback to it") {
 
@@ -61,7 +59,7 @@ class ConfigTest extends FunSuite with Matchers {
 
     test.parse(Array[String]())
 
-    test.arg1 should be(Some(3 days))      //top config: alternate
+    test.arg1 should be(Some(3.days))      //top config: alternate
     test.arg2.arg3 should be(42.42)        //fallback: application
 
   }
@@ -71,7 +69,7 @@ class ConfigTest extends FunSuite with Matchers {
     test.parse(Array("--useDefaultConfig", "false", "--configFiles", "application,alternate"))
     test.configFiles should be(List("application", "alternate"))
     test.useDefaultConfig should be(false)
-    test.arg1 should be(Some(3 days))      //top config: alternate
+    test.arg1 should be(Some(3.days))      //top config: alternate
     test.arg2.arg3 should be(42.42)        //fallback: application
 
   }
@@ -84,7 +82,7 @@ class ConfigTest extends FunSuite with Matchers {
 
     test.parse(Array[String]())
 
-    test.arg1 should be(Some(3 days))
+    test.arg1 should be(Some(3.days))
 
   }
 
@@ -101,7 +99,7 @@ class ConfigTest extends FunSuite with Matchers {
   test("validations should be applied on the config value too") {
     val test = new Test {
       addValidation {
-        if (arg1.equals(Some(10 seconds))) throw new IllegalArgumentException(s"test arg1 = $arg1")
+        if (arg1.equals(Some(10.seconds))) throw new IllegalArgumentException(s"test arg1 = $arg1")
       }
     }
     val ex = the[IllegalArgumentException] thrownBy {

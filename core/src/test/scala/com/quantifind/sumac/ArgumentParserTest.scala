@@ -17,11 +17,11 @@
 
 package com.quantifind.sumac
 
-import org.scalatest.FunSuite
-import org.scalatest.Matchers
+import org.scalatest.funsuite.AnyFunSuiteLike
+import org.scalatest.matchers.should.Matchers
 import scala.collection._
 
-class ArgumentParserTest extends FunSuite with Matchers {
+class ArgumentParserTest extends AnyFunSuiteLike with Matchers {
 
   test("parse") {
     val c = SimpleClass("a", 0, 1.4, 2)
@@ -70,8 +70,8 @@ class ArgumentParserTest extends FunSuite with Matchers {
 
   }
 
-  def getSimpleNameToArgMap(parsedArgs : Map[_ <: ArgAssignable, ValueHolder[_]]) = {
-    parsedArgs.map{kv => kv._1.getName -> kv._2.value}.toMap[String, Any]
+  def getSimpleNameToArgMap[A <: ArgAssignable](parsedArgs: Map[A, ValueHolder[_]]): Map[String, Any] = {
+    parsedArgs.map { case (k, v) => k.getName -> v.value }.toMap[String, Any]
   }
 
   test("remove newlines") {

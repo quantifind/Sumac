@@ -17,12 +17,12 @@
 
 package com.quantifind.sumac
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuiteLike
+import org.scalatest.matchers.should.Matchers
 import java.io.{PrintWriter, File}
 import java.util.Properties
-import org.scalatest.Matchers
 
-class PropertiesConfigTest extends FunSuite with Matchers {
+class PropertiesConfigTest extends AnyFunSuiteLike with Matchers {
 
   val testOutDir = new File("test_output/" + getClass.getSimpleName)
   testOutDir.mkdirs()

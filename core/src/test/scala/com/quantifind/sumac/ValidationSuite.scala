@@ -17,12 +17,12 @@
 
 package com.quantifind.sumac
 
-import org.scalatest.FunSuite
-import org.scalatest.Matchers
+import org.scalatest.funsuite.AnyFunSuiteLike
+import org.scalatest.matchers.should.Matchers
 import com.quantifind.sumac.validation.{FileExists, Positive, Required, Range}
 import java.io.File
 
-class ValidationSuite extends FunSuite with Matchers {
+class ValidationSuite extends AnyFunSuiteLike with Matchers {
 
   def parse(args: Map[String,String], msg: String)(builder: => FieldArgs) {
     val a = builder
