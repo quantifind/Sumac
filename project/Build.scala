@@ -50,7 +50,7 @@ object SumacBuild extends Build {
       // taken from: http://github.com/scala/scala-module-dependency-sample
       // if scala 2.11+ is used, add dependency on scala-parser-combinators module
       case Some((2, scalaMajor)) if scalaMajor >= 11 =>
-        Seq("org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2")
+        Seq("org.scala-lang.modules" %% "scala-parser-combinators" % "2.2.0")
       case _ =>
         Nil //it's in 2.10 core
     }),
