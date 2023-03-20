@@ -314,7 +314,7 @@ abstract class CollectionParser[T <: Traversable[_]] extends CompoundParser[T] {
       val subtype = ptpe.getActualTypeArguments()(0)
       val subParser = ParseHelper.findParser(subtype, parsers).get
       val parts = CollectionCombinatorParser(s)
-      val sub: Seq[Any] = parts.map(subParser.parse(_, subtype, currentValue, parsers))
+      val sub: scala.collection.immutable.Seq[Any] = parts.map(subParser.parse(_, subtype, currentValue, parsers))
       build(sub: _*)
     } else empty
   }

@@ -1,12 +1,12 @@
 package com.quantifind.sumac
 
-import org.scalatest.FunSuite
-import org.scalatest.Matchers
+import org.scalatest.funsuite.AnyFunSuiteLike
+import org.scalatest.matchers.should.Matchers
 import java.util.TimeZone
 import java.text.SimpleDateFormat
 import org.joda.time.{ReadableDateTime, DateTimeZone}
 
-class DateTimeParserTest extends FunSuite with Matchers {
+class DateTimeParserTest extends AnyFunSuiteLike with Matchers {
   test("date parser") {
     class B extends FieldArgs {
       registerParser(USDateTimeParser)

@@ -17,11 +17,11 @@
 
 package com.quantifind.sumac
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuiteLike
+import org.scalatest.matchers.should.Matchers
 import collection._
-import org.scalatest.Matchers
 
-class ExternalConfigTest extends FunSuite with Matchers {
+class ExternalConfigTest extends AnyFunSuiteLike with Matchers {
   test("modifying args"){
     val args = new ExtArgs() with DefaultNumeroUno
     args.parse(Array("--x", "5", "--y", "hi there"))

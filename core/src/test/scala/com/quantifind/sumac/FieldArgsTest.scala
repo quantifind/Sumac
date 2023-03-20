@@ -18,12 +18,12 @@
 package com.quantifind.sumac
 
 import com.quantifind.sumac.types.{SelectInput,MultiSelectInput}
-import org.scalatest.FunSuite
-import org.scalatest.Matchers
+import org.scalatest.funsuite.AnyFunSuiteLike
+import org.scalatest.matchers.should.Matchers
 import java.lang.reflect.Type
 import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, ByteArrayOutputStream}
 
-class FieldArgsTest extends FunSuite with Matchers {
+class FieldArgsTest extends AnyFunSuiteLike with Matchers {
 
   test("parseStrings") {
     val o = new StringHolder(null, null) with FieldArgs
@@ -457,11 +457,11 @@ object CustomTypeParser extends Parser[CustomType] {
   def canParse(tpe:Type) = {
     ParseHelper.checkType(tpe, classOf[CustomType])
   }
-  def parse(s: String, tpe: Type, currentVal: AnyRef, parsers: Seq[Parser[_]]) = {
+  def parse(s: String, tpe: Type, currentVal: AnyRef, parsers: scala.collection.Seq[Parser[_]]) = {
     val parts = s.split(":")
     CustomType(parts(0), parts(1).toInt)
   }
-  override def valueAsString(currentVal: AnyRef, tpe: Type, parsers: Seq[Parser[_]]) = {
+  override def valueAsString(currentVal: AnyRef, tpe: Type, parsers: scala.collection.Seq[Parser[_]]) = {
     val ct = currentVal.asInstanceOf[CustomType]
     ct.name + ":" + ct.x
   }

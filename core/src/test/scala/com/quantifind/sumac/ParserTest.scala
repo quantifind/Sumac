@@ -17,17 +17,16 @@
 
 package com.quantifind.sumac
 
-import org.scalatest.FunSuite
-import org.scalatest.Matchers
+import org.scalatest.funsuite.AnyFunSuiteLike
+import org.scalatest.matchers.should.Matchers
 import scala.concurrent.duration._
-import scala.collection._
 import java.io.File
 import java.util.{Calendar, TimeZone, Date}
 import java.text.SimpleDateFormat
 import scala.reflect.ClassTag
 
 
-class ParserTest extends FunSuite with Matchers {
+class ParserTest extends AnyFunSuiteLike with Matchers {
 
   test("SimpleParser") {
     checkParseAndBack(StringParser, "ooga", "ooga")
@@ -36,11 +35,11 @@ class ParserTest extends FunSuite with Matchers {
     DoubleParser.parse("1e-10") should be (1e-10)
     BooleanParser.parse("false") should be (false)
     BooleanParser.parse("true") should be (true)
-    DurationParser.parse("10.seconds") should be (10 seconds)
-    checkParseAndBack(DurationParser, "10 seconds", 10 seconds)
-    checkParseAndBack(DurationParser, "10 minutes", 10 minutes)
-    FiniteDurationParser.parse("3.days") should be (3 days)
-    checkParseAndBack(FiniteDurationParser, "3 days", 3 days)
+    DurationParser.parse("10.seconds") should be (10.seconds)
+    checkParseAndBack(DurationParser, "10 seconds", 10.seconds)
+    checkParseAndBack(DurationParser, "10 minutes", 10.minutes)
+    FiniteDurationParser.parse("3.days") should be (3.days)
+    checkParseAndBack(FiniteDurationParser, "3 days", 3.days)
   }
 
 
@@ -85,7 +84,7 @@ class ParserTest extends FunSuite with Matchers {
   def collectionCheck[A <: FieldArgs : ClassTag,R](args: A, builder: Seq[Duration] => R) {
     val in = "10 seconds, 15.seconds, 30 minutes"
     val out = "10 seconds,15 seconds,30 minutes"
-    val exp = builder(Seq(10 seconds, 15 seconds, 30 minutes))
+    val exp = builder(Seq(10.seconds, 15.seconds, 30.minutes))
     args.parse(Array("--x", in))
 
     val act = args.getArgs("").find{_.getName == "x"}.get.getCurrentValue
@@ -170,13 +169,13 @@ class ParserTest extends FunSuite with Matchers {
     val a = new A()
     a.parse(Array("--x", "/blah/ooga:10 seconds,/foo/bar:1 hour"))
     a.x should be (Map(
-      new File("/blah/ooga") -> (10 seconds),
-      new File("/foo/bar") -> (1 hour)
+      new File("/blah/ooga") -> (10.seconds),
+      new File("/foo/bar") -> (1.hour)
     ))
     a.getStringValues should be (Map("x" -> "/blah/ooga:10 seconds,/foo/bar:1 hour"))
 
     val ex = the[IllegalArgumentException] thrownBy  {a.parse(Array("--x", "adfadfdfa"))}
-    ex.getCause.getMessage should include ("'adfadfdfa' cannot be parsed. Caused by: `:' expected but end of source found")
+    ex.getCause.getMessage should include ("'adfadfdfa' cannot be parsed. Caused by: ':' expected but end of source found")
   }
 
   test("map of Seq parser") {

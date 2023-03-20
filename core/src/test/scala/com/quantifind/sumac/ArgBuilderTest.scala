@@ -17,14 +17,14 @@
 
 package com.quantifind.sumac
 
-import org.scalatest.FunSuite
-import org.scalatest.Matchers
+import org.scalatest.funsuite.AnyFunSuiteLike
+import org.scalatest.matchers.should.Matchers
 import java.io._
 
-class ArgBuilderTest extends FunSuite with Matchers {
+class ArgBuilderTest extends AnyFunSuiteLike with Matchers {
 
   val nullOutput = new PrintStream(new OutputStream {
-    def write(p1: Int) {}
+    def write(p1: Int): Unit = {}
   })
 
   test("prompting") {
@@ -73,11 +73,11 @@ class ArgBuilderTest extends FunSuite with Matchers {
     //THIS IS REALLY UGLY.  it only works b/c I know I only call readLine on the Buffered Reader
     val itr = lines.iterator
     new BufferedReader(new Reader() {
-      def close() {}
+      def close(): Unit = {}
 
-      def read(p1: Array[Char], p2: Int, p3: Int) = 0
+      def read(p1: Array[Char], p2: Int, p3: Int): Int = 0
     }) {
-      override def readLine(): String = if (itr.hasNext) itr.next else null
+      override def readLine(): String = if (itr.hasNext) itr.next() else null
     }
   }
 }

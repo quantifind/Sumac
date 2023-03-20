@@ -30,7 +30,7 @@ object SumacBuild extends Build {
   xerial.sbt.Sonatype.sonatypeSettings ++
   Seq(
     // version is managed by sbt-release in version.sbt
-    scalaVersion := "2.12.8",
+    scalaVersion := "2.13.10",
     organization := "com.quantifind",
     scalacOptions := Seq("-deprecation", "-unchecked", "-optimize"),
     unmanagedJars in Compile <<= baseDirectory map { base => (base / "lib" ** "*.jar").classpath },
@@ -43,19 +43,19 @@ object SumacBuild extends Build {
       "JBoss Repository" at "http://repository.jboss.org/nexus/content/repositories/releases/"
     ),
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "3.0.5" % "test"
+      "org.scalatest" %% "scalatest" % "3.2.5" % "test"
     ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
       // add scala-parser-combinators dependency when needed (for Scala 2.11 and newer) in a robust way
       // this mechanism supports cross-version publishing
       // taken from: http://github.com/scala/scala-module-dependency-sample
       // if scala 2.11+ is used, add dependency on scala-parser-combinators module
       case Some((2, scalaMajor)) if scalaMajor >= 11 =>
-        Seq("org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.7")
+        Seq("org.scala-lang.modules" %% "scala-parser-combinators" % "2.2.0")
       case _ =>
         Nil //it's in 2.10 core
     }),
 
-    crossScalaVersions := Seq("2.11.0", "2.12.8"),
+    crossScalaVersions := Seq("2.11.0", "2.12.8", "2.13.10"),
 
     // Publishing configuration
 

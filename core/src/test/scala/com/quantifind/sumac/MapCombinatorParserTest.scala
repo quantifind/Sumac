@@ -17,15 +17,15 @@
 
 package com.quantifind.sumac
 
-import org.scalatest.FunSuite
-import org.scalatest.Matchers
+import org.scalatest.funsuite.AnyFunSuiteLike
+import org.scalatest.matchers.should.Matchers
 
 /**
  * Test the Map parser combinator
  * User: andrews
  * Date: 3/24/14
  */
-class MapCombinatorParserTest  extends FunSuite with Matchers {
+class MapCombinatorParserTest  extends AnyFunSuiteLike with Matchers {
 
   test("should not parse something wrong") {
     an[IllegalArgumentException] should be thrownBy {
