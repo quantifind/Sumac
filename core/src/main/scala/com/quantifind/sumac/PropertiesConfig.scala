@@ -44,7 +44,7 @@ trait PropertiesConfig extends ExternalConfig {
     super.readArgs(ExternalConfigUtil.mapWithDefaults(originalArgs,props.asScala))
   }
 
-  abstract override def saveConfig() {
+  abstract override def saveConfig(): Unit = {
     PropertiesConfig.saveConfig(this, propertyFile)
     super.saveConfig()
   }
@@ -52,7 +52,7 @@ trait PropertiesConfig extends ExternalConfig {
 }
 
 object PropertiesConfig {
-  def saveConfig(args: Args, propertyFile: File) {
+  def saveConfig(args: Args, propertyFile: File): Unit = {
     val props = new Properties()
     args.getStringValues.foreach{case(k,v) => props.put(k,v)}
     val out = new FileOutputStream(propertyFile)

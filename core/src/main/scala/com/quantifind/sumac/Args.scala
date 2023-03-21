@@ -53,15 +53,15 @@ trait Args extends ExternalConfig with Serializable {
   @transient
   var validationFunctions: Seq[() => Unit] = Seq()
 
-  def parse(commandLineArgs: String) {
+  def parse(commandLineArgs: String): Unit = {
     parse(ArgumentParser.argCLIStringToArgList(commandLineArgs))
   }
 
-  def parse(args: Array[String]) {
+  def parse(args: Array[String]): Unit = {
     parse(ArgumentParser.argListToKvMap(args))
   }
 
-  def parse(kvPairs: Map[String,String], validation: Boolean = true) {
+  def parse(kvPairs: Map[String,String], validation: Boolean = true): Unit = {
     val modifiedKvPairs = if (validation) readArgs(kvPairs) else kvPairs
     val parsedArgs = argParser.parse(modifiedKvPairs)
     parsedArgs.foreach { case (argAssignable, valueHolder) =>
@@ -81,7 +81,7 @@ trait Args extends ExternalConfig with Serializable {
     originalArgs  //here for stackable traits
   }
 
-  override def saveConfig() {} //noop, here for stackable traits
+  override def saveConfig(): Unit = {} //noop, here for stackable traits
 
   /**
    * run all validation functions.
@@ -89,7 +89,7 @@ trait Args extends ExternalConfig with Serializable {
    * Note that parse automatically runs all validation, so in general a user will not need to call this.  However,
    * if you are programatically filling in the the args of this object, you probably want to call this.
    */
-  def runValidation() {
+  def runValidation(): Unit = {
     validationFunctions.foreach{_()}
     nestedArgs.foreach{_.runValidation()}
   }
@@ -100,7 +100,7 @@ trait Args extends ExternalConfig with Serializable {
    * add the ability to parse your own custom types.  Note that this
    * registers the parser *globally*, not just for this object.
    */
-  def registerParser[T](parser: Parser[T]) {
+  def registerParser[T](parser: Parser[T]): Unit = {
     parsers =  parser +: parsers
   }
 
@@ -116,7 +116,7 @@ trait Args extends ExternalConfig with Serializable {
     }.toMap
   }
 
-  def addValidation(f:  => Unit) {
+  def addValidation(f:  => Unit): Unit = {
     validationFunctions ++= Seq(() => f)
   }
 }

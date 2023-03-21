@@ -41,11 +41,11 @@ trait Argable[T <: Args] {
 }
 
 trait ArgMain[T <: FieldArgs] extends Argable[T] {
-  def main(rawArgs: Array[String]) {
+  def main(rawArgs: Array[String]): Unit = {
     mainHelper(rawArgs)
   }
 
-  private def mainHelper(rawArgs: Array[String]) {
+  private def mainHelper(rawArgs: Array[String]): Unit = {
     try {
       argHolder.parse(rawArgs)
     } catch {
@@ -56,7 +56,7 @@ trait ArgMain[T <: FieldArgs] extends Argable[T] {
     main(argHolder)
   }
 
-  def main(args: T)
+  def main(args: T): Unit
 }
 
 trait ArgFunction[T <: FieldArgs, U] extends Function[T, U] with Argable[T]
@@ -69,7 +69,7 @@ class MyArgs extends FieldArgs {
 }
 
 object MyMain extends ArgMain[MyArgs] {
-  def main(args: MyArgs) {
+  def main(args: MyArgs): Unit = {
     println(args.a)
     println(args.b)
   }

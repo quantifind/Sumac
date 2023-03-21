@@ -64,7 +64,7 @@ trait ConfigArgs extends ExternalConfig {
    * add a config to the stack of files to load
    * @param filename
    */
-  def addConfig(filename: String) {
+  def addConfig(filename: String): Unit = {
     configFiles = configFiles :+ filename
   }
 

@@ -81,7 +81,7 @@ class ExternalConfigTest extends AnyFunSuiteLike with Matchers {
       )
     }
 
-    abstract override def saveConfig() {
+    abstract override def saveConfig(): Unit = {
       numeroUnoSave = true
       super.saveConfig()
     }
@@ -104,7 +104,7 @@ class ExternalConfigTest extends AnyFunSuiteLike with Matchers {
       super.readArgs(withOoga)
     }
 
-    abstract override def saveConfig() {
+    abstract override def saveConfig(): Unit = {
       numberTwoSave  = true
       super.saveConfig()
     }

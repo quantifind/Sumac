@@ -23,7 +23,7 @@ import java.io._
  * Util for building up a set of arguments interactively through command line.  Prompt the user for each argument
  */
 object ArgBuilder extends ArgMain[ArgBuilderArgs] {
-  def main(mainArgs: ArgBuilderArgs) {
+  def main(mainArgs: ArgBuilderArgs): Unit = {
     val clz = Class.forName(mainArgs.argClass)
     val args = clz.newInstance().asInstanceOf[Args]
     promptForArgs(args)
@@ -37,12 +37,12 @@ object ArgBuilder extends ArgMain[ArgBuilderArgs] {
     }
   }
 
-  def promptForArgs(args: Args) {
+  def promptForArgs(args: Args): Unit = {
     val in = new BufferedReader(new InputStreamReader(System.in))
     promptForArgs(args, in, System.out)
   }
 
-  private[sumac] def promptForArgs(args: Args, input: BufferedReader, out: PrintStream) {
+  private[sumac] def promptForArgs(args: Args, input: BufferedReader, out: PrintStream): Unit = {
     out.println("Enter values for each argument.  To skip an argument, enter 2 blank lines. To enter an empty string, enter" +
       "one blank line followed by a line with \"\"")
     var newVals = Map[String,String]()
