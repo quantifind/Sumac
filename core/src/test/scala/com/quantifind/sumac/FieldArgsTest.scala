@@ -432,7 +432,7 @@ case class MyFunkyType(var x: String)
 
 
 class SomeApp extends ArgMain[SomeArgs] {
-  def main(args: SomeArgs) {}
+  def main(args: SomeArgs): Unit = {}
 }
 
 class SomeArgs extends FieldArgs {

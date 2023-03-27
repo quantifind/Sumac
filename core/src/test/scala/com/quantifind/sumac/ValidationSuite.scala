@@ -24,7 +24,7 @@ import java.io.File
 
 class ValidationSuite extends AnyFunSuiteLike with Matchers {
 
-  def parse(args: Map[String,String], msg: String)(builder: => FieldArgs) {
+  def parse(args: Map[String,String], msg: String)(builder: => FieldArgs): Unit = {
     val a = builder
     val exc = withClue(args){the[ArgException] thrownBy {a.parse(args)}}
     withClue(args){exc.getMessage should include(msg)}
@@ -63,7 +63,7 @@ class ValidationSuite extends AnyFunSuiteLike with Matchers {
   }
 
   test("@Positive") {
-    def parseP(args: Map[String,String], msg: String) {
+    def parseP(args: Map[String,String], msg: String): Unit = {
       parse(args, msg){new PositiveArgs()}
     }
 
@@ -86,7 +86,7 @@ class ValidationSuite extends AnyFunSuiteLike with Matchers {
     val tmpPath = tmpFile.getAbsolutePath
     tmpFile.deleteOnExit()
 
-    def parseF(args: Map[String,String], msg: String) {
+    def parseF(args: Map[String,String], msg: String): Unit = {
       parse(args, msg){new FileExistsArgs()}
     }
 
@@ -104,7 +104,7 @@ class ValidationSuite extends AnyFunSuiteLike with Matchers {
 
 
   test("@Range") {
-    def parseR(args: Map[String,String], msg: String) {
+    def parseR(args: Map[String,String], msg: String): Unit = {
       parse(args, msg) {new RangeArgs()}
     }
 

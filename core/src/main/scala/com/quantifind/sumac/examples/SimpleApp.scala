@@ -38,7 +38,7 @@ import com.quantifind.sumac.{FieldArgs, ArgMain}
  *
  */
 object SimpleApp extends ArgMain[SimpleAppArgs] {
-  def main(args: SimpleAppArgs) {
+  def main(args: SimpleAppArgs): Unit = {
     (0 until args.count).foreach{_ => println(args.name)}
   }
 }

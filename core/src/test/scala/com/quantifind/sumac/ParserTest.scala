@@ -52,12 +52,12 @@ class ParserTest extends AnyFunSuiteLike with Matchers {
     f.getStringValues should be (Map("x" -> "5"))
   }
 
-  def checkParseAndBack(p: SimpleParser[_], s: String, v: AnyRef) {
+  def checkParseAndBack(p: SimpleParser[_], s: String, v: AnyRef): Unit = {
     p.parse(s) should be (v)
     p.valueAsString(v, null, ParseHelper.defaultParsers) should be (s)
   }
 
-  def checkReparse(p: SimpleParser[_ <: AnyRef], s: String) {
+  def checkReparse(p: SimpleParser[_ <: AnyRef], s: String): Unit = {
     val v = p.parse(s)
     val s2 = p.valueAsString(v, null, ParseHelper.defaultParsers)
     val v2 = p.parse(s2)
@@ -81,7 +81,7 @@ class ParserTest extends AnyFunSuiteLike with Matchers {
     checkReparse(FileParser, "~/ooga")
   }
 
-  def collectionCheck[A <: FieldArgs : ClassTag,R](args: A, builder: Seq[Duration] => R) {
+  def collectionCheck[A <: FieldArgs : ClassTag,R](args: A, builder: Seq[Duration] => R): Unit = {
     val in = "10 seconds, 15.seconds, 30 minutes"
     val out = "10 seconds,15 seconds,30 minutes"
     val exp = builder(Seq(10.seconds, 15.seconds, 30.minutes))
@@ -193,7 +193,7 @@ class ParserTest extends AnyFunSuiteLike with Matchers {
   }
   
   test("date parser") {
-    def checkDateAndCalendar(parser:Parser[_], s:String, m: Int) {
+    def checkDateAndCalendar(parser:Parser[_], s:String, m: Int): Unit = {
       val d = parser.parse(s, classOf[Date], null, ParseHelper.defaultParsers).asInstanceOf[Date]
       d.getMonth() should be (m)
       val c = parser.parse(s, classOf[Calendar], null, ParseHelper.defaultParsers).asInstanceOf[Calendar]

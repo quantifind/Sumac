@@ -77,7 +77,7 @@ trait FieldArgs extends Args {
     f.getDeclaringClass.getMethods.exists{_.getName() == f.getName + "_$eq"}
   }
 
-  private[sumac] def addAnnotationValidations(f: FieldArgAssignable, defaultVals: Map[String, ArgAssignable]) {
+  private[sumac] def addAnnotationValidations(f: FieldArgAssignable, defaultVals: Map[String, ArgAssignable]): Unit = {
     //Q: do inherited annotations mean anything on a field?  does it matter if I use getAnnotations vs getDeclaredAnnotations?
     f.field.getAnnotations.foreach { annot =>
       annotationValidationFunctions.get(annot.annotationType()).foreach{func =>
@@ -94,7 +94,7 @@ trait FieldArgs extends Args {
     annot: Annotation,
     check: (Any, Any, Annotation, String, ArgAssignable) => Unit
   ) extends (() => Unit) {
-    def apply() {
+    def apply(): Unit = {
       check(default, field.getCurrentValue, annot, field.getName, field)
     }
     override def toString() = "annotation check of " + field.getName
@@ -117,11 +117,11 @@ trait FieldArgs extends Args {
    *                           first argument is the default value of the argument, the second is the current value,
    *                           the third is the annotation, and the fourth is the name of the argument (for error msgs).
    */
-  def registerAnnotationValidationUpdate(annotation: Class[_ <: Annotation])(validationFunction: (Any,Any, Annotation, String, ArgAssignable) => Unit) {
+  def registerAnnotationValidationUpdate(annotation: Class[_ <: Annotation])(validationFunction: (Any,Any, Annotation, String, ArgAssignable) => Unit): Unit = {
     annotationValidationFunctions += annotation -> validationFunction
   }
 
-  def registerAnnotationValidation(annotation: Class[_ <: Annotation])(validationFunction: (Any,Any, Annotation, String) => Unit) {
+  def registerAnnotationValidation(annotation: Class[_ <: Annotation])(validationFunction: (Any,Any, Annotation, String) => Unit): Unit = {
     registerAnnotationValidationUpdate(annotation){(a:Any,b:Any,c:Annotation,d:String,e:ArgAssignable) => validationFunction(a,b,c,d)}
   }
 

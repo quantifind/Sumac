@@ -23,7 +23,7 @@ import java.io.File
 
 object RequiredCheck extends Function4[Any, Any, Annotation, String, Unit] {
 
-  def apply(defaultValue: Any, currentValue: Any, annot: Annotation, name: String) {
+  def apply(defaultValue: Any, currentValue: Any, annot: Annotation, name: String): Unit = {
     if (defaultValue == currentValue)
       throw new FeedbackException("must specify a value for " + name)
   }
@@ -33,7 +33,7 @@ object RequiredCheck extends Function4[Any, Any, Annotation, String, Unit] {
 
 
 object PositiveCheck extends Function4[Any, Any, Annotation, String, Unit] {
-  def apply(defaultValue: Any, currentValue: Any, annot: Annotation, name: String) {
+  def apply(defaultValue: Any, currentValue: Any, annot: Annotation, name: String): Unit = {
     numericAsDouble(currentValue){v =>
       if (v <= 0.0)
         throw new FeedbackException("must specify a positive value for " + name)
@@ -54,7 +54,7 @@ object PositiveCheck extends Function4[Any, Any, Annotation, String, Unit] {
 }
 
 object RangeCheck extends Function4[Any, Any, Annotation, String, Unit] {
-  def apply(defaultValue: Any, currentValue: Any, annot: Annotation, name: String) {
+  def apply(defaultValue: Any, currentValue: Any, annot: Annotation, name: String): Unit = {
     annot match {
       case r:Range =>
         PositiveCheck.numericAsDouble(currentValue){v =>
@@ -69,7 +69,7 @@ object RangeCheck extends Function4[Any, Any, Annotation, String, Unit] {
 object FileExistsCheck extends Function4[Any, Any, Annotation, String, Unit] {
 
 
-  def apply(defaultValue: Any, currentValue: Any, annot: Annotation, name: String) {
+  def apply(defaultValue: Any, currentValue: Any, annot: Annotation, name: String): Unit = {
     Option(currentValue).map{asFile(_)} match {
       case Some(f) if !f.exists() =>
         throw new FeedbackException("must specify a file that exists for %s, current value = %s".format(name, f.toString))

@@ -184,7 +184,7 @@ trait ArgAssignable {
    * different in each subArgs
    */
   def getParsers: Seq[Parser[_]]
-  def setValue(value: Any)
+  def setValue(value: Any): Unit
 
   def allowedValues: Option[Set[String]] = getParser.allowedValues(getType, getCurrentValue)
   def required: Boolean = false
